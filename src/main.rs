@@ -18,11 +18,78 @@ use std::{
     },
     thread,
     time::Duration,
+    vec,
 };
 
+#[derive(Debug, Default)]
+struct InputModeNormalState {
+    cursor_position: (u64, u64),
+}
+
 #[derive(Debug)]
+enum InputMode {
+    Normal(InputModeNormalState),
+    Insert,
+    InsertUnicode,
+    Visual,
+    Command,
+}
+
+impl Default for InputMode {
+    fn default() -> Self {
+        InputMode::Normal(InputModeNormalState::default())
+    }
+}
+
+#[derive(Debug)]
+enum Color {
+    TrueColor((u8, u8, u8)),
+    Simple256(u8),
+    Simple16(u8),
+    Simple8(u8),
+}
+
+#[derive(Debug)]
+enum SGREffect {
+    Bold,
+    Faint,
+    Italic,
+    Underline,
+    Strikethrough,
+    Other(String), // Will render `ESC [ <provided string> m` before the cell
+}
+
+#[derive(Debug)]
+struct CanvasCell {
+    character: char,
+    color: Option<Color>,
+    bacground_color: Option<Color>,
+    other_effects: Vec<SGREffect>,
+}
+
+impl Default for CanvasCell {
+    fn default() -> Self {
+        CanvasCell {
+            character: ' ',
+            color: None,
+            bacground_color: None,
+            other_effects: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+struct Canvas {
+    cells: Vec<Vec<CanvasCell>>,
+}
+
+#[derive(Debug, Default)]
 struct ProgramState {
     a: u64,
+    input_mode: InputMode,
+    canvas: Canvas,
+    chosen_color: Option<Color>,
+    chosen_background_color: Option<Color>,
 }
 
 #[derive(Debug)]
@@ -95,7 +162,7 @@ fn draw_frame(
 }
 
 fn application(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> ResultCustom<()> {
-    let program_state = Arc::new(Mutex::new(ProgramState { a: 42 }));
+    let program_state = Arc::new(Mutex::new(ProgramState::default()));
     let (exit_tx, exit_rx) = mpsc::channel::<()>();
     let exit_tx = Arc::new(Mutex::new(exit_tx));
     let (redraw_tx, redraw_rx) = mpsc::channel::<()>();
