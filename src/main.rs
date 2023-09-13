@@ -6,12 +6,14 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
-    widgets::{Block, Borders},
+    text::{Line, Span},
+    widgets::{Block, Borders, Paragraph},
     Terminal,
 };
 use std::{
+    collections::BTreeMap,
     fmt::Debug,
-    io,
+    io::{self},
     sync::{
         mpsc::{self, RecvError, SendError},
         Arc, Mutex, PoisonError,
@@ -41,12 +43,25 @@ impl Default for InputMode {
     }
 }
 
-#[derive(Debug)]
+trait AnsiEscapeSequence {
+    fn ansi_escape_sequence(&self) -> String;
+}
+
+#[derive(Debug, PartialEq)]
 enum Color {
     TrueColor((u8, u8, u8)),
     Simple256(u8),
     Simple16(u8),
     Simple8(u8),
+}
+
+impl AnsiEscapeSequence for Color {
+    fn ansi_escape_sequence(&self) -> String {
+        match self {
+            Self::TrueColor((r, g, b)) => format!("\x1b[38;2;{};{};{}m", r, g, b),
+            _ => format!(""),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -67,6 +82,14 @@ struct CanvasCell {
     other_effects: Vec<SGREffect>,
 }
 
+impl CanvasCell {
+    fn from_char(character: char) -> Self {
+        let mut cell = CanvasCell::default();
+        cell.character = character;
+        cell
+    }
+}
+
 impl Default for CanvasCell {
     fn default() -> Self {
         CanvasCell {
@@ -78,9 +101,67 @@ impl Default for CanvasCell {
     }
 }
 
+// .0 is row, .1 is column
+type CanvasIndex = (u64, u64);
+
 #[derive(Debug, Default)]
 struct Canvas {
-    cells: Vec<Vec<CanvasCell>>,
+    rows: u64,
+    columns: u64,
+    cells: BTreeMap<CanvasIndex, CanvasCell>,
+}
+
+trait AnsiExport {
+    fn to_ansi(&self) -> String;
+}
+
+impl AnsiExport for Canvas {
+    fn to_ansi(&self) -> String {
+        let mut result = String::new();
+        let mut cells = self.cells.iter();
+        let (first_index, first_cell) = match cells.next() {
+            Some(cell) => cell,
+            None => {
+                return result;
+            }
+        };
+        result.push(first_cell.character);
+        let previous_cell = first_cell;
+        let (mut previous_row, mut previous_column) = first_index.to_owned();
+        for (index, cell) in cells {
+            let (row, column) = index.to_owned();
+
+            let linebreaks_to_add = row - previous_row;
+            let spaces_to_add = if row == previous_row {
+                column - previous_column
+            } else {
+                column
+            };
+
+            // Reset all SGR effects if cells are being skipped
+            if linebreaks_to_add > 0 || spaces_to_add > 0 {
+                result += "\x1b[0m";
+            }
+
+            for _i in 0..linebreaks_to_add {
+                result.push('\n');
+            }
+            for _i in 0..spaces_to_add {
+                result.push(' ');
+            }
+
+            if cell.color != previous_cell.color {
+                result += "\x1b[0m";
+                if let Some(color) = &cell.color {
+                    result += &color.ansi_escape_sequence();
+                }
+            }
+
+            result.push(cell.character);
+            (previous_row, previous_column) = (row, column);
+        }
+        result
+    }
 }
 
 #[derive(Debug, Default)]
@@ -153,10 +234,14 @@ fn draw_frame(
 ) -> ResultCustom<()> {
     terminal.draw(|f| {
         let size = f.size();
-        let block = Block::default()
+        let paragraph = Paragraph::new(vec![Line::from(vec![Span::raw(
+            program_state.canvas.to_ansi(),
+        )])])
+        .block(Block::new().title("Ye").borders(Borders::ALL));
+        let _block = Block::default()
             .title(format!("Halla, jeg heter Petter {}", (*program_state).a))
             .borders(Borders::ALL);
-        f.render_widget(block, size);
+        f.render_widget(paragraph, size);
     })?;
     Ok(())
 }
@@ -196,7 +281,24 @@ fn application(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> ResultCu
     thread::spawn(move || -> ResultCustom<()> {
         loop {
             redraw_rx.recv()?;
-            let program_state = program_state_draw_screen.lock()?;
+            let mut program_state = program_state_draw_screen.lock()?;
+            program_state
+                .canvas
+                .cells
+                .insert((0, 0), CanvasCell::from_char('/'));
+            program_state
+                .canvas
+                .cells
+                .insert((3, 15), CanvasCell::from_char('+'));
+            program_state.canvas.cells.insert(
+                (2, 10),
+                CanvasCell {
+                    character: '@',
+                    color: Some(Color::TrueColor((255, 64, 0))),
+                    bacground_color: None,
+                    other_effects: vec![],
+                },
+            );
             draw_frame(&mut terminal, &program_state)?;
         }
         // Ok(())
