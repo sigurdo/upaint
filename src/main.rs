@@ -1,11 +1,11 @@
 use crossterm::{
-    cursor::SetCursorStyle,
+    cursor,
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    backend::{Backend, CrosstermBackend},
+    backend::CrosstermBackend,
     widgets::{Block, Borders},
     Terminal,
 };
@@ -103,10 +103,14 @@ fn application(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> io::Resu
 fn setup_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, io::Error> {
     let mut stdout = io::stdout();
     enable_raw_mode()?;
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(
+        stdout,
+        EnterAlternateScreen,
+        EnableMouseCapture,
+        cursor::Hide, // This seems to happen anyways
+    )?;
     let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-    terminal.hide_cursor()?; // This doesn't seem to affect anything
+    let terminal = Terminal::new(backend)?;
     Ok(terminal)
 }
 
@@ -115,7 +119,7 @@ fn restore_terminal() -> io::Result<()> {
         io::stdout(),
         LeaveAlternateScreen,
         DisableMouseCapture,
-        SetCursorStyle::DefaultUserShape, // This doesn't seem to affect anything
+        cursor::Show,
     )?;
     disable_raw_mode()?;
     Ok(())
