@@ -2,6 +2,7 @@
 name = "upaint"
 version = "0.1.0"
 edition = "2021"
+default-run = "main"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,3 +10,12 @@ edition = "2021"
 ratatui = { version = "0.23.0", features = ["all-widgets"] }
 anyhow = "1.0.75"
 crossterm = "0.27.0"
+
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "test_export"
+path = "src/test_export.rs"
