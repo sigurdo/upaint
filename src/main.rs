@@ -6,8 +6,11 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
+    buffer::Buffer,
+    layout::Rect,
+    style::{Color, Modifier},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Paragraph, Widget},
     Terminal,
 };
 use std::{
@@ -43,43 +46,12 @@ impl Default for InputMode {
     }
 }
 
-trait AnsiEscapeSequence {
-    fn ansi_escape_sequence(&self) -> String;
-}
-
-#[derive(Debug, PartialEq)]
-enum Color {
-    TrueColor((u8, u8, u8)),
-    Simple256(u8),
-    Simple16(u8),
-    Simple8(u8),
-}
-
-impl AnsiEscapeSequence for Color {
-    fn ansi_escape_sequence(&self) -> String {
-        match self {
-            Self::TrueColor((r, g, b)) => format!("\x1b[38;2;{};{};{}m", r, g, b),
-            _ => format!(""),
-        }
-    }
-}
-
-#[derive(Debug)]
-enum SGREffect {
-    Bold,
-    Faint,
-    Italic,
-    Underline,
-    Strikethrough,
-    Other(String), // Will render `ESC [ <provided string> m` before the cell
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct CanvasCell {
     character: char,
-    color: Option<Color>,
-    bacground_color: Option<Color>,
-    other_effects: Vec<SGREffect>,
+    color: Color,
+    bacground_color: Color,
+    modifiers: Modifier,
 }
 
 impl CanvasCell {
@@ -94,9 +66,9 @@ impl Default for CanvasCell {
     fn default() -> Self {
         CanvasCell {
             character: ' ',
-            color: None,
-            bacground_color: None,
-            other_effects: vec![],
+            color: Color::default(),
+            bacground_color: Color::default(),
+            modifiers: Modifier::default(),
         }
     }
 }
@@ -104,7 +76,7 @@ impl Default for CanvasCell {
 // .0 is row, .1 is column
 type CanvasIndex = (u64, u64);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Canvas {
     rows: u64,
     columns: u64,
@@ -115,52 +87,19 @@ trait AnsiExport {
     fn to_ansi(&self) -> String;
 }
 
-impl AnsiExport for Canvas {
-    fn to_ansi(&self) -> String {
-        let mut result = String::new();
-        let mut cells = self.cells.iter();
-        let (first_index, first_cell) = match cells.next() {
-            Some(cell) => cell,
-            None => {
-                return result;
+impl Widget for Canvas {
+    fn render(self, area: Rect, buffer: &mut Buffer) {
+        for ((row, column), cell) in self.cells {
+            let (x, y) = (area.x + (column as u16), area.y + (row as u16));
+            if x > (area.x + area.width) || y > (area.y + area.height) {
+                continue;
             }
-        };
-        result.push(first_cell.character);
-        let previous_cell = first_cell;
-        let (mut previous_row, mut previous_column) = first_index.to_owned();
-        for (index, cell) in cells {
-            let (row, column) = index.to_owned();
-
-            let linebreaks_to_add = row - previous_row;
-            let spaces_to_add = if row == previous_row {
-                column - previous_column
-            } else {
-                column
-            };
-
-            // Reset all SGR effects if cells are being skipped
-            if linebreaks_to_add > 0 || spaces_to_add > 0 {
-                result += "\x1b[0m";
-            }
-
-            for _i in 0..linebreaks_to_add {
-                result.push('\n');
-            }
-            for _i in 0..spaces_to_add {
-                result.push(' ');
-            }
-
-            if cell.color != previous_cell.color {
-                result += "\x1b[0m";
-                if let Some(color) = &cell.color {
-                    result += &color.ansi_escape_sequence();
-                }
-            }
-
-            result.push(cell.character);
-            (previous_row, previous_column) = (row, column);
+            let target = buffer.get_mut(x, y);
+            target.symbol = String::from(cell.character);
+            target.fg = cell.color;
+            target.bg = cell.bacground_color;
+            target.modifier = cell.modifiers;
         }
-        result
     }
 }
 
@@ -207,6 +146,8 @@ impl From<io::Error> for ErrorCustom {
     }
 }
 
+struct AnsiExportBackend {}
+
 fn handle_user_input(
     event: Event,
     program_state: &mut ProgramState,
@@ -234,14 +175,13 @@ fn draw_frame(
 ) -> ResultCustom<()> {
     terminal.draw(|f| {
         let size = f.size();
-        let paragraph = Paragraph::new(vec![Line::from(vec![Span::raw(
-            program_state.canvas.to_ansi(),
-        )])])
-        .block(Block::new().title("Ye").borders(Borders::ALL));
-        let _block = Block::default()
+        let block = Block::default()
             .title(format!("Halla, jeg heter Petter {}", (*program_state).a))
             .borders(Borders::ALL);
-        f.render_widget(paragraph, size);
+        let inner_area = block.inner(size);
+        f.render_widget(block, size);
+        let canvas = program_state.canvas.clone();
+        f.render_widget(canvas, inner_area);
     })?;
     Ok(())
 }
@@ -294,9 +234,9 @@ fn application(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> ResultCu
                 (2, 10),
                 CanvasCell {
                     character: '@',
-                    color: Some(Color::TrueColor((255, 64, 0))),
-                    bacground_color: None,
-                    other_effects: vec![],
+                    color: Color::Rgb(255, 64, 0),
+                    bacground_color: Color::Rgb(0, 0, 128),
+                    modifiers: Modifier::default(),
                 },
             );
             draw_frame(&mut terminal, &program_state)?;
