@@ -31,14 +31,11 @@ use std::{
     vec,
 };
 
-mod main;
-
-pub use main::{AnsiExport, Canvas, CanvasCell, CanvasIndex, ProgramState};
+use upaint::canvas::{AnsiExport, Canvas, CanvasCell, CanvasIndex};
 
 fn main() {
-    let mut program_state = ProgramState::default();
-    program_state
-        .canvas
+    let mut canvas = Canvas::default();
+    canvas
         .set_character((0, 0), '/')
         .set_character((3, 15), '+')
         .set_character((2, 10), '@')
@@ -49,7 +46,7 @@ fn main() {
         .set_character((2, 7), 'Å')
         .set_fg_color((2, 7), Color::Rgb(0, 200, 160))
         .add_modifier((2, 7), Modifier::UNDERLINED);
-    println!("{}", program_state.canvas.to_ansi().unwrap());
-    dbg!(program_state.canvas.to_ansi().unwrap());
+    println!("{}", canvas.to_ansi().unwrap());
+    dbg!(canvas.to_ansi().unwrap());
     std::process::exit(1);
 }
