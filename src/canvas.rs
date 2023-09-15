@@ -34,15 +34,15 @@ use std::{
 use crate::result_custom::ResultCustom;
 
 #[derive(Debug, Clone)]
-pub struct CanvasCell {
-    pub character: char,
-    pub color: Color,
-    pub background_color: Color,
-    pub modifiers: Modifier,
+struct CanvasCell {
+    character: char,
+    color: Color,
+    background_color: Color,
+    modifiers: Modifier,
 }
 
 impl CanvasCell {
-    pub fn from_char(character: char) -> Self {
+    fn from_char(character: char) -> Self {
         let mut cell = CanvasCell::default();
         cell.character = character;
         cell

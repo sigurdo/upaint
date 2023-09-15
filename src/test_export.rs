@@ -31,7 +31,7 @@ use std::{
     vec,
 };
 
-use upaint::canvas::{AnsiExport, Canvas, CanvasCell, CanvasIndex};
+use upaint::canvas::{AnsiExport, Canvas};
 
 fn main() {
     let mut canvas = Canvas::default();
