@@ -85,7 +85,40 @@ pub type CanvasIndex = (u64, u64);
 pub struct Canvas {
     rows: u64,
     columns: u64,
-    pub cells: BTreeMap<CanvasIndex, CanvasCell>,
+    cells: BTreeMap<CanvasIndex, CanvasCell>,
+}
+
+impl Canvas {
+    fn get_or_create_cell_mut(&mut self, index: &CanvasIndex) -> &mut CanvasCell {
+        if !self.cells.contains_key(&index) {
+            self.cells.insert(*index, CanvasCell::default());
+        }
+        self.cells.get_mut(&index).unwrap()
+    }
+
+    pub fn set_character(&mut self, index: CanvasIndex, character: char) -> &mut Self {
+        let cell = self.get_or_create_cell_mut(&index);
+        cell.character = character;
+        self
+    }
+
+    pub fn set_fg_color(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
+        let cell = self.get_or_create_cell_mut(&index);
+        cell.color = color;
+        self
+    }
+
+    pub fn set_bg_color(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
+        let cell = self.get_or_create_cell_mut(&index);
+        cell.background_color = color;
+        self
+    }
+
+    pub fn add_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
+        let cell = self.get_or_create_cell_mut(&index);
+        cell.modifiers |= modifier;
+        self
+    }
 }
 
 pub trait AnsiExport {
