@@ -1,37 +1,19 @@
 use crossterm::{
-    cursor,
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
-    execute, queue,
     style::{
-        Attribute as CAttribute, Color as CColor, Colored as CColored, ResetColor, SetAttribute,
-        SetBackgroundColor, SetForegroundColor,
+        Attribute as CAttribute, Color as CColor, ResetColor, SetAttribute, SetBackgroundColor,
+        SetForegroundColor,
     },
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     Command,
 };
 use ratatui::{
-    backend::CrosstermBackend,
     buffer::Buffer,
     layout::Rect,
     style::{Color, Modifier},
-    text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget},
-    Terminal,
+    widgets::Widget,
 };
-use std::{
-    collections::BTreeMap,
-    fmt::{Debug, Display},
-    io::{self},
-    sync::{
-        mpsc::{self, RecvError, SendError},
-        Arc, Mutex, PoisonError,
-    },
-    thread,
-    time::Duration,
-    vec,
-};
+use std::{collections::BTreeMap, fmt::Debug};
 
-use crate::result_custom::ResultCustom;
+use crate::ResultCustom;
 
 #[derive(Debug, Clone)]
 struct CanvasCell {
@@ -142,9 +124,9 @@ impl AnsiExport for Canvas {
                 result.push(' ');
             }
 
-            let sgr_different = (cell.color != previous_cell.color
+            let sgr_different = cell.color != previous_cell.color
                 || cell.background_color != previous_cell.background_color
-                || cell.modifiers != previous_cell.modifiers);
+                || cell.modifiers != previous_cell.modifiers;
 
             if sgr_different {
                 // Reset all SGR effects

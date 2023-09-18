@@ -1,35 +1,4 @@
-use crossterm::{
-    cursor,
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
-    execute, queue,
-    style::{
-        Attribute as CAttribute, Color as CColor, Colored as CColored, ResetColor, SetAttribute,
-        SetBackgroundColor, SetForegroundColor,
-    },
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-    Command,
-};
-use ratatui::{
-    backend::CrosstermBackend,
-    buffer::Buffer,
-    layout::Rect,
-    style::{Color, Modifier},
-    text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget},
-    Terminal,
-};
-use std::{
-    collections::BTreeMap,
-    fmt::{Debug, Display},
-    io::{self},
-    sync::{
-        mpsc::{self, RecvError, SendError},
-        Arc, Mutex, PoisonError,
-    },
-    thread,
-    time::Duration,
-    vec,
-};
+use ratatui::style::{Color, Modifier};
 
 use upaint::canvas::{AnsiExport, Canvas};
 
