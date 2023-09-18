@@ -1,5 +1,5 @@
 use crossterm::{
-    cursor,
+    cursor::{self, SetCursorStyle},
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute, queue,
     style::{
@@ -13,6 +13,7 @@ use ratatui::{
     backend::CrosstermBackend,
     buffer::Buffer,
     layout::Rect,
+    prelude::Backend,
     style::{Color, Modifier},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
@@ -57,6 +58,7 @@ impl Default for InputMode {
 pub struct ProgramState {
     a: u64,
     input_mode: InputMode,
+    cursor_position: (u16, u16),
     pub canvas: Canvas,
     chosen_color: Option<Color>,
     chosen_background_color: Option<Color>,
@@ -73,8 +75,12 @@ fn handle_user_input(
             KeyCode::Char('q') => {
                 exit_tx.send(())?;
             }
+            KeyCode::Char(character) => {
+                program_state.canvas.set_character((3, 3), character);
+                redraw_tx.send(())?;
+            }
             _ => {
-                program_state.a = 54;
+                program_state.a += 1;
                 redraw_tx.send(())?;
             }
         },
@@ -97,6 +103,9 @@ fn draw_frame(
         let canvas = program_state.canvas.clone();
         f.render_widget(canvas, inner_area);
     })?;
+    terminal.backend_mut().set_cursor(2, 3)?;
+    terminal.backend_mut().show_cursor()?;
+    execute!(io::stdout(), SetCursorStyle::SteadyBlock)?;
     Ok(())
 }
 
