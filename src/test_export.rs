@@ -17,5 +17,5 @@ fn main() {
         .add_modifier((2, 7), Modifier::UNDERLINED);
     println!("{}", canvas.to_ansi().unwrap());
     dbg!(canvas.to_ansi().unwrap());
-    std::process::exit(1);
+    std::process::exit(0);
 }
