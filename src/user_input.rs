@@ -16,7 +16,29 @@ pub fn handle_user_input(
                 exit_tx.send(())?;
             }
             KeyCode::Char(character) => {
-                program_state.canvas.set_character((3, 3), character);
+                match character {
+                    'h' => {
+                        program_state.cursor_position.1 -= 1;
+                    }
+                    'j' => {
+                        program_state.cursor_position.0 += 1;
+                    }
+                    'k' => {
+                        program_state.cursor_position.0 -= 1;
+                    }
+                    'l' => {
+                        program_state.cursor_position.1 += 1;
+                    }
+                    _ => {
+                        program_state.canvas.set_character(
+                            (
+                                program_state.cursor_position.0 as u64,
+                                program_state.cursor_position.1 as u64,
+                            ),
+                            character,
+                        );
+                    }
+                }
                 redraw_tx.send(())?;
             }
             _ => {

@@ -23,7 +23,10 @@ pub fn draw_frame(
         let canvas = program_state.canvas.clone();
         f.render_widget(canvas, inner_area);
     })?;
-    terminal.backend_mut().set_cursor(2, 3)?;
+    terminal.backend_mut().set_cursor(
+        1 + program_state.cursor_position.1,
+        1 + program_state.cursor_position.0,
+    )?;
     terminal.backend_mut().show_cursor()?;
     execute!(io::stdout(), SetCursorStyle::SteadyBlock)?;
     Ok(())

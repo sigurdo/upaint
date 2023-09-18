@@ -30,7 +30,7 @@ impl Default for InputMode {
 pub struct ProgramState {
     a: u64,
     input_mode: InputMode,
-    cursor_position: (u16, u16),
+    cursor_position: (u16, u16), // (row, column)
     canvas: Canvas,
     chosen_color: Option<Color>,
     chosen_background_color: Option<Color>,

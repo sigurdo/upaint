@@ -29,34 +29,38 @@ fn application(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> ResultCu
     let program_state_user_input = Arc::clone(&program_state);
     let exit_tx_user_input = Arc::clone(&exit_tx);
     let redraw_tx_user_input = Arc::clone(&redraw_tx);
-    thread::spawn(move || -> ResultCustom<()> {
-        loop {
-            // Block until an event has occurred, then aquire the program state mutex and keep it until all events are processed.
-            event::poll(Duration::from_secs(2 ^ 64 - 1))?;
-            let mut program_state = program_state_user_input.lock()?;
-            while event::poll(Duration::from_millis(0))? {
-                let e = event::read()?;
-                handle_user_input(
-                    e,
-                    &mut (*program_state),
-                    &(*(exit_tx_user_input.lock()?)),
-                    &(*(redraw_tx_user_input.lock()?)),
-                )?;
+    thread::Builder::new()
+        .name("user input".to_string())
+        .spawn(move || -> ResultCustom<()> {
+            loop {
+                // Block until an event has occurred, then aquire the program state mutex and keep it until all events are processed.
+                event::poll(Duration::from_secs(2 ^ 64 - 1))?;
+                let mut program_state = program_state_user_input.lock()?;
+                while event::poll(Duration::from_millis(0))? {
+                    let e = event::read()?;
+                    handle_user_input(
+                        e,
+                        &mut (*program_state),
+                        &(*(exit_tx_user_input.lock()?)),
+                        &(*(redraw_tx_user_input.lock()?)),
+                    )?;
+                }
             }
-        }
-        // Ok(())
-    });
+            // Ok(())
+        })?;
 
     // Draw screen thread
     let program_state_draw_screen = Arc::clone(&program_state);
-    thread::spawn(move || -> ResultCustom<()> {
-        loop {
-            redraw_rx.recv()?;
-            let program_state = program_state_draw_screen.lock()?;
-            draw_frame(&mut terminal, &program_state)?;
-        }
-        // Ok(())
-    });
+    thread::Builder::new()
+        .name("draw screen".to_string())
+        .spawn(move || -> ResultCustom<()> {
+            loop {
+                redraw_rx.recv()?;
+                let program_state = program_state_draw_screen.lock()?;
+                draw_frame(&mut terminal, &program_state)?;
+            }
+            // Ok(())
+        })?;
 
     exit_rx.recv()?;
     Ok(())
@@ -88,11 +92,15 @@ fn restore_terminal() -> ResultCustom<()> {
 }
 
 fn application_wrapper() -> ResultCustom<()> {
-    let result = match setup_terminal() {
-        Ok(terminal) => application(terminal),
-        Err(e) => Err(e),
-    };
-    restore_terminal()?;
+    let terminal = setup_terminal().unwrap();
+    let default_panic_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |e| {
+        restore_terminal().unwrap();
+        default_panic_hook(e);
+        std::process::exit(1);
+    }));
+    let result = application(terminal);
+    restore_terminal().unwrap();
     return result;
 }
 
