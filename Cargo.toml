@@ -9,8 +9,11 @@ default-run = "main"
 [dependencies]
 ratatui = { version = "0.23.0", features = ["all-widgets"] }
 anyhow = "1.0.75"
-crossterm = "0.27.0"
+crossterm = { version = "0.27.0", features = ["serde"] }
 clap = { version= "4.4.2", features = ["derive"] }
+config = "0.13.3"
+serde = { version = "1.0.188", features = ["derive"] }
+toml = "0.8.0"
 
 
 [[bin]]
@@ -24,3 +27,7 @@ path = "src/test_export.rs"
 [[bin]]
 name = "test_import"
 path = "src/test_import.rs"
+
+[[bin]]
+name = "test_config"
+path = "src/test_config.rs"
