@@ -28,12 +28,12 @@ impl Default for InputMode {
 
 #[derive(Debug, Default)]
 pub struct ProgramState {
-    a: u64,
-    input_mode: InputMode,
-    cursor_position: (u16, u16), // (row, column)
-    canvas: Canvas,
-    chosen_color: Option<Color>,
-    chosen_background_color: Option<Color>,
+    pub a: u64,
+    pub input_mode: InputMode,
+    pub cursor_position: (u16, u16), // (row, column)
+    pub canvas: Canvas,
+    pub chosen_color: Option<Color>,
+    pub chosen_background_color: Option<Color>,
 }
 
 use std::{

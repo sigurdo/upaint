@@ -10,6 +10,7 @@ default-run = "main"
 ratatui = { version = "0.23.0", features = ["all-widgets"] }
 anyhow = "1.0.75"
 crossterm = "0.27.0"
+clap = { version= "4.4.2", features = ["derive"] }
 
 
 [[bin]]

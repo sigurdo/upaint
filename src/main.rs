@@ -1,10 +1,11 @@
+use clap::{arg, Parser};
 use crossterm::{
     cursor::{self},
     event::{self, DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{backend::CrosstermBackend, style::Color, Terminal};
 use std::{
     io::{self},
     sync::{
@@ -15,10 +16,39 @@ use std::{
     time::Duration,
 };
 
-use upaint::{rendering::draw_frame, user_input::handle_user_input, ProgramState, ResultCustom};
+use upaint::{
+    canvas::{AnsiImport, Canvas},
+    rendering::draw_frame,
+    user_input::handle_user_input,
+    ProgramState, ResultCustom,
+};
 
-fn application(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> ResultCustom<()> {
-    let program_state = Arc::new(Mutex::new(ProgramState::default()));
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct UpaintCli {
+    #[arg(short, long)]
+    ansi_file: Option<String>,
+}
+
+fn application(
+    mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
+    args: UpaintCli,
+) -> ResultCustom<()> {
+    let mut program_state = ProgramState::default();
+    program_state.canvas = if let Some(file_path) = args.ansi_file {
+        let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
+        Canvas::from_ansi(ansi_to_load)?
+    } else {
+        let mut canvas = Canvas::default();
+        canvas
+            .set_character((0, 0), '/')
+            .set_character((3, 15), '+')
+            .set_character((2, 10), '@')
+            .set_fg_color((2, 10), Color::Rgb(255, 64, 0))
+            .set_bg_color((2, 10), Color::Rgb(0, 0, 128));
+        canvas
+    };
+    let program_state = Arc::new(Mutex::new(program_state));
     let (exit_tx, exit_rx) = mpsc::channel::<()>();
     let exit_tx = Arc::new(Mutex::new(exit_tx));
     let (redraw_tx, redraw_rx) = mpsc::channel::<()>();
@@ -91,7 +121,7 @@ fn restore_terminal() -> ResultCustom<()> {
     Ok(())
 }
 
-fn application_wrapper() -> ResultCustom<()> {
+fn application_wrapper(args: UpaintCli) -> ResultCustom<()> {
     let terminal = setup_terminal().unwrap();
     let default_panic_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |e| {
@@ -99,13 +129,14 @@ fn application_wrapper() -> ResultCustom<()> {
         default_panic_hook(e);
         std::process::exit(1);
     }));
-    let result = application(terminal);
+    let result = application(terminal, args);
     restore_terminal().unwrap();
     return result;
 }
 
 fn main() {
-    let result = application_wrapper();
+    let args = UpaintCli::parse();
+    let result = application_wrapper(args);
     if let Err(error) = result {
         dbg!(error);
         std::process::exit(1);

@@ -54,9 +54,9 @@ pub struct Canvas {
 
 impl Canvas {
     fn get_or_create_cell_mut(&mut self, index: &CanvasIndex) -> &mut CanvasCell {
-        if index.0 >= self.rows || index.1 >= self.columns {
-            panic!("Index {:#?} is out of range for canvas", index);
-        }
+        // if index.0 >= self.rows || index.1 >= self.columns {
+        //     panic!("Index {:#?} is out of range for canvas", index);
+        // }
         if !self.cells.contains_key(&index) {
             self.cells.insert(*index, CanvasCell::default());
         }
@@ -145,11 +145,11 @@ impl AnsiImport for Canvas {
 
             let result = characters.next();
             match result {
-                            // Only allow CSI sequences
-                            Some((_i, '[')) => (),
-                            Some((_i, character)) => return Err(ErrorCustom::String(format!("Illegal escape sequence at character {}, only SGR sequences (ESC [ ... m) are allowed", i))),
-                            None => return Err(ErrorCustom::String(format!("Unfinished escape sequence at character {}", i))),
-                        }
+                // Only allow CSI sequences
+                Some((_i, '[')) => (),
+                Some((_i, character)) => return Err(ErrorCustom::String(format!("Illegal escape sequence at character {}, only SGR sequences (ESC [ ... m) are allowed", i))),
+                None => return Err(ErrorCustom::String(format!("Unfinished escape sequence at character {}", i))),
+            }
             let mut sgr_sequence = String::new();
             loop {
                 let result = characters.next();
@@ -347,7 +347,7 @@ impl AnsiExport for Canvas {
         }
         apply_sgr_effects(first_cell, &mut result)?;
         result.push(first_cell.character);
-        let previous_cell = first_cell;
+        let mut previous_cell = first_cell;
         let (mut previous_row, mut previous_column) = first_index.to_owned();
         for (index, cell) in cells {
             let (row, column) = index.to_owned();
@@ -381,6 +381,7 @@ impl AnsiExport for Canvas {
             }
 
             result.push(cell.character);
+            previous_cell = cell;
             (previous_row, previous_column) = (row, column);
         }
         Ok(result)
