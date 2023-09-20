@@ -1,4 +1,4 @@
-use crossterm::event::{Event, KeyCode, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyModifiers, MouseEventKind};
 use ratatui::style::Color;
 use std::sync::mpsc::{self};
 
@@ -52,6 +52,12 @@ pub fn handle_user_input(
             }
             if e.modifiers.contains(KeyModifiers::SHIFT) {
                 program_state.a += 1000;
+            }
+        }
+        Event::Mouse(e) => {
+            program_state.a += 10;
+            if e.kind == MouseEventKind::Moved {
+                // redraw = false;
             }
         }
         _ => {

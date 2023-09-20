@@ -16,6 +16,7 @@ pub fn draw_frame(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     program_state: &ProgramState,
 ) -> ResultCustom<()> {
+    // terminal.hide_cursor()?;
     terminal.draw(|f| {
         let size = f.size();
         let block = Block::default()
