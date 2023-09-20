@@ -4,17 +4,21 @@ use std::sync::mpsc::{self};
 
 use crate::{ProgramState, ResultCustom};
 
+/**
+ * Return values:
+ * (redraw, exit)
+ */
 pub fn handle_user_input(
     event: Event,
     program_state: &mut ProgramState,
-    exit_tx: &mpsc::Sender<()>,
-    redraw_tx: &mpsc::Sender<()>,
-) -> ResultCustom<()> {
+) -> ResultCustom<(bool, bool)> {
+    let mut redraw = true;
+    let mut exit = false;
     match event {
         Event::Key(e) => {
             match e.code {
                 KeyCode::Char('q') => {
-                    exit_tx.send(())?;
+                    exit = true;
                 }
                 KeyCode::Char(character) => {
                     let canvas_dimensions = program_state.canvas_editor.canvas.get_dimensions();
@@ -38,11 +42,9 @@ pub fn handle_user_input(
                             );
                         }
                     }
-                    redraw_tx.send(())?;
                 }
                 _ => {
                     program_state.a += 1;
-                    redraw_tx.send(())?;
                 }
             }
             if e.modifiers.contains(KeyModifiers::CONTROL) {
@@ -54,8 +56,7 @@ pub fn handle_user_input(
         }
         _ => {
             program_state.a += 10;
-            redraw_tx.send(())?;
         }
     };
-    Ok(())
+    Ok((redraw, exit))
 }

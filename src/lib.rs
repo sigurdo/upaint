@@ -36,7 +36,7 @@ use std::{
     default,
     io::{self},
     sync::{
-        mpsc::{RecvError, SendError},
+        mpsc::{RecvError, SendError, TrySendError},
         PoisonError,
     },
 };
@@ -60,6 +60,12 @@ impl<T> From<PoisonError<T>> for ErrorCustom {
 
 impl<T> From<SendError<T>> for ErrorCustom {
     fn from(value: SendError<T>) -> Self {
+        ErrorCustom::String(value.to_string())
+    }
+}
+
+impl<T> From<TrySendError<T>> for ErrorCustom {
+    fn from(value: TrySendError<T>) -> Self {
         ErrorCustom::String(value.to_string())
     }
 }

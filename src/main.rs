@@ -54,9 +54,9 @@ fn application(
         canvas_dimensions.upper_left_index.1 + canvas_dimensions.columns as i64 / 2,
     );
     let program_state = Arc::new(Mutex::new(program_state));
-    let (exit_tx, exit_rx) = mpsc::channel::<()>();
+    let (exit_tx, exit_rx) = mpsc::sync_channel::<()>(1);
     let exit_tx = Arc::new(Mutex::new(exit_tx));
-    let (redraw_tx, redraw_rx) = mpsc::channel::<()>();
+    let (redraw_tx, redraw_rx) = mpsc::sync_channel::<()>(1);
     redraw_tx.send(())?; // Ensures drawing the frame once at startup
     let redraw_tx = Arc::new(Mutex::new(redraw_tx));
 
@@ -75,12 +75,13 @@ fn application(
                 let mut program_state = program_state_user_input.lock()?;
                 while event::poll(Duration::from_millis(0))? {
                     let e = event::read()?;
-                    handle_user_input(
-                        e,
-                        &mut (*program_state),
-                        &(*(exit_tx_user_input.lock()?)),
-                        &(*(redraw_tx_user_input.lock()?)),
-                    )?;
+                    let (redraw, exit) = handle_user_input(e, &mut (*program_state))?;
+                    if exit {
+                        (*(exit_tx_user_input.lock()?)).try_send(()).unwrap_or(());
+                    }
+                    if redraw {
+                        (*(redraw_tx_user_input.lock()?)).try_send(()).unwrap_or(());
+                    }
                 }
             }
             // Ok(())
