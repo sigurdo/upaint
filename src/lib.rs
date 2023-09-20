@@ -7,36 +7,33 @@ use canvas::Canvas;
 use ratatui::style::Color;
 
 #[derive(Debug, Default)]
-pub struct InputModeNormalState {
-    cursor_position: (u64, u64),
-}
-
-#[derive(Debug)]
 pub enum InputMode {
-    Normal(InputModeNormalState),
+    #[default]
+    Normal,
     Insert,
-    InsertUnicode,
-    Visual,
     Command,
 }
 
-impl Default for InputMode {
-    fn default() -> Self {
-        InputMode::Normal(InputModeNormalState::default())
-    }
+#[derive(Debug, Default)]
+pub struct CanvasEditor {
+    pub canvas: Canvas,
+    pub cursor_position: (i64, i64),
+    // pub focus_position: (i64, i64),
+    center_position: (i64, i64),
 }
 
 #[derive(Debug, Default)]
 pub struct ProgramState {
     pub a: u64,
     pub input_mode: InputMode,
-    pub cursor_position: (u16, u16), // (row, column)
-    pub canvas: Canvas,
+    // pub cursor_position: (i64, i64), // (row, column)
+    pub canvas_editor: CanvasEditor,
     pub chosen_color: Option<Color>,
     pub chosen_background_color: Option<Color>,
 }
 
 use std::{
+    default,
     io::{self},
     sync::{
         mpsc::{RecvError, SendError},

@@ -11,7 +11,7 @@ use ratatui::{
     style::{Color, Modifier},
     widgets::Widget,
 };
-use std::{collections::BTreeMap, fmt::Debug, io::Split};
+use std::{collections::BTreeMap, fmt::Debug, io, panic};
 
 use crate::{ErrorCustom, ResultCustom};
 
@@ -43,22 +43,62 @@ impl Default for CanvasCell {
 }
 
 // .0 is row, .1 is column
-pub type CanvasIndex = (u64, u64);
+pub type CanvasIndex = (i64, i64);
+
+#[derive(Debug, Default, Clone)]
+pub struct CanvasDimensions {
+    pub upper_left_index: CanvasIndex,
+    pub rows: u64,
+    pub columns: u64,
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct Canvas {
-    rows: u64,
-    columns: u64,
+    // rows: u64,
+    // columns: u64,
+    dimensions_cache: CanvasDimensions,
     cells: BTreeMap<CanvasIndex, CanvasCell>,
+    // Used for rendering as a ratatui Widget
+    // pub focus_index: CanvasIndex,
 }
 
 impl Canvas {
+    fn calculate_dimensions(&self) -> CanvasDimensions {
+        let mut dimensions = CanvasDimensions::default();
+        for (index, cell) in self.cells.iter() {
+            let (row, column) = index.to_owned();
+            let (first_row, first_column) = dimensions.upper_left_index;
+            let last_row = first_row + (dimensions.rows as i64);
+            let last_column = first_column + (dimensions.columns as i64);
+
+            if row < first_row {
+                dimensions.upper_left_index.0 = row;
+            } else if row > last_row {
+                dimensions.rows = (row - first_row + 1) as u64;
+            }
+
+            if column < first_column {
+                dimensions.upper_left_index.1 = column;
+            } else if column > last_column {
+                dimensions.columns = (column - first_column + 1) as u64;
+            }
+        }
+        dimensions
+    }
+
+    pub fn get_dimensions(&self) -> CanvasDimensions {
+        self.dimensions_cache.clone()
+    }
+
+    pub fn get_render_translation(&self, area: &Rect) {}
+
     fn get_or_create_cell_mut(&mut self, index: &CanvasIndex) -> &mut CanvasCell {
         // if index.0 >= self.rows || index.1 >= self.columns {
         //     panic!("Index {:#?} is out of range for canvas", index);
         // }
         if !self.cells.contains_key(&index) {
             self.cells.insert(*index, CanvasCell::default());
+            self.dimensions_cache = self.calculate_dimensions();
         }
         self.cells.get_mut(&index).unwrap()
     }
@@ -241,8 +281,8 @@ impl AnsiImport for Canvas {
         }
 
         let mut canvas = Self::default();
-        canvas.rows = 50;
-        canvas.columns = 200;
+        // canvas.rows = 50;
+        // canvas.columns = 200;
         // let mut escape_sequence = false;
         let mut fg_color = Color::Reset;
         let mut bg_color = Color::Reset;
@@ -388,18 +428,109 @@ impl AnsiExport for Canvas {
     }
 }
 
-impl Widget for Canvas {
-    fn render(self, area: Rect, buffer: &mut Buffer) {
-        for ((row, column), cell) in self.cells {
-            let (x, y) = (area.x + (column as u16), area.y + (row as u16));
-            if x > (area.x + area.width) || y > (area.y + area.height) {
-                continue;
-            }
-            let target = buffer.get_mut(x, y);
-            target.symbol = String::from(cell.character);
-            target.fg = cell.color;
-            target.bg = cell.background_color;
-            target.modifier = cell.modifiers;
+pub fn calculate_canvas_render_translation(
+    canvas: &Canvas,
+    focus_index: CanvasIndex,
+    area: &Rect,
+) -> (i64, i64) {
+    let dimensions = canvas.get_dimensions();
+    let (first_row, first_column) = dimensions.upper_left_index;
+    let center_row = first_row + (dimensions.rows as i64) / 2;
+    let center_colum = first_column + (dimensions.columns as i64) / 2;
+    let last_row = first_row + (dimensions.rows as i64) - 1;
+    let last_column = first_column + (dimensions.columns as i64) - 1;
+    let focus_row = focus_index.0;
+    let focus_column = focus_index.1;
+    let first_x = area.x as i64;
+    let first_y = area.y as i64;
+    let center_x = (area.x + area.width / 2) as i64;
+    let center_y = (area.y + area.height / 2) as i64;
+    let last_x = (area.x + area.width) as i64 - 1;
+    let last_y = (area.y + area.height) as i64 - 1;
+
+    let row_to_y_translation = if dimensions.rows <= area.height as u64 {
+        // Center horizontally
+        center_y - center_row
+    } else if focus_row - first_row < area.height as i64 / 2 {
+        // Align first_row with area.y
+        first_y - first_row
+    } else if last_row - focus_row < area.height as i64 / 2 {
+        // Align last_row with area.y + area.height
+        last_y - last_row
+    } else {
+        // Focus index in center
+        center_y - focus_row
+    } - first_y;
+
+    let column_to_x_translation = if dimensions.columns <= area.width as u64 {
+        // Center horizontally
+        center_x - center_colum
+    } else if focus_column - first_column < area.width as i64 / 2 {
+        // Align first_row with area.y
+        first_x - first_column
+    } else if last_column - focus_column < area.width as i64 / 2 {
+        // Align last_row with area.y + area.height
+        last_x - last_column
+    } else {
+        // Focus index in center
+        center_x - focus_column
+    } - first_x;
+
+    // (row_to_y_translation, column_to_x_translation)
+    (
+        center_y - focus_row - first_y,
+        center_x - focus_column - first_x,
+    )
+}
+
+pub struct CanvasWidget {
+    pub canvas: Canvas,
+    // pub dimensions: CanvasDimensions,
+    // pub focus_index: CanvasIndex,
+    pub render_translation: (i64, i64),
+}
+
+impl CanvasWidget {
+    pub fn from_canvas(canvas: Canvas) -> Self {
+        CanvasWidget {
+            canvas: canvas,
+            render_translation: (0, 0),
         }
+    }
+}
+
+impl Widget for CanvasWidget {
+    fn render(self, area: Rect, buffer: &mut Buffer) {
+        let (row_to_y_translation, column_to_x_translation) = self.render_translation;
+        for ((row, column), cell) in self.canvas.cells {
+            let first_x = area.x as i64;
+            let first_y = area.y as i64;
+            let last_x = (area.x + area.width) as i64 - 1;
+            let last_y = (area.y + area.height) as i64 - 1;
+            let x = first_x + (column + column_to_x_translation);
+            let y = first_y + (row + row_to_y_translation);
+            // if x > (area.x + area.width) || y > (area.y + area.height) {
+            //     continue;
+            // }
+            // panic!("first_x: {}, first_y: {}", x, y);
+            if x >= first_x && x <= last_x && y >= first_y && y <= last_y {
+                let target = buffer.get_mut(x as u16, y as u16);
+                target.symbol = String::from(cell.character);
+                target.fg = cell.color;
+                target.bg = cell.background_color;
+                target.modifier = cell.modifiers;
+            }
+        }
+
+        // crossterm::execute!(
+        //     io::stdout(),
+        //     crossterm::cursor::MoveTo(
+        //         (focus_column + column_to_x_translation) as u16,
+        //         (focus_row + row_to_y_translation) as u16
+        //     )
+        // )
+        // .unwrap();
+        // crossterm::execute!(io::stdout(), crossterm::cursor::Show).unwrap();
+        // crossterm::execute!(io::stdout(), crossterm::cursor::SetCursorStyle::SteadyBlock).unwrap();
     }
 }

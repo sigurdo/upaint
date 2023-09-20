@@ -35,7 +35,7 @@ fn application(
     args: UpaintCli,
 ) -> ResultCustom<()> {
     let mut program_state = ProgramState::default();
-    program_state.canvas = if let Some(file_path) = args.ansi_file {
+    program_state.canvas_editor.canvas = if let Some(file_path) = args.ansi_file {
         let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
         Canvas::from_ansi(ansi_to_load)?
     } else {
@@ -48,12 +48,19 @@ fn application(
             .set_bg_color((2, 10), Color::Rgb(0, 0, 128));
         canvas
     };
+    let canvas_dimensions = program_state.canvas_editor.canvas.get_dimensions();
+    program_state.canvas_editor.cursor_position = (
+        canvas_dimensions.upper_left_index.0 + canvas_dimensions.rows as i64 / 2,
+        canvas_dimensions.upper_left_index.1 + canvas_dimensions.columns as i64 / 2,
+    );
     let program_state = Arc::new(Mutex::new(program_state));
     let (exit_tx, exit_rx) = mpsc::channel::<()>();
     let exit_tx = Arc::new(Mutex::new(exit_tx));
     let (redraw_tx, redraw_rx) = mpsc::channel::<()>();
     redraw_tx.send(())?; // Ensures drawing the frame once at startup
     let redraw_tx = Arc::new(Mutex::new(redraw_tx));
+
+    crossterm::execute!(io::stdout(), crossterm::cursor::SetCursorStyle::SteadyBlock,).unwrap();
 
     // User input
     let program_state_user_input = Arc::clone(&program_state);

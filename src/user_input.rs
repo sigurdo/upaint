@@ -17,25 +17,23 @@ pub fn handle_user_input(
                     exit_tx.send(())?;
                 }
                 KeyCode::Char(character) => {
+                    let canvas_dimensions = program_state.canvas_editor.canvas.get_dimensions();
                     match character {
                         'h' => {
-                            program_state.cursor_position.1 -= 1;
+                            program_state.canvas_editor.cursor_position.1 -= 1;
                         }
                         'j' => {
-                            program_state.cursor_position.0 += 1;
+                            program_state.canvas_editor.cursor_position.0 += 1;
                         }
                         'k' => {
-                            program_state.cursor_position.0 -= 1;
+                            program_state.canvas_editor.cursor_position.0 -= 1;
                         }
                         'l' => {
-                            program_state.cursor_position.1 += 1;
+                            program_state.canvas_editor.cursor_position.1 += 1;
                         }
                         _ => {
-                            program_state.canvas.set_character(
-                                (
-                                    program_state.cursor_position.0 as u64,
-                                    program_state.cursor_position.1 as u64,
-                                ),
+                            program_state.canvas_editor.canvas.set_character(
+                                program_state.canvas_editor.cursor_position,
                                 character,
                             );
                         }
