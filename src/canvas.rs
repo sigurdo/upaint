@@ -42,6 +42,8 @@ impl Default for CanvasCell {
     }
 }
 
+pub mod rect;
+
 // .0 is row, .1 is column
 pub type CanvasIndex = (i64, i64);
 

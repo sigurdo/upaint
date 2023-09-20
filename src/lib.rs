@@ -3,8 +3,8 @@ pub mod canvas;
 pub mod rendering;
 pub mod user_input;
 
-use canvas::Canvas;
-use ratatui::style::Color;
+use canvas::{rect::CanvasRect, Canvas};
+use ratatui::{prelude::Rect, style::Color};
 
 #[derive(Debug, Default)]
 pub enum InputMode {
@@ -15,19 +15,13 @@ pub enum InputMode {
 }
 
 #[derive(Debug, Default)]
-pub struct CanvasEditor {
-    pub canvas: Canvas,
-    pub cursor_position: (i64, i64),
-    // pub focus_position: (i64, i64),
-    center_position: (i64, i64),
-}
-
-#[derive(Debug, Default)]
 pub struct ProgramState {
     pub a: u64,
     pub input_mode: InputMode,
-    // pub cursor_position: (i64, i64), // (row, column)
-    pub canvas_editor: CanvasEditor,
+    pub cursor_position: (i64, i64), // (row, column)
+    pub focus_position: (i64, i64),  // (row, column)
+    pub canvas_visible: CanvasRect,
+    pub canvas: Canvas,
     pub chosen_color: Option<Color>,
     pub chosen_background_color: Option<Color>,
 }

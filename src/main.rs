@@ -35,7 +35,7 @@ fn application(
     args: UpaintCli,
 ) -> ResultCustom<()> {
     let mut program_state = ProgramState::default();
-    program_state.canvas_editor.canvas = if let Some(file_path) = args.ansi_file {
+    program_state.canvas = if let Some(file_path) = args.ansi_file {
         let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
         Canvas::from_ansi(ansi_to_load)?
     } else {
@@ -48,11 +48,12 @@ fn application(
             .set_bg_color((2, 10), Color::Rgb(0, 0, 128));
         canvas
     };
-    let canvas_dimensions = program_state.canvas_editor.canvas.get_dimensions();
-    program_state.canvas_editor.cursor_position = (
+    let canvas_dimensions = program_state.canvas.get_dimensions();
+    program_state.cursor_position = (
         canvas_dimensions.upper_left_index.0 + canvas_dimensions.rows as i64 / 2,
         canvas_dimensions.upper_left_index.1 + canvas_dimensions.columns as i64 / 2,
     );
+    program_state.focus_position = program_state.cursor_position;
     let program_state = Arc::new(Mutex::new(program_state));
     let (exit_tx, exit_rx) = mpsc::sync_channel::<()>(1);
     let exit_tx = Arc::new(Mutex::new(exit_tx));
@@ -94,8 +95,8 @@ fn application(
         .spawn(move || -> ResultCustom<()> {
             loop {
                 redraw_rx.recv()?;
-                let program_state = program_state_draw_screen.lock()?;
-                draw_frame(&mut terminal, &program_state)?;
+                let mut program_state = program_state_draw_screen.lock()?;
+                draw_frame(&mut terminal, &mut program_state)?;
             }
             // Ok(())
         })?;

@@ -21,25 +21,56 @@ pub fn handle_user_input(
                     exit = true;
                 }
                 KeyCode::Char(character) => {
-                    let canvas_dimensions = program_state.canvas_editor.canvas.get_dimensions();
+                    let canvas_dimensions = program_state.canvas.get_dimensions();
                     match character {
                         'h' => {
-                            program_state.canvas_editor.cursor_position.1 -= 1;
+                            program_state.cursor_position.1 -= 1;
+                            if program_state.cursor_position.1
+                                < program_state.canvas_visible.first_column()
+                            {
+                                program_state.focus_position.1 -= 1;
+                            }
                         }
                         'j' => {
-                            program_state.canvas_editor.cursor_position.0 += 1;
+                            program_state.cursor_position.0 += 1;
+                            if program_state.cursor_position.0
+                                > program_state.canvas_visible.last_row()
+                            {
+                                program_state.focus_position.0 += 1;
+                            }
                         }
                         'k' => {
-                            program_state.canvas_editor.cursor_position.0 -= 1;
+                            program_state.cursor_position.0 -= 1;
+                            if program_state.cursor_position.0
+                                < program_state.canvas_visible.first_row()
+                            {
+                                program_state.focus_position.0 -= 1;
+                            }
                         }
                         'l' => {
-                            program_state.canvas_editor.cursor_position.1 += 1;
+                            program_state.cursor_position.1 += 1;
+                            if program_state.cursor_position.1
+                                > program_state.canvas_visible.last_column()
+                            {
+                                program_state.focus_position.1 += 1;
+                            }
+                        }
+                        'n' => {
+                            program_state.focus_position.1 -= 1;
+                        }
+                        'm' => {
+                            program_state.focus_position.0 += 1;
+                        }
+                        ',' => {
+                            program_state.focus_position.0 -= 1;
+                        }
+                        '.' => {
+                            program_state.focus_position.1 += 1;
                         }
                         _ => {
-                            program_state.canvas_editor.canvas.set_character(
-                                program_state.canvas_editor.cursor_position,
-                                character,
-                            );
+                            program_state
+                                .canvas
+                                .set_character(program_state.cursor_position, character);
                         }
                     }
                 }
