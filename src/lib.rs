@@ -1,5 +1,6 @@
 pub mod canvas;
 // pub mod program_state;
+pub mod color_picker;
 pub mod command_line;
 pub mod rendering;
 pub mod user_input;
