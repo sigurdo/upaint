@@ -88,7 +88,11 @@ mod commands {
     impl Command for Quit {
         fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
             // Todo: check that no changes are made since last save (requires revision system)
-            return Ok(true);
+            if program_state.last_saved_revision == program_state.canvas.get_current_revision() {
+                Ok(true)
+            } else {
+                Err(format!("Changes have been made since last save. Use :x to save changes and quit or :q! to quit without saving changes."))
+            }
         }
     }
 
@@ -124,6 +128,7 @@ mod commands {
                 Err(e) => return Err(e.to_string()),
                 _ => (),
             }
+            program_state.last_saved_revision = program_state.canvas.get_current_revision();
             Ok(false)
         }
     }
@@ -139,15 +144,15 @@ mod commands {
                 Err(e) => return Err(e.to_string()),
                 _ => (),
             }
+            program_state.last_saved_revision = program_state.canvas.get_current_revision();
             Ok(true)
         }
     }
 }
 
-/**
- * Returns
- * exit
- */
+/// Executes the command stored in `program_state.command_line`
+///
+/// If the returned boolean is `true`, it should be treated as a request to exit the program.
 pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<bool> {
     // Clear eventual old feedback
     program_state.user_feedback = None;
@@ -171,7 +176,7 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<bool> {
             }
         }
         "x" | "wq" => commands::SaveQuit {}.execute(program_state),
-        _ => Err("Command not found".to_string()),
+        command => Err(format!("Command not found: {}", command)),
     };
     match result {
         Ok(exit) => {

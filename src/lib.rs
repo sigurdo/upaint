@@ -30,6 +30,7 @@ pub struct ProgramState<'a> {
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
     pub open_file: Option<String>,
+    pub last_saved_revision: u64,
     pub user_feedback: Option<String>,
 }
 

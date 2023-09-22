@@ -4,6 +4,7 @@ use ratatui_textarea::{CursorMove, TextArea};
 use std::sync::mpsc::{self};
 
 use crate::{
+    canvas::CanvasOperation,
     command_line::{create_command_line_textarea, execute_command},
     InputMode, ProgramState, ResultCustom,
 };
@@ -113,10 +114,17 @@ pub fn handle_user_input_normal_mode(
                         '.' => {
                             program_state.focus_position.1 += 1;
                         }
+                        'u' => program_state.canvas.undo(),
+                        'r' if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                            program_state.canvas.redo()
+                        }
                         _ => {
-                            program_state
-                                .canvas
-                                .set_character(program_state.cursor_position, character);
+                            program_state.canvas.create_commit(vec![
+                                CanvasOperation::SetCharacter(
+                                    program_state.cursor_position,
+                                    character,
+                                ),
+                            ]);
                         }
                     }
                 }
@@ -144,10 +152,9 @@ pub fn handle_user_input_normal_mode(
     Ok((redraw, exit))
 }
 
-/**
- * Return values:
- * (redraw, exit)
- */
+/// Handles user input
+///
+/// Returns a tuple of booleans `(redraw, exit)`.
 pub fn handle_user_input(
     event: Event,
     program_state: &mut ProgramState,

@@ -7,7 +7,7 @@ use ratatui::{
     backend::CrosstermBackend,
     prelude::{Backend, Constraint, Layout, Rect},
     text::{Line, Span},
-    widgets::{Block, Borders, Padding, Paragraph},
+    widgets::{Block, Borders, Padding, Paragraph, Wrap},
     Frame, Terminal,
 };
 use std::io::{self};
@@ -106,7 +106,8 @@ pub fn draw_frame(
                 .user_feedback
                 .clone()
                 .unwrap_or("".to_string()),
-        )])]);
+        )])])
+        .wrap(Wrap { trim: false });
 
         f.render_widget(user_feedback_widget, chunks[1]);
 

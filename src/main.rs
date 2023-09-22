@@ -17,7 +17,7 @@ use std::{
 };
 
 use upaint::{
-    canvas::{AnsiImport, Canvas},
+    canvas::{AnsiImport, Canvas, CanvasOperation},
     command_line::create_command_line_textarea,
     rendering::draw_frame,
     user_input::handle_user_input,
@@ -39,15 +39,20 @@ fn application(
     program_state.open_file = args.ansi_file;
     program_state.canvas = if let Some(file_path) = &program_state.open_file {
         let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
-        Canvas::from_ansi(ansi_to_load)?
+        let canvas = Canvas::from_ansi(ansi_to_load)?;
+        program_state.last_saved_revision = canvas.get_current_revision();
+        canvas
     } else {
         let mut canvas = Canvas::default();
-        canvas
-            .set_character((0, 0), '/')
-            .set_character((3, 15), '+')
-            .set_character((2, 10), '@')
-            .set_fg_color((2, 10), Color::Rgb(255, 64, 0))
-            .set_bg_color((2, 10), Color::Rgb(0, 0, 128));
+        canvas.create_commit(vec![
+            CanvasOperation::SetCharacter((0, 0), '/'),
+            CanvasOperation::SetCharacter((3, 15), '+'),
+            CanvasOperation::SetCharacter((2, 10), '@'),
+            CanvasOperation::SetFgColor((2, 10), Color::Rgb(255, 64, 0)),
+            CanvasOperation::SetBgColor((2, 10), Color::Rgb(0, 0, 128)),
+        ]);
+        canvas.delete_history();
+        program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     };
     let canvas_dimensions = program_state.canvas.get_dimensions();

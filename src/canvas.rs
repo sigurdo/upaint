@@ -11,7 +11,12 @@ use ratatui::{
     style::{Color, Modifier},
     widgets::Widget,
 };
-use std::{collections::BTreeMap, fmt::Debug, io, panic};
+use std::{
+    collections::{BTreeMap, LinkedList},
+    fmt::Debug,
+    io, panic,
+};
+use toml::map::Iter;
 
 use crate::{ErrorCustom, ResultCustom};
 
@@ -54,12 +59,58 @@ pub struct CanvasDimensions {
     pub columns: u64,
 }
 
+#[derive(Debug, Clone)]
+pub enum CanvasOperation {
+    SetCharacter(CanvasIndex, char),
+    SetFgColor(CanvasIndex, Color),
+    SetBgColor(CanvasIndex, Color),
+    AddModifier(CanvasIndex, Modifier),
+    RemoveModifier(CanvasIndex, Modifier),
+}
+
+fn apply_canvas_operation(canvas: &mut Canvas, operation: &CanvasOperation) {
+    match operation {
+        CanvasOperation::SetCharacter(index, character) => {
+            canvas.get_or_create_cell_mut(index).character = *character;
+        }
+        CanvasOperation::SetFgColor(index, color) => {
+            canvas.get_or_create_cell_mut(index).color = *color;
+        }
+        CanvasOperation::SetBgColor(index, color) => {
+            canvas.get_or_create_cell_mut(index).background_color = *color;
+        }
+        CanvasOperation::AddModifier(index, modifier) => {
+            canvas
+                .get_or_create_cell_mut(index)
+                .modifiers
+                .insert(*modifier);
+        }
+        CanvasOperation::RemoveModifier(index, modifier) => {
+            canvas
+                .get_or_create_cell_mut(index)
+                .modifiers
+                .remove(*modifier);
+        }
+        _ => (),
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct CanvasCommit {
+    revision: u64,
+    operations: Vec<CanvasOperation>,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct Canvas {
     // rows: u64,
     // columns: u64,
     dimensions_cache: CanvasDimensions,
     cells: BTreeMap<CanvasIndex, CanvasCell>,
+    cells_initial: BTreeMap<CanvasIndex, CanvasCell>,
+    commits: LinkedList<CanvasCommit>,
+    commits_unapplied: LinkedList<CanvasCommit>,
+    revision_counter: u64,
     // Used for rendering as a ratatui Widget
     // pub focus_index: CanvasIndex,
 }
@@ -94,6 +145,62 @@ impl Canvas {
 
     pub fn get_render_translation(&self, area: &Rect) {}
 
+    pub fn delete_history(&mut self) -> &mut Self {
+        self.cells_initial = self.cells.clone();
+        self.commits = LinkedList::new();
+        self.commits_unapplied = LinkedList::new();
+        self.revision_counter = 0;
+        self
+    }
+
+    fn apply_commit(&mut self, commit: &CanvasCommit) {
+        for operation in &commit.operations {
+            apply_canvas_operation(self, &operation);
+        }
+    }
+
+    /// Rebuilds `self.cells` from `self.cells_initial` by applying all commits in `self.commits`
+    fn rebuild(&mut self) {
+        self.cells = self.cells_initial.clone();
+        for commit in self.commits.clone() {
+            self.apply_commit(&commit);
+        }
+    }
+
+    pub fn create_commit(&mut self, operations: Vec<CanvasOperation>) -> &mut Self {
+        self.revision_counter += 1;
+        let commit = CanvasCommit {
+            revision: self.revision_counter,
+            operations: operations,
+        };
+        self.apply_commit(&commit);
+        self.commits.push_back(commit);
+        self.commits_unapplied = LinkedList::new();
+        self
+    }
+
+    pub fn undo(&mut self) {
+        if let Some(last_commit) = self.commits.pop_back() {
+            self.commits_unapplied.push_front(last_commit);
+            self.rebuild();
+        }
+    }
+
+    pub fn redo(&mut self) {
+        if let Some(next_commit) = self.commits_unapplied.pop_front() {
+            self.apply_commit(&next_commit);
+            self.commits.push_back(next_commit);
+        }
+    }
+
+    pub fn get_current_revision(&self) -> u64 {
+        if let Some(last_commit) = self.commits.back() {
+            last_commit.revision
+        } else {
+            0
+        }
+    }
+
     fn get_or_create_cell_mut(&mut self, index: &CanvasIndex) -> &mut CanvasCell {
         // if index.0 >= self.rows || index.1 >= self.columns {
         //     panic!("Index {:#?} is out of range for canvas", index);
@@ -125,7 +232,13 @@ impl Canvas {
 
     pub fn add_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
-        cell.modifiers |= modifier;
+        cell.modifiers.insert(modifier);
+        self
+    }
+
+    pub fn remove_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
+        let cell = self.get_or_create_cell_mut(&index);
+        cell.modifiers.remove(modifier);
         self
     }
 }
@@ -331,6 +444,7 @@ impl AnsiImport for Canvas {
 
             canvas_index.1 += 1;
         }
+        canvas.delete_history();
         Ok(canvas)
     }
 }
