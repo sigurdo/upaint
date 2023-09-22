@@ -1,14 +1,14 @@
-use crossterm::event::{Event, KeyCode, KeyModifiers, MouseEventKind};
-use ratatui::style::Color;
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseEventKind};
+use ratatui::style::{Color, Style};
+use ratatui_textarea::{CursorMove, TextArea};
 use std::sync::mpsc::{self};
 
-use crate::{ProgramState, ResultCustom};
+use crate::{
+    command_line::{create_command_line_textarea, execute_command},
+    InputMode, ProgramState, ResultCustom,
+};
 
-/**
- * Return values:
- * (redraw, exit)
- */
-pub fn handle_user_input(
+pub fn handle_user_input_command_mode(
     event: Event,
     program_state: &mut ProgramState,
 ) -> ResultCustom<(bool, bool)> {
@@ -17,12 +17,58 @@ pub fn handle_user_input(
     match event {
         Event::Key(e) => {
             match e.code {
-                KeyCode::Char('q') => {
-                    exit = true;
+                KeyCode::Enter => {
+                    exit = execute_command(program_state)?;
                 }
+                _ => {
+                    program_state.command_line.input(e);
+                }
+            }
+            if e.modifiers.contains(KeyModifiers::CONTROL) {
+                program_state.a += 100;
+            }
+            if e.modifiers.contains(KeyModifiers::SHIFT) {
+                program_state.a += 1000;
+            }
+        }
+        Event::Mouse(e) => {
+            program_state.a += 10;
+            if e.kind == MouseEventKind::Moved {
+                // redraw = false;
+            }
+        }
+        _ => {
+            program_state.a += 10;
+        }
+    };
+    Ok((redraw, exit))
+}
+
+pub fn handle_user_input_insert_mode(
+    event: Event,
+    program_state: &mut ProgramState,
+) -> ResultCustom<(bool, bool)> {
+    let mut redraw = true;
+    let mut exit = false;
+    Ok((redraw, exit))
+}
+
+pub fn handle_user_input_normal_mode(
+    event: Event,
+    program_state: &mut ProgramState,
+) -> ResultCustom<(bool, bool)> {
+    let mut redraw = true;
+    let mut exit = false;
+    match event {
+        Event::Key(e) => {
+            match e.code {
                 KeyCode::Char(character) => {
                     let canvas_dimensions = program_state.canvas.get_dimensions();
                     match character {
+                        ':' => {
+                            program_state.command_line = create_command_line_textarea();
+                            program_state.input_mode = InputMode::Command;
+                        }
                         'h' => {
                             program_state.cursor_position.1 -= 1;
                             if program_state.cursor_position.1
@@ -96,4 +142,27 @@ pub fn handle_user_input(
         }
     };
     Ok((redraw, exit))
+}
+
+/**
+ * Return values:
+ * (redraw, exit)
+ */
+pub fn handle_user_input(
+    event: Event,
+    program_state: &mut ProgramState,
+) -> ResultCustom<(bool, bool)> {
+    if let Event::Key(e) = event {
+        if e.code == KeyCode::Esc {
+            program_state.input_mode = InputMode::Normal;
+            program_state.user_feedback = None;
+            return Ok((true, false));
+        }
+    }
+
+    match program_state.input_mode {
+        InputMode::Normal => handle_user_input_normal_mode(event, program_state),
+        InputMode::Command => handle_user_input_command_mode(event, program_state),
+        InputMode::Insert => handle_user_input_insert_mode(event, program_state),
+    }
 }

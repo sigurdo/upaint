@@ -564,6 +564,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatui-textarea"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfffc4d19ebe969530a2f9e55b6bca1920a519db45b7f8ab859f2c5a0ab487b9"
+dependencies = [
+ "crossterm",
+ "ratatui",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -858,6 +868,7 @@ dependencies = [
  "config",
  "crossterm",
  "ratatui",
+ "ratatui-textarea",
  "serde",
  "toml 0.8.0",
 ]

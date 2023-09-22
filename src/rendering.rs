@@ -1,29 +1,52 @@
-use crossterm::{cursor::SetCursorStyle, execute};
+use crossterm::{
+    cursor::SetCursorStyle,
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 use ratatui::{
     backend::CrosstermBackend,
-    prelude::{Backend, Rect},
-    widgets::{Block, Borders, Padding},
+    prelude::{Backend, Constraint, Layout, Rect},
+    text::{Line, Span},
+    widgets::{Block, Borders, Padding, Paragraph},
     Frame, Terminal,
 };
 use std::io::{self};
 
 use crate::{
     canvas::{calculate_canvas_render_translation, rect::CanvasRect, CanvasIndex, CanvasWidget},
-    ProgramState, ResultCustom,
+    command_line::CommandLineWidget,
+    InputMode, ProgramState, ResultCustom,
 };
 
 pub fn draw_frame(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     program_state: &mut ProgramState,
 ) -> ResultCustom<()> {
+    let command_line_active = program_state.input_mode == InputMode::Command;
     // terminal.hide_cursor()?;
     terminal.draw(|f| {
+        let user_feedback_height = if program_state.user_feedback.is_some() {
+            2
+        } else {
+            0
+        };
+        let chunks = Layout::default()
+            .direction(ratatui::prelude::Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Min(1),
+                    Constraint::Max(user_feedback_height),
+                    Constraint::Max(1),
+                ]
+                .as_ref(),
+            )
+            .split(f.size());
         let size = f.size();
         let block = Block::default()
             .title(format!("Halla, jeg heter Petter {}", (*program_state).a))
             .borders(Borders::ALL);
-        let inner_area = block.inner(size);
-        f.render_widget(block, size);
+        let inner_area = block.inner(chunks[0]);
+        f.render_widget(block, chunks[0]);
 
         let canvas_render_translation = calculate_canvas_render_translation(
             &program_state.canvas,
@@ -38,29 +61,36 @@ pub fn draw_frame(
             columns: inner_area.width as u64,
         };
 
-        // Update cursor position so that it stays inside the visible area of the canvas when the
-        // widget size changes or the focus position is changed.
-        if program_state.cursor_position.1 < canvas_visible.first_column() {
-            program_state.cursor_position.1 = canvas_visible.first_column();
-        }
-        if program_state.cursor_position.1 > canvas_visible.last_column() {
-            program_state.cursor_position.1 = canvas_visible.last_column();
-        }
-        if program_state.cursor_position.0 < canvas_visible.first_row() {
-            program_state.cursor_position.0 = canvas_visible.first_row();
-        }
-        if program_state.cursor_position.0 > canvas_visible.last_row() {
-            program_state.cursor_position.0 = canvas_visible.last_row();
-        }
+        match program_state.input_mode {
+            InputMode::Command => {}
+            _ => {
+                // Update cursor position so that it stays inside the visible area of the canvas when the
+                // widget size changes or the focus position is changed.
+                if program_state.cursor_position.1 < canvas_visible.first_column() {
+                    program_state.cursor_position.1 = canvas_visible.first_column();
+                }
+                if program_state.cursor_position.1 > canvas_visible.last_column() {
+                    program_state.cursor_position.1 = canvas_visible.last_column();
+                }
+                if program_state.cursor_position.0 < canvas_visible.first_row() {
+                    program_state.cursor_position.0 = canvas_visible.first_row();
+                }
+                if program_state.cursor_position.0 > canvas_visible.last_row() {
+                    program_state.cursor_position.0 = canvas_visible.last_row();
+                }
 
-        program_state.canvas_visible = canvas_visible;
+                program_state.canvas_visible = canvas_visible;
 
-        {
-            let cursor_x =
-                inner_area.x as i64 + program_state.cursor_position.1 + canvas_render_translation.1;
-            let cursor_y =
-                inner_area.y as i64 + program_state.cursor_position.0 + canvas_render_translation.0;
-            f.set_cursor(cursor_x as u16, cursor_y as u16);
+                {
+                    let cursor_x = inner_area.x as i64
+                        + program_state.cursor_position.1
+                        + canvas_render_translation.1;
+                    let cursor_y = inner_area.y as i64
+                        + program_state.cursor_position.0
+                        + canvas_render_translation.0;
+                    f.set_cursor(cursor_x as u16, cursor_y as u16);
+                }
+            }
         }
 
         f.render_widget(
@@ -69,6 +99,23 @@ pub fn draw_frame(
                 render_translation: canvas_render_translation,
             },
             inner_area,
+        );
+
+        let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(
+            program_state
+                .user_feedback
+                .clone()
+                .unwrap_or("".to_string()),
+        )])]);
+
+        f.render_widget(user_feedback_widget, chunks[1]);
+
+        f.render_widget(
+            CommandLineWidget {
+                textarea: program_state.command_line.clone(),
+                active: command_line_active,
+            },
+            chunks[2],
         );
     })?;
     Ok(())

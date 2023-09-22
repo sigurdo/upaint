@@ -1,12 +1,16 @@
 pub mod canvas;
 // pub mod program_state;
+pub mod command_line;
 pub mod rendering;
 pub mod user_input;
 
 use canvas::{rect::CanvasRect, Canvas};
+use command_line::CommandLine;
 use ratatui::{prelude::Rect, style::Color};
+use ratatui_textarea::TextArea;
+use std::fmt::Display;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub enum InputMode {
     #[default]
     Normal,
@@ -14,8 +18,8 @@ pub enum InputMode {
     Command,
 }
 
-#[derive(Debug, Default)]
-pub struct ProgramState {
+#[derive(Default)]
+pub struct ProgramState<'a> {
     pub a: u64,
     pub input_mode: InputMode,
     pub cursor_position: (i64, i64), // (row, column)
@@ -24,6 +28,9 @@ pub struct ProgramState {
     pub canvas: Canvas,
     pub chosen_color: Option<Color>,
     pub chosen_background_color: Option<Color>,
+    pub command_line: TextArea<'a>,
+    pub open_file: Option<String>,
+    pub user_feedback: Option<String>,
 }
 
 use std::{
@@ -40,6 +47,21 @@ pub enum ErrorCustom {
     String(String),
     IoError(io::Error),
     FmtError(std::fmt::Error),
+}
+
+impl Display for ErrorCustom {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let ErrorCustom::String(s) = self {
+            write!(f, "{}", s)?;
+        }
+        Ok(())
+    }
+}
+
+impl From<ErrorCustom> for String {
+    fn from(value: ErrorCustom) -> Self {
+        value.to_string()
+    }
 }
 
 pub type ResultCustom<T> = Result<T, ErrorCustom>;

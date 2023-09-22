@@ -1,6 +1,6 @@
 use clap::{arg, Parser};
 use crossterm::{
-    cursor::{self},
+    cursor::{self, SetCursorStyle},
     event::{self, DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -18,6 +18,7 @@ use std::{
 
 use upaint::{
     canvas::{AnsiImport, Canvas},
+    command_line::create_command_line_textarea,
     rendering::draw_frame,
     user_input::handle_user_input,
     ProgramState, ResultCustom,
@@ -35,7 +36,8 @@ fn application(
     args: UpaintCli,
 ) -> ResultCustom<()> {
     let mut program_state = ProgramState::default();
-    program_state.canvas = if let Some(file_path) = args.ansi_file {
+    program_state.open_file = args.ansi_file;
+    program_state.canvas = if let Some(file_path) = &program_state.open_file {
         let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
         Canvas::from_ansi(ansi_to_load)?
     } else {
@@ -54,6 +56,7 @@ fn application(
         canvas_dimensions.upper_left_index.1 + canvas_dimensions.columns as i64 / 2,
     );
     program_state.focus_position = program_state.cursor_position;
+    program_state.command_line = create_command_line_textarea();
     let program_state = Arc::new(Mutex::new(program_state));
     let (exit_tx, exit_rx) = mpsc::sync_channel::<()>(1);
     let exit_tx = Arc::new(Mutex::new(exit_tx));
@@ -124,6 +127,7 @@ fn restore_terminal() -> ResultCustom<()> {
         io::stdout(),
         LeaveAlternateScreen,
         DisableMouseCapture,
+        SetCursorStyle::DefaultUserShape,
         cursor::Show,
     )?;
     disable_raw_mode()?;
