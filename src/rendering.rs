@@ -118,6 +118,19 @@ pub fn draw_frame(
             },
             chunks[2],
         );
+
+        if program_state.input_mode == InputMode::ColorPicker {
+            // let block =
+            f.render_widget(
+                program_state.color_picker.widget(),
+                Rect {
+                    x: 80,
+                    y: 10,
+                    width: 20,
+                    height: 10,
+                },
+            );
+        }
     })?;
     Ok(())
 }

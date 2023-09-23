@@ -15,6 +15,7 @@ config = "0.13.3"
 serde = { version = "1.0.188", features = ["derive"] }
 toml = "0.8.0"
 ratatui-textarea = "0.3.2"
+hsv = "0.1.1"
 
 
 [[bin]]

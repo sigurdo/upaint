@@ -6,7 +6,9 @@ pub mod rendering;
 pub mod user_input;
 
 use canvas::{rect::CanvasRect, Canvas};
+use color_picker::ColorPicker;
 use command_line::CommandLine;
+use ratatui::style::Modifier;
 use ratatui::{prelude::Rect, style::Color};
 use ratatui_textarea::TextArea;
 use std::fmt::Display;
@@ -17,6 +19,15 @@ pub enum InputMode {
     Normal,
     Insert,
     Command,
+    ColorPicker,
+}
+
+#[derive(Default)]
+pub struct Brush {
+    pub character: Option<char>,
+    pub fg: Option<Color>,
+    pub bg: Option<Color>,
+    pub modifiers: Option<Modifier>,
 }
 
 #[derive(Default)]
@@ -30,6 +41,8 @@ pub struct ProgramState<'a> {
     pub chosen_color: Option<Color>,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
+    pub color_picker: ColorPicker,
+    pub brush: Brush,
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
     pub user_feedback: Option<String>,

@@ -5,6 +5,7 @@ use std::sync::mpsc::{self};
 
 use crate::{
     canvas::CanvasOperation,
+    color_picker::ColorPicker,
     command_line::{create_command_line_textarea, execute_command},
     InputMode, ProgramState, ResultCustom,
 };
@@ -70,6 +71,10 @@ pub fn handle_user_input_normal_mode(
                             program_state.command_line = create_command_line_textarea();
                             program_state.input_mode = InputMode::Command;
                         }
+                        'c' => {
+                            program_state.color_picker = ColorPicker::new("FG Color");
+                            program_state.input_mode = InputMode::ColorPicker;
+                        }
                         'h' => {
                             program_state.cursor_position.1 -= 1;
                             if program_state.cursor_position.1
@@ -119,12 +124,17 @@ pub fn handle_user_input_normal_mode(
                             program_state.canvas.redo()
                         }
                         _ => {
-                            program_state.canvas.create_commit(vec![
-                                CanvasOperation::SetCharacter(
+                            let mut operations = vec![CanvasOperation::SetCharacter(
+                                program_state.cursor_position,
+                                character,
+                            )];
+                            if let Some(fg) = program_state.brush.fg {
+                                operations.push(CanvasOperation::SetFgColor(
                                     program_state.cursor_position,
-                                    character,
-                                ),
-                            ]);
+                                    fg,
+                                ));
+                            }
+                            program_state.canvas.create_commit(operations);
                         }
                     }
                 }
@@ -152,6 +162,25 @@ pub fn handle_user_input_normal_mode(
     Ok((redraw, exit))
 }
 
+fn handle_user_input_color_picker(
+    event: Event,
+    program_state: &mut ProgramState,
+) -> ResultCustom<(bool, bool)> {
+    let mut redraw = true;
+    let mut exit = false;
+    match event {
+        Event::Key(e) => match e.code {
+            KeyCode::Enter => {
+                program_state.input_mode = InputMode::Normal;
+                program_state.brush.fg = Some(program_state.color_picker.get_color());
+            }
+            _ => program_state.color_picker.input(event),
+        },
+        _ => (),
+    }
+    Ok((redraw, exit))
+}
+
 /// Handles user input
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
@@ -171,5 +200,6 @@ pub fn handle_user_input(
         InputMode::Normal => handle_user_input_normal_mode(event, program_state),
         InputMode::Command => handle_user_input_command_mode(event, program_state),
         InputMode::Insert => handle_user_input_insert_mode(event, program_state),
+        InputMode::ColorPicker => handle_user_input_color_picker(event, program_state),
     }
 }

@@ -1,13 +1,15 @@
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
+use hsv::hsv_to_rgb;
 use ratatui::{
-    style::{Color, Modifier},
-    widgets::Widget,
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{block::title, Block, Borders, Paragraph, Widget},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum ColorPickerColor {
     Actual(Color),
-    Hsv(u8, u8, u8),
+    Hsv(f64, f64, f64),
 }
 
 impl Default for ColorPickerColor {
@@ -16,22 +18,43 @@ impl Default for ColorPickerColor {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ColorPicker {
     title: String,
     color: ColorPickerColor,
     active_slider: u8,
 }
 
-pub struct ColorPickerWidget {}
+pub struct ColorPickerWidget {
+    picker: ColorPicker,
+}
 
 impl Widget for ColorPickerWidget {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {}
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
+        let block = Block::default()
+            .title(format!("{}", self.picker.title))
+            .borders(Borders::ALL);
+        let inner = block.inner(area);
+        block.render(area, buf);
+        let hue_slider = Line::from(vec![Span::raw("hue")]);
+        let paragraph = Paragraph::new(vec![hue_slider]);
+        paragraph.render(inner, buf);
+    }
 }
 
 impl ColorPicker {
+    pub fn new(title: &str) -> Self {
+        Self {
+            title: title.to_string(),
+            color: ColorPickerColor::Hsv(0.0, 1.0, 1.0),
+            active_slider: 1,
+        }
+    }
+
     pub fn widget(&self) -> impl Widget {
-        ColorPickerWidget {}
+        ColorPickerWidget {
+            picker: self.clone(),
+        }
     }
 
     fn slide_left(&mut self, ticks: u8) {
@@ -40,9 +63,9 @@ impl ColorPicker {
                 0 => {
                     // Change color mode
                 }
-                1 => *h = (*h).saturating_sub(1),
-                2 => *s = (*s).saturating_sub(1),
-                3 => *v = (*v).saturating_sub(1),
+                1 => *h = f64::max(*h - 1.0, 0.0),
+                2 => *s = f64::max(*s - 0.01, 0.0),
+                3 => *v = f64::max(*v - 0.01, 0.0),
                 _ => (),
             }
         }
@@ -54,9 +77,9 @@ impl ColorPicker {
                 0 => {
                     // Change color mode
                 }
-                1 => *h = (*h).saturating_add(1),
-                2 => *s = (*s).saturating_add(1),
-                3 => *v = (*v).saturating_add(1),
+                1 => *h = f64::min(*h + 1.0, 360.0),
+                2 => *s = f64::min(*s + 0.01, 1.0),
+                3 => *v = f64::min(*v + 0.01, 1.0),
                 _ => (),
             }
         }
@@ -99,6 +122,15 @@ impl ColorPicker {
                 }
             }
             _ => (),
+        }
+    }
+
+    pub fn get_color(&self) -> Color {
+        if let ColorPickerColor::Hsv(h, s, v) = self.color {
+            let (r, g, b) = hsv_to_rgb(h, s, v);
+            Color::Rgb(r, g, b)
+        } else {
+            Color::default()
         }
     }
 }
