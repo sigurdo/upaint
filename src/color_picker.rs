@@ -1,6 +1,7 @@
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use hsv::hsv_to_rgb;
 use ratatui::{
+    prelude::Rect,
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{block::title, Block, Borders, Paragraph, Widget},
@@ -25,23 +26,6 @@ pub struct ColorPicker {
     active_slider: u8,
 }
 
-pub struct ColorPickerWidget {
-    picker: ColorPicker,
-}
-
-impl Widget for ColorPickerWidget {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        let block = Block::default()
-            .title(format!("{}", self.picker.title))
-            .borders(Borders::ALL);
-        let inner = block.inner(area);
-        block.render(area, buf);
-        let hue_slider = Line::from(vec![Span::raw("hue")]);
-        let paragraph = Paragraph::new(vec![hue_slider]);
-        paragraph.render(inner, buf);
-    }
-}
-
 impl ColorPicker {
     pub fn new(title: &str) -> Self {
         Self {
@@ -63,7 +47,7 @@ impl ColorPicker {
                 0 => {
                     // Change color mode
                 }
-                1 => *h = f64::max(*h - 1.0, 0.0),
+                1 => *h = (*h + 360.0 - 1.0) % 360.0,
                 2 => *s = f64::max(*s - 0.01, 0.0),
                 3 => *v = f64::max(*v - 0.01, 0.0),
                 _ => (),
@@ -77,7 +61,7 @@ impl ColorPicker {
                 0 => {
                     // Change color mode
                 }
-                1 => *h = f64::min(*h + 1.0, 360.0),
+                1 => *h = (*h + 360.0 + 1.0) % 360.0,
                 2 => *s = f64::min(*s + 0.01, 1.0),
                 3 => *v = f64::min(*v + 0.01, 1.0),
                 _ => (),
@@ -132,5 +116,59 @@ impl ColorPicker {
         } else {
             Color::default()
         }
+    }
+}
+
+pub struct ColorPickerWidget {
+    picker: ColorPicker,
+}
+
+impl Widget for ColorPickerWidget {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
+        let ColorPickerColor::Hsv(h, s, v) = self.picker.color else {
+            return;
+        };
+        let block = Block::default()
+            .title(format!("{}", self.picker.title))
+            .borders(Borders::ALL);
+        let inner = block.inner(area);
+        block.render(area, buf);
+        let hsv_values = Paragraph::new(vec![
+            Line::from(vec![Span::raw(format!("H {:.0}", h))]),
+            Line::from(vec![Span::raw(format!(""))]),
+            Line::from(vec![Span::raw(format!("S {:.2}", s))]),
+            Line::from(vec![Span::raw(format!("V {:.2}", v))]),
+        ]);
+        let hsv_values_area = Rect {
+            x: inner.x,
+            y: inner.y,
+            width: 6,
+            height: 4,
+        };
+        hsv_values.render(hsv_values_area, buf);
+        for x in inner.left()..inner.right() {
+            for y in (hsv_values_area.bottom() + 1)..inner.bottom() {
+                buf.get_mut(x, y).set_bg(self.picker.get_color());
+            }
+        }
+
+        let sliders_width = inner.right() - (hsv_values_area.right() + 1);
+        let hue_slider_area = Rect {
+            x: hsv_values_area.right() + 1,
+            y: inner.top(),
+            width: sliders_width,
+            height: 1,
+        };
+        for x in hue_slider_area.left()..hue_slider_area.right() {
+            let h = ((x - hue_slider_area.left()) as f64 / sliders_width as f64) * 360.0;
+            let (r, g, b) = hsv_to_rgb(h, s, v);
+            buf.get_mut(x, hue_slider_area.y)
+                .set_bg(Color::Rgb(r, g, b));
+        }
+
+        let slide_cursor_x =
+            hsv_values_area.right() + 1 + (((h / 360.0) * sliders_width as f64) as u16);
+        buf.get_mut(slide_cursor_x, hue_slider_area.bottom())
+            .set_char('^');
     }
 }

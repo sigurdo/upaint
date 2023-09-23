@@ -1,7 +1,10 @@
 use clap::{arg, Parser};
 use crossterm::{
     cursor::{self, SetCursorStyle},
-    event::{self, DisableMouseCapture, EnableMouseCapture},
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, KeyboardEnhancementFlags,
+        PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags,
+    },
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -121,6 +124,7 @@ fn setup_terminal() -> ResultCustom<Terminal<CrosstermBackend<io::Stdout>>> {
         EnterAlternateScreen,
         EnableMouseCapture,
         cursor::Hide, // This seems to happen anyways
+        PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::REPORT_EVENT_TYPES),
     )?;
     let backend = CrosstermBackend::new(stdout);
     let terminal = Terminal::new(backend)?;
@@ -134,6 +138,7 @@ fn restore_terminal() -> ResultCustom<()> {
         DisableMouseCapture,
         SetCursorStyle::DefaultUserShape,
         cursor::Show,
+        PopKeyboardEnhancementFlags,
     )?;
     disable_raw_mode()?;
     Ok(())

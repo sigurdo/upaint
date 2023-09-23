@@ -126,8 +126,8 @@ pub fn draw_frame(
                 Rect {
                     x: 80,
                     y: 10,
-                    width: 20,
-                    height: 10,
+                    width: 30,
+                    height: 15,
                 },
             );
         }
