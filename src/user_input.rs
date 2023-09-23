@@ -72,7 +72,8 @@ pub fn handle_user_input_normal_mode(
                             program_state.input_mode = InputMode::Command;
                         }
                         'c' => {
-                            program_state.color_picker = ColorPicker::new("FG Color");
+                            program_state.color_picker =
+                                ColorPicker::new("FG Color", program_state.brush.fg);
                             program_state.input_mode = InputMode::ColorPicker;
                         }
                         'h' => {

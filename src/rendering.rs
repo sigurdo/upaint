@@ -62,7 +62,8 @@ pub fn draw_frame(
         };
 
         match program_state.input_mode {
-            InputMode::Command => {}
+            InputMode::Command => (),
+            InputMode::ColorPicker => (),
             _ => {
                 // Update cursor position so that it stays inside the visible area of the canvas when the
                 // widget size changes or the focus position is changed.
@@ -126,8 +127,8 @@ pub fn draw_frame(
                 Rect {
                     x: 80,
                     y: 10,
-                    width: 30,
-                    height: 15,
+                    width: 16,
+                    height: 8,
                 },
             );
         }

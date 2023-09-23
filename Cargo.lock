@@ -14,6 +14,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "angular-units"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f1c36cde4b75aa8518ad38880fdc7b649d7bf22b359a296964756e2319d598d"
+dependencies = [
+ "approx",
+ "num-traits",
+]
+
+[[package]]
 name = "anstream"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -66,6 +76,15 @@ name = "anyhow"
 version = "1.0.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
+
+[[package]]
+name = "approx"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0e60b75072ecd4168020818c0107f2857bb6c4e64252d8d3983f6263b40a5c3"
+dependencies = [
+ "num-traits",
+]
 
 [[package]]
 name = "async-trait"
@@ -429,6 +448,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-traits"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "num_threads"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -531,6 +559,17 @@ dependencies = [
  "once_cell",
  "pest",
  "sha2",
+]
+
+[[package]]
+name = "prisma"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5640533116b656900156ef15e22d3789edb9a71f36ec04a2678a307be243495"
+dependencies = [
+ "angular-units",
+ "approx",
+ "num-traits",
 ]
 
 [[package]]
@@ -869,11 +908,13 @@ checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
 name = "upaint"
 version = "0.1.0"
 dependencies = [
+ "angular-units",
  "anyhow",
  "clap",
  "config",
  "crossterm",
  "hsv",
+ "prisma",
  "ratatui",
  "ratatui-textarea",
  "serde",
