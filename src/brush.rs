@@ -2,7 +2,7 @@ use ratatui::style::{Color, Modifier};
 
 use crate::canvas::{Canvas, CanvasIndex, CanvasOperation};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Brush {
     pub character: Option<char>,
     pub fg: Option<Color>,

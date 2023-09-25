@@ -15,6 +15,7 @@ use std::io::{self};
 use crate::{
     canvas::{calculate_canvas_render_translation, rect::CanvasRect, CanvasIndex, CanvasWidget},
     command_line::CommandLineWidget,
+    status_bar::StatusBar,
     InputMode, ProgramState, ResultCustom,
 };
 
@@ -36,6 +37,7 @@ pub fn draw_frame(
                 [
                     Constraint::Min(1),
                     Constraint::Max(user_feedback_height),
+                    Constraint::Max(1),
                     Constraint::Max(1),
                 ]
                 .as_ref(),
@@ -112,12 +114,15 @@ pub fn draw_frame(
 
         f.render_widget(user_feedback_widget, chunks[1]);
 
+        let status_bar = StatusBar::from(program_state.clone());
+        f.render_widget(status_bar, chunks[2]);
+
         f.render_widget(
             CommandLineWidget {
                 textarea: program_state.command_line.clone(),
                 active: command_line_active,
             },
-            chunks[2],
+            chunks[3],
         );
 
         if let InputMode::ColorPicker(_) = program_state.input_mode {

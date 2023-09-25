@@ -9,6 +9,7 @@ pub mod brush;
 pub mod color_picker;
 pub mod command_line;
 pub mod rendering;
+pub mod status_bar;
 pub mod user_input;
 
 use brush::Brush;
@@ -32,7 +33,7 @@ pub enum Ground {
     Background,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum InputMode {
     #[default]
     Normal,
@@ -45,7 +46,7 @@ pub enum InputMode {
     ChooseBrushCharacter,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ProgramState<'a> {
     pub a: u64,
     pub input_mode: InputMode,
