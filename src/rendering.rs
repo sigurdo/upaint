@@ -31,24 +31,66 @@ pub fn draw_frame(
         } else {
             0
         };
+        let sidebar_width = if let InputMode::ColorPicker(_) = program_state.input_mode {
+            18
+        } else {
+            0
+        };
         let chunks = Layout::default()
             .direction(ratatui::prelude::Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Min(1),
-                    Constraint::Max(user_feedback_height),
-                    Constraint::Max(1),
-                    Constraint::Max(1),
+                    Constraint::Min(1), // Rest
+                    Constraint::Max(1), // Command line
                 ]
                 .as_ref(),
             )
             .split(f.size());
+        let command_line_chunk = chunks[1];
+        let chunks = Layout::default()
+            .direction(ratatui::prelude::Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Min(1),             // Rest
+                    Constraint::Max(sidebar_width), // Sidebar
+                ]
+                .as_ref(),
+            )
+            .split(chunks[0]);
+        let sidebar_chunk = chunks[1];
+        let color_picker_chunk = Layout::default()
+            .direction(ratatui::prelude::Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Max(10), // Color picker
+                    Constraint::Min(1),  // Rest
+                ]
+                .as_ref(),
+            )
+            .split(sidebar_chunk)[0];
+        let chunks = Layout::default()
+            .direction(ratatui::prelude::Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Min(1),                    // Canvas
+                    Constraint::Max(user_feedback_height), // User feedback
+                    Constraint::Max(1),                    // Status bar
+                ]
+                .as_ref(),
+            )
+            .split(chunks[0]);
+        let canvas_chunk = chunks[0];
+        let user_feedback_chunk = chunks[1];
+        let status_bar_chunk = chunks[2];
         let size = f.size();
-        let block = Block::default()
-            .title(format!("Halla, jeg heter Petter {}", (*program_state).a))
-            .borders(Borders::ALL);
+        let title = if let Some(filename) = &program_state.open_file {
+            filename.to_owned()
+        } else {
+            "New canvas".to_string()
+        };
+        let block = Block::default().title(title).borders(Borders::ALL);
         let inner_area = block.inner(chunks[0]);
-        f.render_widget(block, chunks[0]);
+        f.render_widget(block, canvas_chunk);
 
         let canvas_render_translation = calculate_canvas_render_translation(
             &program_state.canvas,
@@ -112,30 +154,22 @@ pub fn draw_frame(
         )])])
         .wrap(Wrap { trim: false });
 
-        f.render_widget(user_feedback_widget, chunks[1]);
+        f.render_widget(user_feedback_widget, user_feedback_chunk);
 
         let status_bar = StatusBar::from(program_state.clone());
-        f.render_widget(status_bar, chunks[2]);
+        f.render_widget(status_bar, status_bar_chunk);
 
         f.render_widget(
             CommandLineWidget {
                 textarea: program_state.command_line.clone(),
                 active: command_line_active,
             },
-            chunks[3],
+            command_line_chunk,
         );
 
         if let InputMode::ColorPicker(_) = program_state.input_mode {
             // let block =
-            f.render_widget(
-                program_state.color_picker.widget(),
-                Rect {
-                    x: 80,
-                    y: 10,
-                    width: 16,
-                    height: 8,
-                },
-            );
+            f.render_widget(program_state.color_picker.widget(), color_picker_chunk);
         }
     })?;
     Ok(())
