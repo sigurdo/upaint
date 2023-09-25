@@ -44,6 +44,7 @@ pub enum InputMode {
     ChangeBrush,
     ColorPicker(Ground),
     ChooseBrushCharacter,
+    Pipette,
 }
 
 #[derive(Default, Clone)]

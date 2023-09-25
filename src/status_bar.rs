@@ -45,6 +45,7 @@ impl<'a> Widget for StatusBar<'a> {
             InputMode::ChangeBrush => "CHANGE BRUSH",
             InputMode::ColorPicker(_) => "COLOR PICKER",
             InputMode::ChooseBrushCharacter => "CHOOSE BRUSH CHARACTER",
+            InputMode::Pipette => "PIPETTE",
         };
 
         let status_bar = Paragraph::new(vec![Line::from(vec![

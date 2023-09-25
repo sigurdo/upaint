@@ -164,6 +164,9 @@ pub fn handle_user_input_normal_mode(
                 KeyCode::Char('r') => {
                     program_state.input_mode = InputMode::Replace;
                 }
+                KeyCode::Char('p') => {
+                    program_state.input_mode = InputMode::Pipette;
+                }
                 KeyCode::Char('f') => {
                     program_state
                         .brush
@@ -313,6 +316,46 @@ fn handle_user_input_choose_brush_character(
     Ok(())
 }
 
+fn handle_user_input_pipette(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    match event {
+        Event::Key(e) => match e.code {
+            KeyCode::Char('c') => {
+                program_state.brush.character = program_state
+                    .canvas
+                    .get_character(program_state.cursor_position);
+                program_state.input_mode = InputMode::Normal;
+            }
+            KeyCode::Char('f') => {
+                program_state.brush.fg = program_state
+                    .canvas
+                    .get_fg_color(program_state.cursor_position);
+                program_state.input_mode = InputMode::Normal;
+            }
+            KeyCode::Char('g') => {
+                program_state.brush.bg = program_state
+                    .canvas
+                    .get_bg_color(program_state.cursor_position);
+                program_state.input_mode = InputMode::Normal;
+            }
+            KeyCode::Char(' ') | KeyCode::Char('a') => {
+                program_state.brush.character = program_state
+                    .canvas
+                    .get_character(program_state.cursor_position);
+                program_state.brush.fg = program_state
+                    .canvas
+                    .get_fg_color(program_state.cursor_position);
+                program_state.brush.bg = program_state
+                    .canvas
+                    .get_bg_color(program_state.cursor_position);
+                program_state.input_mode = InputMode::Normal;
+            }
+            _ => (),
+        },
+        _ => (),
+    }
+    Ok(())
+}
+
 /// Handles user input
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
@@ -342,5 +385,6 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
         InputMode::ChooseBrushCharacter => {
             handle_user_input_choose_brush_character(event, program_state)
         }
+        InputMode::Pipette => handle_user_input_pipette(event, program_state),
     }
 }

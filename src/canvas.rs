@@ -244,6 +244,30 @@ impl Canvas {
         cell.modifiers.remove(modifier);
         self
     }
+
+    pub fn get_character(&self, index: CanvasIndex) -> Option<char> {
+        if let Some(cell) = self.cells.get(&index) {
+            Some(cell.character)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_fg_color(&self, index: CanvasIndex) -> Option<Color> {
+        if let Some(cell) = self.cells.get(&index) {
+            Some(cell.color)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_bg_color(&self, index: CanvasIndex) -> Option<Color> {
+        if let Some(cell) = self.cells.get(&index) {
+            Some(cell.background_color)
+        } else {
+            None
+        }
+    }
 }
 
 pub trait AnsiImport {
