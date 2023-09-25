@@ -4,6 +4,7 @@ use ratatui_textarea::{CursorMove, TextArea};
 use std::sync::mpsc::{self};
 
 use crate::{
+    brush::Brush,
     canvas::CanvasOperation,
     color_picker::ColorPicker,
     command_line::{create_command_line_textarea, execute_command},
@@ -113,7 +114,7 @@ pub fn handle_user_input_normal_mode(
                     program_state.command_line = create_command_line_textarea();
                     program_state.input_mode = InputMode::Command;
                 }
-                KeyCode::Char('b') => {
+                KeyCode::Char('o') => {
                     program_state.input_mode = InputMode::ChangeBrush;
                 }
                 KeyCode::Char('h') if e.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -157,7 +158,7 @@ pub fn handle_user_input_normal_mode(
                     program_state.cursor_position_previous = None;
                     program_state.input_mode = InputMode::Insert(Direction::Right);
                 }
-                KeyCode::Char('d') => {
+                KeyCode::Char('s') => {
                     program_state.cursor_position_previous = None;
                     program_state.input_mode = InputMode::ChooseInsertDirection;
                 }
@@ -172,12 +173,12 @@ pub fn handle_user_input_normal_mode(
                         .brush
                         .paint_fg(&mut program_state.canvas, program_state.cursor_position);
                 }
-                KeyCode::Char('g') => {
+                KeyCode::Char('d') => {
                     program_state
                         .brush
                         .paint_bg(&mut program_state.canvas, program_state.cursor_position);
                 }
-                KeyCode::Char('c') => {
+                KeyCode::Char('g') => {
                     program_state
                         .brush
                         .paint_character(&mut program_state.canvas, program_state.cursor_position);
@@ -285,12 +286,16 @@ fn handle_user_input_change_brush(
                 program_state.color_picker = ColorPicker::new("FG Color", program_state.brush.fg);
                 program_state.input_mode = InputMode::ColorPicker(Ground::Foreground);
             }
-            KeyCode::Char('g') => {
+            KeyCode::Char('d') => {
                 program_state.color_picker = ColorPicker::new("BG Color", program_state.brush.bg);
                 program_state.input_mode = InputMode::ColorPicker(Ground::Background);
             }
-            KeyCode::Char('c') => {
+            KeyCode::Char('g') => {
                 program_state.input_mode = InputMode::ChooseBrushCharacter;
+            }
+            KeyCode::Char('c') => {
+                program_state.brush = Brush::default();
+                program_state.input_mode = InputMode::Normal;
             }
             _ => (),
         },
@@ -319,7 +324,7 @@ fn handle_user_input_choose_brush_character(
 fn handle_user_input_pipette(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
     match event {
         Event::Key(e) => match e.code {
-            KeyCode::Char('c') => {
+            KeyCode::Char('g') => {
                 program_state.brush.character = program_state
                     .canvas
                     .get_character(program_state.cursor_position);
@@ -331,7 +336,7 @@ fn handle_user_input_pipette(event: Event, program_state: &mut ProgramState) -> 
                     .get_fg_color(program_state.cursor_position);
                 program_state.input_mode = InputMode::Normal;
             }
-            KeyCode::Char('g') => {
+            KeyCode::Char('d') => {
                 program_state.brush.bg = program_state
                     .canvas
                     .get_bg_color(program_state.cursor_position);
