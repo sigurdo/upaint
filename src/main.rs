@@ -39,6 +39,7 @@ fn application(
     args: UpaintCli,
 ) -> ResultCustom<()> {
     let mut program_state = ProgramState::default();
+    program_state.exit = false;
     program_state.open_file = args.ansi_file;
     program_state.canvas = if let Some(file_path) = &program_state.open_file {
         let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
@@ -87,13 +88,11 @@ fn application(
                 let mut program_state = program_state_user_input.lock()?;
                 while event::poll(Duration::from_millis(0))? {
                     let e = event::read()?;
-                    let (redraw, exit) = handle_user_input(e, &mut (*program_state))?;
-                    if exit {
+                    handle_user_input(e, &mut (*program_state))?;
+                    if (*program_state).exit {
                         (*(exit_tx_user_input.lock()?)).try_send(()).unwrap_or(());
                     }
-                    if redraw {
-                        (*(redraw_tx_user_input.lock()?)).try_send(()).unwrap_or(());
-                    }
+                    (*(redraw_tx_user_input.lock()?)).try_send(()).unwrap_or(());
                 }
             }
             // Ok(())

@@ -13,14 +13,12 @@ use crate::{
 pub fn handle_user_input_command_mode(
     event: Event,
     program_state: &mut ProgramState,
-) -> ResultCustom<(bool, bool)> {
-    let mut redraw = true;
-    let mut exit = false;
+) -> ResultCustom<()> {
     match event {
         Event::Key(e) => {
             match e.code {
                 KeyCode::Enter => {
-                    exit = execute_command(program_state)?;
+                    execute_command(program_state)?;
                 }
                 _ => {
                     program_state.command_line.input(e);
@@ -35,24 +33,20 @@ pub fn handle_user_input_command_mode(
         }
         Event::Mouse(e) => {
             program_state.a += 10;
-            if e.kind == MouseEventKind::Moved {
-                // redraw = false;
-            }
+            if e.kind == MouseEventKind::Moved {}
         }
         _ => {
             program_state.a += 10;
         }
     };
-    Ok((redraw, exit))
+    Ok(())
 }
 
 pub fn handle_user_input_insert_mode(
     event: Event,
     program_state: &mut ProgramState,
-) -> ResultCustom<(bool, bool)> {
-    let mut redraw = true;
-    let mut exit = false;
-    Ok((redraw, exit))
+) -> ResultCustom<()> {
+    Ok(())
 }
 
 fn cursor_left(program_state: &mut ProgramState, cells: i64) {
@@ -111,9 +105,7 @@ fn focus_down(program_state: &mut ProgramState, cells: i64) {
 pub fn handle_user_input_normal_mode(
     event: Event,
     program_state: &mut ProgramState,
-) -> ResultCustom<(bool, bool)> {
-    let mut redraw = true;
-    let mut exit = false;
+) -> ResultCustom<()> {
     match event {
         Event::Key(e) => {
             let canvas_dimensions = program_state.canvas.get_dimensions();
@@ -190,23 +182,19 @@ pub fn handle_user_input_normal_mode(
         }
         Event::Mouse(e) => {
             program_state.a += 10;
-            if e.kind == MouseEventKind::Moved {
-                // redraw = false;
-            }
+            if e.kind == MouseEventKind::Moved {}
         }
         _ => {
             program_state.a += 10;
         }
     };
-    Ok((redraw, exit))
+    Ok(())
 }
 
 fn handle_user_input_color_picker(
     event: Event,
     program_state: &mut ProgramState,
-) -> ResultCustom<(bool, bool)> {
-    let mut redraw = true;
-    let mut exit = false;
+) -> ResultCustom<()> {
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Enter => {
@@ -217,21 +205,18 @@ fn handle_user_input_color_picker(
         },
         _ => (),
     }
-    Ok((redraw, exit))
+    Ok(())
 }
 
 /// Handles user input
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
-pub fn handle_user_input(
-    event: Event,
-    program_state: &mut ProgramState,
-) -> ResultCustom<(bool, bool)> {
+pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
     if let Event::Key(e) = event {
         if e.code == KeyCode::Esc {
             program_state.input_mode = InputMode::Normal;
             program_state.user_feedback = None;
-            return Ok((true, false));
+            return Ok(());
         }
     }
 

@@ -74,8 +74,8 @@ fn save(program_state: &ProgramState) -> ResultCustom<()> {
     Ok(())
 }
 
-// Contains Ok(exit) or Err(error_message)
-type ExecuteCommandResult = Result<bool, String>;
+// Contains Ok(())) or Err(error_message)
+type ExecuteCommandResult = Result<(), String>;
 
 trait Command {
     fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult;
@@ -89,7 +89,8 @@ mod commands {
         fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
             // Todo: check that no changes are made since last save (requires revision system)
             if program_state.last_saved_revision == program_state.canvas.get_current_revision() {
-                Ok(true)
+                program_state.exit = true;
+                Ok(())
             } else {
                 Err(format!("Changes have been made since last save. Use :x to save changes and quit or :q! to quit without saving changes."))
             }
@@ -99,7 +100,8 @@ mod commands {
     pub struct ForceQuit {}
     impl Command for ForceQuit {
         fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
-            return Ok(true);
+            program_state.exit = true;
+            return Ok(());
         }
     }
 
@@ -114,7 +116,7 @@ mod commands {
                 Err(e) => return Err(e.to_string()),
                 _ => (),
             }
-            Ok(false)
+            Ok(())
         }
     }
 
@@ -129,7 +131,7 @@ mod commands {
                 _ => (),
             }
             program_state.last_saved_revision = program_state.canvas.get_current_revision();
-            Ok(false)
+            Ok(())
         }
     }
 
@@ -145,7 +147,8 @@ mod commands {
                 _ => (),
             }
             program_state.last_saved_revision = program_state.canvas.get_current_revision();
-            Ok(true)
+            program_state.exit = true;
+            Ok(())
         }
     }
 }
@@ -153,14 +156,14 @@ mod commands {
 /// Executes the command stored in `program_state.command_line`
 ///
 /// If the returned boolean is `true`, it should be treated as a request to exit the program.
-pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<bool> {
+pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
     // Clear eventual old feedback
     program_state.user_feedback = None;
 
     let command = program_state.command_line.lines().join("\n");
     let mut command_split = command.split_whitespace();
     let Some(command_name) = command_split.next() else {
-        return Ok(false);
+        return Ok(());
     };
     let result = match command_name {
         "q" => commands::Quit {}.execute(program_state),
@@ -179,13 +182,13 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<bool> {
         command => Err(format!("Command not found: {}", command)),
     };
     match result {
-        Ok(exit) => {
+        Ok(()) => {
             program_state.input_mode = InputMode::Normal;
-            Ok(exit)
+            Ok(())
         }
         Err(feedback) => {
             program_state.user_feedback = Some(feedback);
-            Ok(false)
+            Ok(())
         }
     }
 }

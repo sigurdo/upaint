@@ -46,6 +46,7 @@ pub struct ProgramState<'a> {
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
     pub user_feedback: Option<String>,
+    pub exit: bool,
 }
 
 use std::{
