@@ -13,11 +13,22 @@ use ratatui::{prelude::Rect, style::Color};
 use ratatui_textarea::TextArea;
 use std::fmt::Display;
 
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
+pub enum Direction {
+    Left,
+    #[default]
+    Right,
+    Up,
+    Down,
+}
+
 #[derive(Debug, Default, PartialEq)]
 pub enum InputMode {
     #[default]
     Normal,
-    Insert,
+    ChooseInsertDirection,
+    Insert(Direction),
+    Replace,
     Command,
     ColorPicker,
 }

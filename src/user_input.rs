@@ -7,12 +7,14 @@ use crate::{
     canvas::CanvasOperation,
     color_picker::ColorPicker,
     command_line::{create_command_line_textarea, execute_command},
-    InputMode, ProgramState, ResultCustom,
+    Direction, InputMode, ProgramState, ResultCustom,
 };
 
 mod insert_mode;
 
 use insert_mode::handle_user_input_insert_mode;
+
+use self::insert_mode::handle_user_input_choose_insert_direction_mode;
 
 pub fn handle_user_input_command_mode(
     event: Event,
@@ -137,13 +139,13 @@ pub fn handle_user_input_normal_mode(
                 KeyCode::Char('L') if e.modifiers.contains(KeyModifiers::CONTROL) => {
                     focus_right(program_state, 5)
                 }
-                KeyCode::Char('h') => cursor_left(program_state, 1),
+                KeyCode::Char('h') | KeyCode::Left => cursor_left(program_state, 1),
+                KeyCode::Char('j') | KeyCode::Down => cursor_down(program_state, 1),
+                KeyCode::Char('k') | KeyCode::Up => cursor_up(program_state, 1),
+                KeyCode::Char('l') | KeyCode::Right => cursor_right(program_state, 1),
                 KeyCode::Char('H') => cursor_left(program_state, 5),
-                KeyCode::Char('j') => cursor_down(program_state, 1),
                 KeyCode::Char('J') => cursor_down(program_state, 5),
-                KeyCode::Char('k') => cursor_up(program_state, 1),
                 KeyCode::Char('K') => cursor_up(program_state, 5),
-                KeyCode::Char('l') => cursor_right(program_state, 1),
                 KeyCode::Char('L') => cursor_right(program_state, 5),
                 KeyCode::Char('n') => focus_left(program_state, 1),
                 KeyCode::Char('m') => focus_down(program_state, 1),
@@ -155,21 +157,16 @@ pub fn handle_user_input_normal_mode(
                 }
                 KeyCode::Char('i') => {
                     program_state.cursor_position_previous = None;
-                    program_state.input_mode = InputMode::Insert;
+                    program_state.input_mode = InputMode::Insert(Direction::Right);
                 }
-                KeyCode::Char(character) => {
-                    let mut operations = vec![CanvasOperation::SetCharacter(
-                        program_state.cursor_position,
-                        character,
-                    )];
-                    if let Some(fg) = program_state.brush.fg {
-                        operations.push(CanvasOperation::SetFgColor(
-                            program_state.cursor_position,
-                            fg,
-                        ));
-                    }
-                    program_state.canvas.create_commit(operations);
+                KeyCode::Char('d') => {
+                    program_state.cursor_position_previous = None;
+                    program_state.input_mode = InputMode::ChooseInsertDirection;
                 }
+                KeyCode::Char('r') => {
+                    program_state.input_mode = InputMode::Replace;
+                }
+                KeyCode::Char(character) => {}
                 _ => {
                     program_state.a += 1;
                 }
@@ -189,6 +186,30 @@ pub fn handle_user_input_normal_mode(
             program_state.a += 10;
         }
     };
+    Ok(())
+}
+
+fn handle_user_input_replace(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    match event {
+        Event::Key(e) => match e.code {
+            KeyCode::Char(character) => {
+                let mut operations = vec![CanvasOperation::SetCharacter(
+                    program_state.cursor_position,
+                    character,
+                )];
+                if let Some(fg) = program_state.brush.fg {
+                    operations.push(CanvasOperation::SetFgColor(
+                        program_state.cursor_position,
+                        fg,
+                    ));
+                }
+                program_state.canvas.create_commit(operations);
+                program_state.input_mode = InputMode::Normal;
+            }
+            _ => (),
+        },
+        _ => (),
+    }
     Ok(())
 }
 
@@ -224,7 +245,13 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
     match program_state.input_mode {
         InputMode::Normal => handle_user_input_normal_mode(event, program_state),
         InputMode::Command => handle_user_input_command_mode(event, program_state),
-        InputMode::Insert => handle_user_input_insert_mode(event, program_state),
+        InputMode::ChooseInsertDirection => {
+            handle_user_input_choose_insert_direction_mode(event, program_state)
+        }
+        InputMode::Insert(direction) => {
+            handle_user_input_insert_mode(event, program_state, direction)
+        }
+        InputMode::Replace => handle_user_input_replace(event, program_state),
         InputMode::ColorPicker => handle_user_input_color_picker(event, program_state),
     }
 }
