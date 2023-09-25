@@ -10,6 +10,10 @@ use crate::{
     InputMode, ProgramState, ResultCustom,
 };
 
+mod insert_mode;
+
+use insert_mode::handle_user_input_insert_mode;
+
 pub fn handle_user_input_command_mode(
     event: Event,
     program_state: &mut ProgramState,
@@ -39,13 +43,6 @@ pub fn handle_user_input_command_mode(
             program_state.a += 10;
         }
     };
-    Ok(())
-}
-
-pub fn handle_user_input_insert_mode(
-    event: Event,
-    program_state: &mut ProgramState,
-) -> ResultCustom<()> {
     Ok(())
 }
 
@@ -155,6 +152,10 @@ pub fn handle_user_input_normal_mode(
                 KeyCode::Char('u') => program_state.canvas.undo(),
                 KeyCode::Char('r') if e.modifiers.contains(KeyModifiers::CONTROL) => {
                     program_state.canvas.redo()
+                }
+                KeyCode::Char('i') => {
+                    program_state.cursor_position_previous = None;
+                    program_state.input_mode = InputMode::Insert;
                 }
                 KeyCode::Char(character) => {
                     let mut operations = vec![CanvasOperation::SetCharacter(
