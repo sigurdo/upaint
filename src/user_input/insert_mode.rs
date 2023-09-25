@@ -1,4 +1,5 @@
 use crate::{
+    brush::Brush,
     canvas::CanvasOperation,
     user_input::{cursor_down, cursor_left, cursor_right, cursor_up},
     Direction, InputMode, ProgramState, ResultCustom,
@@ -31,17 +32,11 @@ pub fn handle_user_input_insert_mode(
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Char(character) => {
-                let mut operations = vec![CanvasOperation::SetCharacter(
+                program_state.brush.paint_with_character(
+                    &mut program_state.canvas,
                     program_state.cursor_position,
                     character,
-                )];
-                if let Some(fg) = program_state.brush.fg {
-                    operations.push(CanvasOperation::SetFgColor(
-                        program_state.cursor_position,
-                        fg,
-                    ));
-                }
-                program_state.canvas.create_commit(operations);
+                );
                 let painted_position = program_state.cursor_position;
 
                 match direction {
@@ -81,14 +76,19 @@ pub fn handle_user_input_insert_mode(
                     Direction::Down => cursor_up(program_state, 1),
                 }
 
-                let operations = vec![
-                    CanvasOperation::SetCharacter(program_state.cursor_position, ' '),
-                    CanvasOperation::SetFgColor(program_state.cursor_position, Color::Reset),
-                    CanvasOperation::SetBgColor(program_state.cursor_position, Color::Reset),
-                    CanvasOperation::RemoveModifier(program_state.cursor_position, Modifier::all()),
-                ];
+                // program_state.brush.paint_with_character(
+                //     &mut program_state.canvas,
+                //     program_state.cursor_position,
+                //     character,
+                // );
 
-                program_state.canvas.create_commit(operations);
+                Brush {
+                    character: Some(' '),
+                    fg: Some(Color::Reset),
+                    bg: Some(Color::Reset),
+                    modifiers: Some(Modifier::default()),
+                }
+                .paint(&mut program_state.canvas, program_state.cursor_position);
             }
             _ => (),
         },

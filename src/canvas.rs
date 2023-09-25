@@ -66,6 +66,7 @@ pub enum CanvasOperation {
     SetBgColor(CanvasIndex, Color),
     AddModifier(CanvasIndex, Modifier),
     RemoveModifier(CanvasIndex, Modifier),
+    SetModifiers(CanvasIndex, Modifier),
 }
 
 fn apply_canvas_operation(canvas: &mut Canvas, operation: &CanvasOperation) {
@@ -91,7 +92,9 @@ fn apply_canvas_operation(canvas: &mut Canvas, operation: &CanvasOperation) {
                 .modifiers
                 .remove(*modifier);
         }
-        _ => (),
+        CanvasOperation::SetModifiers(index, modifiers) => {
+            canvas.get_or_create_cell_mut(index).modifiers = *modifiers;
+        }
     }
 }
 

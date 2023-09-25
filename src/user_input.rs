@@ -7,7 +7,7 @@ use crate::{
     canvas::CanvasOperation,
     color_picker::ColorPicker,
     command_line::{create_command_line_textarea, execute_command},
-    Direction, InputMode, ProgramState, ResultCustom,
+    Direction, Ground, InputMode, ProgramState, ResultCustom,
 };
 
 mod insert_mode;
@@ -113,10 +113,8 @@ pub fn handle_user_input_normal_mode(
                     program_state.command_line = create_command_line_textarea();
                     program_state.input_mode = InputMode::Command;
                 }
-                KeyCode::Char('c') => {
-                    program_state.color_picker =
-                        ColorPicker::new("FG Color", program_state.brush.fg);
-                    program_state.input_mode = InputMode::ColorPicker;
+                KeyCode::Char('b') => {
+                    program_state.input_mode = InputMode::ChangeBrush;
                 }
                 KeyCode::Char('h') if e.modifiers.contains(KeyModifiers::CONTROL) => {
                     focus_left(program_state, 1)
@@ -166,6 +164,26 @@ pub fn handle_user_input_normal_mode(
                 KeyCode::Char('r') => {
                     program_state.input_mode = InputMode::Replace;
                 }
+                KeyCode::Char('f') => {
+                    program_state
+                        .brush
+                        .paint_fg(&mut program_state.canvas, program_state.cursor_position);
+                }
+                KeyCode::Char('g') => {
+                    program_state
+                        .brush
+                        .paint_bg(&mut program_state.canvas, program_state.cursor_position);
+                }
+                KeyCode::Char('c') => {
+                    program_state
+                        .brush
+                        .paint_character(&mut program_state.canvas, program_state.cursor_position);
+                }
+                KeyCode::Char(' ') => {
+                    program_state
+                        .brush
+                        .paint(&mut program_state.canvas, program_state.cursor_position);
+                }
                 KeyCode::Char(character) => {}
                 _ => {
                     program_state.a += 1;
@@ -193,17 +211,11 @@ fn handle_user_input_replace(event: Event, program_state: &mut ProgramState) -> 
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Char(character) => {
-                let mut operations = vec![CanvasOperation::SetCharacter(
+                program_state.brush.paint_with_character(
+                    &mut program_state.canvas,
                     program_state.cursor_position,
                     character,
-                )];
-                if let Some(fg) = program_state.brush.fg {
-                    operations.push(CanvasOperation::SetFgColor(
-                        program_state.cursor_position,
-                        fg,
-                    ));
-                }
-                program_state.canvas.create_commit(operations);
+                );
                 program_state.input_mode = InputMode::Normal;
             }
             _ => (),
@@ -216,14 +228,85 @@ fn handle_user_input_replace(event: Event, program_state: &mut ProgramState) -> 
 fn handle_user_input_color_picker(
     event: Event,
     program_state: &mut ProgramState,
+    ground: Ground,
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Enter => {
+                match ground {
+                    Ground::Foreground => {
+                        program_state.brush.fg = Some(program_state.color_picker.get_color());
+                    }
+                    Ground::Background => {
+                        program_state.brush.bg = Some(program_state.color_picker.get_color());
+                    }
+                }
                 program_state.input_mode = InputMode::Normal;
-                program_state.brush.fg = Some(program_state.color_picker.get_color());
+            }
+            KeyCode::Char('n') => {
+                match ground {
+                    Ground::Foreground => {
+                        program_state.brush.fg = None;
+                    }
+                    Ground::Background => {
+                        program_state.brush.bg = None;
+                    }
+                }
+                program_state.input_mode = InputMode::Normal;
+            }
+            KeyCode::Char('r') => {
+                match ground {
+                    Ground::Foreground => {
+                        program_state.brush.fg = Some(Color::Reset);
+                    }
+                    Ground::Background => {
+                        program_state.brush.bg = Some(Color::Reset);
+                    }
+                }
+                program_state.input_mode = InputMode::Normal;
             }
             _ => program_state.color_picker.input(event),
+        },
+        _ => (),
+    }
+    Ok(())
+}
+
+fn handle_user_input_change_brush(
+    event: Event,
+    program_state: &mut ProgramState,
+) -> ResultCustom<()> {
+    match event {
+        Event::Key(e) => match e.code {
+            KeyCode::Char('f') => {
+                program_state.color_picker = ColorPicker::new("FG Color", program_state.brush.fg);
+                program_state.input_mode = InputMode::ColorPicker(Ground::Foreground);
+            }
+            KeyCode::Char('g') => {
+                program_state.color_picker = ColorPicker::new("BG Color", program_state.brush.bg);
+                program_state.input_mode = InputMode::ColorPicker(Ground::Background);
+            }
+            KeyCode::Char('c') => {
+                program_state.input_mode = InputMode::ChooseBrushCharacter;
+            }
+            _ => (),
+        },
+        _ => (),
+    }
+    Ok(())
+}
+
+fn handle_user_input_choose_brush_character(
+    event: Event,
+    program_state: &mut ProgramState,
+) -> ResultCustom<()> {
+    match event {
+        Event::Key(e) => match e.code {
+            KeyCode::Char(character) => {
+                program_state.brush.character = Some(character);
+                program_state.input_mode = InputMode::Normal;
+            }
+            _ => (),
         },
         _ => (),
     }
@@ -252,6 +335,12 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
             handle_user_input_insert_mode(event, program_state, direction)
         }
         InputMode::Replace => handle_user_input_replace(event, program_state),
-        InputMode::ColorPicker => handle_user_input_color_picker(event, program_state),
+        InputMode::ChangeBrush => handle_user_input_change_brush(event, program_state),
+        InputMode::ColorPicker(ground) => {
+            handle_user_input_color_picker(event, program_state, ground)
+        }
+        InputMode::ChooseBrushCharacter => {
+            handle_user_input_choose_brush_character(event, program_state)
+        }
     }
 }

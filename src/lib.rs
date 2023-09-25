@@ -1,17 +1,20 @@
+use ratatui::style::Modifier;
+use ratatui::{prelude::Rect, style::Color};
+use ratatui_textarea::TextArea;
+use std::fmt::Display;
+
 pub mod canvas;
 // pub mod program_state;
+pub mod brush;
 pub mod color_picker;
 pub mod command_line;
 pub mod rendering;
 pub mod user_input;
 
+use brush::Brush;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
 use command_line::CommandLine;
-use ratatui::style::Modifier;
-use ratatui::{prelude::Rect, style::Color};
-use ratatui_textarea::TextArea;
-use std::fmt::Display;
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum Direction {
@@ -22,6 +25,13 @@ pub enum Direction {
     Down,
 }
 
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
+pub enum Ground {
+    #[default]
+    Foreground,
+    Background,
+}
+
 #[derive(Debug, Default, PartialEq)]
 pub enum InputMode {
     #[default]
@@ -30,15 +40,9 @@ pub enum InputMode {
     Insert(Direction),
     Replace,
     Command,
-    ColorPicker,
-}
-
-#[derive(Default)]
-pub struct Brush {
-    pub character: Option<char>,
-    pub fg: Option<Color>,
-    pub bg: Option<Color>,
-    pub modifiers: Option<Modifier>,
+    ChangeBrush,
+    ColorPicker(Ground),
+    ChooseBrushCharacter,
 }
 
 #[derive(Default)]

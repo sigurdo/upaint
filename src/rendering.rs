@@ -63,7 +63,7 @@ pub fn draw_frame(
 
         match program_state.input_mode {
             InputMode::Command => (),
-            InputMode::ColorPicker => (),
+            InputMode::ColorPicker(_) => (),
             _ => {
                 // Update cursor position so that it stays inside the visible area of the canvas when the
                 // widget size changes or the focus position is changed.
@@ -120,7 +120,7 @@ pub fn draw_frame(
             chunks[2],
         );
 
-        if program_state.input_mode == InputMode::ColorPicker {
+        if let InputMode::ColorPicker(_) = program_state.input_mode {
             // let block =
             f.render_widget(
                 program_state.color_picker.widget(),
