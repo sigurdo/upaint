@@ -462,8 +462,11 @@ impl AnsiImport for Canvas {
                 continue;
             }
 
-            //
-            if character != ' ' {
+            if !(character == ' '
+                && fg_color == Color::Reset
+                && bg_color == Color::Reset
+                && modifiers == Modifier::default())
+            {
                 canvas.set_character(canvas_index, character);
                 canvas.set_fg_color(canvas_index, fg_color);
                 canvas.set_bg_color(canvas_index, bg_color);
