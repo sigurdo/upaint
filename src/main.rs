@@ -48,14 +48,6 @@ fn application(
         canvas
     } else {
         let mut canvas = Canvas::default();
-        canvas.create_commit(vec![
-            CanvasOperation::SetCharacter((0, 0), '/'),
-            CanvasOperation::SetCharacter((3, 15), '+'),
-            CanvasOperation::SetCharacter((2, 10), '@'),
-            CanvasOperation::SetFgColor((2, 10), Color::Rgb(255, 64, 0)),
-            CanvasOperation::SetBgColor((2, 10), Color::Rgb(0, 0, 128)),
-        ]);
-        canvas.delete_history();
         program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     };

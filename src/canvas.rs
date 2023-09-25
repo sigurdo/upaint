@@ -515,6 +515,7 @@ impl AnsiExport for Canvas {
             Ok(())
         }
 
+        let dimensions = self.calculate_dimensions();
         let mut result = String::new();
         let mut cells = self.cells.iter();
         let (first_index, first_cell) = match cells.next() {
@@ -523,8 +524,8 @@ impl AnsiExport for Canvas {
                 return Ok(result);
             }
         };
-        let linebreaks_to_add = first_index.0;
-        let spaces_to_add = first_index.1;
+        let linebreaks_to_add = first_index.0 - dimensions.upper_left_index.0;
+        let spaces_to_add = first_index.1 - dimensions.upper_left_index.1;
         for _i in 0..linebreaks_to_add {
             result.push('\n');
         }
@@ -542,7 +543,7 @@ impl AnsiExport for Canvas {
             let spaces_to_add = if row == previous_row {
                 column - (previous_column + 1)
             } else {
-                column
+                column - dimensions.upper_left_index.1
             };
 
             // Reset all SGR effects if cells are being skipped
