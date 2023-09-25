@@ -55,6 +55,59 @@ pub fn handle_user_input_insert_mode(
     Ok((redraw, exit))
 }
 
+fn cursor_left(program_state: &mut ProgramState, cells: i64) {
+    program_state.cursor_position.1 -= cells;
+    let outside_edge =
+        program_state.canvas_visible.first_column() - program_state.cursor_position.1;
+    if outside_edge > 0 {
+        program_state.focus_position.1 -= outside_edge;
+        program_state.canvas_visible.column -= outside_edge;
+    }
+}
+
+fn cursor_right(program_state: &mut ProgramState, cells: i64) {
+    program_state.cursor_position.1 += cells;
+    let outside_edge = program_state.cursor_position.1 - program_state.canvas_visible.last_column();
+    if outside_edge > 0 {
+        program_state.focus_position.1 += outside_edge;
+        program_state.canvas_visible.column += outside_edge;
+    }
+}
+
+fn cursor_up(program_state: &mut ProgramState, cells: i64) {
+    program_state.cursor_position.0 -= cells;
+    let outside_edge = program_state.canvas_visible.first_row() - program_state.cursor_position.0;
+    if outside_edge > 0 {
+        program_state.focus_position.0 -= outside_edge;
+        program_state.canvas_visible.row -= outside_edge;
+    }
+}
+
+fn cursor_down(program_state: &mut ProgramState, cells: i64) {
+    program_state.cursor_position.0 += cells;
+    let outside_edge = program_state.cursor_position.0 - program_state.canvas_visible.last_row();
+    if outside_edge > 0 {
+        program_state.focus_position.0 += outside_edge;
+        program_state.canvas_visible.row += outside_edge;
+    }
+}
+
+fn focus_left(program_state: &mut ProgramState, cells: i64) {
+    program_state.focus_position.1 -= cells;
+}
+
+fn focus_right(program_state: &mut ProgramState, cells: i64) {
+    program_state.focus_position.1 += cells;
+}
+
+fn focus_up(program_state: &mut ProgramState, cells: i64) {
+    program_state.focus_position.0 -= cells;
+}
+
+fn focus_down(program_state: &mut ProgramState, cells: i64) {
+    program_state.focus_position.0 += cells;
+}
+
 pub fn handle_user_input_normal_mode(
     event: Event,
     program_state: &mut ProgramState,
@@ -63,81 +116,66 @@ pub fn handle_user_input_normal_mode(
     let mut exit = false;
     match event {
         Event::Key(e) => {
+            let canvas_dimensions = program_state.canvas.get_dimensions();
             match e.code {
+                KeyCode::Char(':') => {
+                    program_state.command_line = create_command_line_textarea();
+                    program_state.input_mode = InputMode::Command;
+                }
+                KeyCode::Char('c') => {
+                    program_state.color_picker =
+                        ColorPicker::new("FG Color", program_state.brush.fg);
+                    program_state.input_mode = InputMode::ColorPicker;
+                }
+                KeyCode::Char('h') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_left(program_state, 1)
+                }
+                KeyCode::Char('j') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_down(program_state, 1)
+                }
+                KeyCode::Char('J') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_down(program_state, 5)
+                }
+                KeyCode::Char('k') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_up(program_state, 1)
+                }
+                KeyCode::Char('K') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_up(program_state, 5)
+                }
+                KeyCode::Char('l') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_right(program_state, 1)
+                }
+                KeyCode::Char('L') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    focus_right(program_state, 5)
+                }
+                KeyCode::Char('h') => cursor_left(program_state, 1),
+                KeyCode::Char('H') => cursor_left(program_state, 5),
+                KeyCode::Char('j') => cursor_down(program_state, 1),
+                KeyCode::Char('J') => cursor_down(program_state, 5),
+                KeyCode::Char('k') => cursor_up(program_state, 1),
+                KeyCode::Char('K') => cursor_up(program_state, 5),
+                KeyCode::Char('l') => cursor_right(program_state, 1),
+                KeyCode::Char('L') => cursor_right(program_state, 5),
+                KeyCode::Char('n') => focus_left(program_state, 1),
+                KeyCode::Char('m') => focus_down(program_state, 1),
+                KeyCode::Char(',') => focus_up(program_state, 1),
+                KeyCode::Char('.') => focus_right(program_state, 1),
+                KeyCode::Char('u') => program_state.canvas.undo(),
+                KeyCode::Char('r') if e.modifiers.contains(KeyModifiers::CONTROL) => {
+                    program_state.canvas.redo()
+                }
                 KeyCode::Char(character) => {
-                    let canvas_dimensions = program_state.canvas.get_dimensions();
-                    match character {
-                        ':' => {
-                            program_state.command_line = create_command_line_textarea();
-                            program_state.input_mode = InputMode::Command;
-                        }
-                        'c' => {
-                            program_state.color_picker =
-                                ColorPicker::new("FG Color", program_state.brush.fg);
-                            program_state.input_mode = InputMode::ColorPicker;
-                        }
-                        'h' => {
-                            program_state.cursor_position.1 -= 1;
-                            if program_state.cursor_position.1
-                                < program_state.canvas_visible.first_column()
-                            {
-                                program_state.focus_position.1 -= 1;
-                            }
-                        }
-                        'j' => {
-                            program_state.cursor_position.0 += 1;
-                            if program_state.cursor_position.0
-                                > program_state.canvas_visible.last_row()
-                            {
-                                program_state.focus_position.0 += 1;
-                            }
-                        }
-                        'k' => {
-                            program_state.cursor_position.0 -= 1;
-                            if program_state.cursor_position.0
-                                < program_state.canvas_visible.first_row()
-                            {
-                                program_state.focus_position.0 -= 1;
-                            }
-                        }
-                        'l' => {
-                            program_state.cursor_position.1 += 1;
-                            if program_state.cursor_position.1
-                                > program_state.canvas_visible.last_column()
-                            {
-                                program_state.focus_position.1 += 1;
-                            }
-                        }
-                        'n' => {
-                            program_state.focus_position.1 -= 1;
-                        }
-                        'm' => {
-                            program_state.focus_position.0 += 1;
-                        }
-                        ',' => {
-                            program_state.focus_position.0 -= 1;
-                        }
-                        '.' => {
-                            program_state.focus_position.1 += 1;
-                        }
-                        'u' => program_state.canvas.undo(),
-                        'r' if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                            program_state.canvas.redo()
-                        }
-                        _ => {
-                            let mut operations = vec![CanvasOperation::SetCharacter(
-                                program_state.cursor_position,
-                                character,
-                            )];
-                            if let Some(fg) = program_state.brush.fg {
-                                operations.push(CanvasOperation::SetFgColor(
-                                    program_state.cursor_position,
-                                    fg,
-                                ));
-                            }
-                            program_state.canvas.create_commit(operations);
-                        }
+                    let mut operations = vec![CanvasOperation::SetCharacter(
+                        program_state.cursor_position,
+                        character,
+                    )];
+                    if let Some(fg) = program_state.brush.fg {
+                        operations.push(CanvasOperation::SetFgColor(
+                            program_state.cursor_position,
+                            fg,
+                        ));
                     }
+                    program_state.canvas.create_commit(operations);
                 }
                 _ => {
                     program_state.a += 1;
