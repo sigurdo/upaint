@@ -571,6 +571,7 @@ impl AnsiExport for Canvas {
             previous_cell = cell;
             (previous_row, previous_column) = (row, column);
         }
+        ResetColor.write_ansi(&mut result)?;
         result.push('\n');
         Ok(result)
     }

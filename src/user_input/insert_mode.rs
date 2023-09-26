@@ -13,10 +13,18 @@ pub fn handle_user_input_choose_insert_direction_mode(
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => match e.code {
-            KeyCode::Char('h') => program_state.input_mode = InputMode::Insert(Direction::Left),
-            KeyCode::Char('j') => program_state.input_mode = InputMode::Insert(Direction::Down),
-            KeyCode::Char('k') => program_state.input_mode = InputMode::Insert(Direction::Up),
-            KeyCode::Char('l') => program_state.input_mode = InputMode::Insert(Direction::Right),
+            KeyCode::Char('h') | KeyCode::Left => {
+                program_state.input_mode = InputMode::Insert(Direction::Left)
+            }
+            KeyCode::Char('j') | KeyCode::Down => {
+                program_state.input_mode = InputMode::Insert(Direction::Down)
+            }
+            KeyCode::Char('k') | KeyCode::Up => {
+                program_state.input_mode = InputMode::Insert(Direction::Up)
+            }
+            KeyCode::Char('l') | KeyCode::Right => {
+                program_state.input_mode = InputMode::Insert(Direction::Right)
+            }
             _ => (),
         },
         _ => (),
