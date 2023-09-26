@@ -218,37 +218,37 @@ impl Canvas {
         self.cells.get_mut(&index).unwrap()
     }
 
-    pub fn set_character(&mut self, index: CanvasIndex, character: char) -> &mut Self {
+    fn set_character(&mut self, index: CanvasIndex, character: char) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.character = character;
         self
     }
 
-    pub fn set_fg_color(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
+    fn set_fg_color(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.color = color;
         self
     }
 
-    pub fn set_bg_color(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
+    fn set_bg_color(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.background_color = color;
         self
     }
 
-    pub fn add_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
+    fn add_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.modifiers.insert(modifier);
         self
     }
 
-    pub fn remove_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
+    fn remove_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.modifiers.remove(modifier);
         self
     }
 
-    pub fn set_modifiers(&mut self, index: CanvasIndex, modifiers: Modifier) -> &mut Self {
+    fn set_modifiers(&mut self, index: CanvasIndex, modifiers: Modifier) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.modifiers = modifiers;
         self
