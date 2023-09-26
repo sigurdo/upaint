@@ -20,7 +20,7 @@ use toml::map::Iter;
 
 use crate::{ErrorCustom, ResultCustom};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct CanvasCell {
     character: char,
     color: Color,
@@ -48,6 +48,9 @@ impl Default for CanvasCell {
 }
 
 pub mod rect;
+
+#[cfg(test)]
+mod test;
 
 // .0 is row, .1 is column
 pub type CanvasIndex = (i64, i64);
@@ -242,6 +245,12 @@ impl Canvas {
     pub fn remove_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
         let cell = self.get_or_create_cell_mut(&index);
         cell.modifiers.remove(modifier);
+        self
+    }
+
+    pub fn set_modifiers(&mut self, index: CanvasIndex, modifiers: Modifier) -> &mut Self {
+        let cell = self.get_or_create_cell_mut(&index);
+        cell.modifiers = modifiers;
         self
     }
 
@@ -470,6 +479,7 @@ impl AnsiImport for Canvas {
                 canvas.set_character(canvas_index, character);
                 canvas.set_fg_color(canvas_index, fg_color);
                 canvas.set_bg_color(canvas_index, bg_color);
+                canvas.set_modifiers(canvas_index, modifiers);
             }
 
             canvas_index.1 += 1;
