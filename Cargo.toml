@@ -18,6 +18,7 @@ ratatui-textarea = "0.3.2"
 hsv = "0.1.1"
 prisma = "0.1.1"
 angular-units = "0.2.4"
+unicode-width = "0.1.11"
 
 
 [[bin]]
@@ -39,3 +40,7 @@ path = "src/test_config.rs"
 [[bin]]
 name = "test_colors"
 path = "src/test_colors.rs"
+
+[[bin]]
+name = "test_unicode_width"
+path = "src/test_unicode_width.rs"
