@@ -82,7 +82,6 @@ pub fn draw_frame(
         let canvas_chunk = chunks[0];
         let user_feedback_chunk = chunks[1];
         let status_bar_chunk = chunks[2];
-        let size = f.size();
         let title = if let Some(filename) = &program_state.open_file {
             filename.to_owned()
         } else {
@@ -91,19 +90,6 @@ pub fn draw_frame(
         let block = Block::default().title(title).borders(Borders::ALL);
         let inner_area = block.inner(chunks[0]);
         f.render_widget(block, canvas_chunk);
-
-        // let canvas_render_translation = calculate_canvas_render_translation(
-        //     &program_state.canvas,
-        //     program_state.focus_position,
-        //     &inner_area,
-        // );
-
-        // let canvas_visible = CanvasRect {
-        //     row: 0 - canvas_render_translation.0,
-        //     column: 0 - canvas_render_translation.1,
-        //     rows: inner_area.height as u64,
-        //     columns: inner_area.width as u64,
-        // };
 
         let mut canvas = program_state.canvas.widget();
         canvas.focus = program_state.focus_position;
@@ -130,32 +116,20 @@ pub fn draw_frame(
 
                 program_state.canvas_visible = canvas_visible;
                 canvas.cursor = Some(program_state.cursor_position);
-
-                // {
-                //     let cursor_x = inner_area.x as i16
-                //         + program_state.cursor_position.1
-                //         + canvas_render_translation.1;
-                //     let cursor_y = inner_area.y as i16
-                //         + program_state.cursor_position.0
-                //         + canvas_render_translation.0;
-                //     f.set_cursor(cursor_x as u16, cursor_y as u16);
-                // }
             }
         }
 
         f.render_widget(canvas, inner_area);
 
-        let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(
-            program_state
-                .user_feedback
-                .clone()
-                .unwrap_or("".to_string()),
-        )])])
-        .wrap(Wrap { trim: false });
-
+        let user_feedback = match &program_state.user_feedback {
+            Some(feedback) => feedback,
+            None => "",
+        };
+        let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(user_feedback)])])
+            .wrap(Wrap { trim: false });
         f.render_widget(user_feedback_widget, user_feedback_chunk);
 
-        let status_bar = StatusBar::from(program_state.clone());
+        let status_bar = StatusBar::from(&(*program_state));
         f.render_widget(status_bar, status_bar_chunk);
 
         f.render_widget(

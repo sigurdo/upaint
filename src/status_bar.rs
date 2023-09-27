@@ -7,11 +7,11 @@ use ratatui::{
 use crate::{InputMode, ProgramState};
 
 pub struct StatusBar<'a> {
-    program_state: ProgramState<'a>,
+    pub program_state: &'a ProgramState<'a>,
 }
 
-impl<'a> From<ProgramState<'a>> for StatusBar<'a> {
-    fn from(program_state: ProgramState<'a>) -> Self {
+impl<'a> From<&'a ProgramState<'a>> for StatusBar<'a> {
+    fn from(program_state: &'a ProgramState<'a>) -> Self {
         Self {
             program_state: program_state,
         }
