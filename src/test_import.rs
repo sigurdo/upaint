@@ -1,4 +1,4 @@
-use upaint::canvas::{AnsiExport, AnsiImport, Canvas};
+use upaint::canvas::Canvas;
 
 fn test() -> Option<u64> {
     Some(65)

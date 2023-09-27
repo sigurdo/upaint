@@ -1,6 +1,6 @@
 use ratatui::style::{Color, Modifier};
 
-use upaint::canvas::{AnsiExport, Canvas, CanvasOperation};
+use upaint::canvas::{Canvas, CanvasOperation};
 
 fn main() {
     let mut canvas = Canvas::default();

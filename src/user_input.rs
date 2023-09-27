@@ -49,7 +49,7 @@ pub fn handle_user_input_command_mode(
     Ok(())
 }
 
-fn cursor_left(program_state: &mut ProgramState, cells: i64) {
+fn cursor_left(program_state: &mut ProgramState, cells: i16) {
     program_state.cursor_position.1 -= cells;
     let outside_edge =
         program_state.canvas_visible.first_column() - program_state.cursor_position.1;
@@ -59,7 +59,7 @@ fn cursor_left(program_state: &mut ProgramState, cells: i64) {
     }
 }
 
-fn cursor_right(program_state: &mut ProgramState, cells: i64) {
+fn cursor_right(program_state: &mut ProgramState, cells: i16) {
     program_state.cursor_position.1 += cells;
     let outside_edge = program_state.cursor_position.1 - program_state.canvas_visible.last_column();
     if outside_edge > 0 {
@@ -68,7 +68,7 @@ fn cursor_right(program_state: &mut ProgramState, cells: i64) {
     }
 }
 
-fn cursor_up(program_state: &mut ProgramState, cells: i64) {
+fn cursor_up(program_state: &mut ProgramState, cells: i16) {
     program_state.cursor_position.0 -= cells;
     let outside_edge = program_state.canvas_visible.first_row() - program_state.cursor_position.0;
     if outside_edge > 0 {
@@ -77,7 +77,7 @@ fn cursor_up(program_state: &mut ProgramState, cells: i64) {
     }
 }
 
-fn cursor_down(program_state: &mut ProgramState, cells: i64) {
+fn cursor_down(program_state: &mut ProgramState, cells: i16) {
     program_state.cursor_position.0 += cells;
     let outside_edge = program_state.cursor_position.0 - program_state.canvas_visible.last_row();
     if outside_edge > 0 {
@@ -86,19 +86,19 @@ fn cursor_down(program_state: &mut ProgramState, cells: i64) {
     }
 }
 
-fn focus_left(program_state: &mut ProgramState, cells: i64) {
+fn focus_left(program_state: &mut ProgramState, cells: i16) {
     program_state.focus_position.1 -= cells;
 }
 
-fn focus_right(program_state: &mut ProgramState, cells: i64) {
+fn focus_right(program_state: &mut ProgramState, cells: i16) {
     program_state.focus_position.1 += cells;
 }
 
-fn focus_up(program_state: &mut ProgramState, cells: i64) {
+fn focus_up(program_state: &mut ProgramState, cells: i16) {
     program_state.focus_position.0 -= cells;
 }
 
-fn focus_down(program_state: &mut ProgramState, cells: i64) {
+fn focus_down(program_state: &mut ProgramState, cells: i16) {
     program_state.focus_position.0 += cells;
 }
 
@@ -108,7 +108,6 @@ pub fn handle_user_input_normal_mode(
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => {
-            let canvas_dimensions = program_state.canvas.get_dimensions();
             match e.code {
                 KeyCode::Char(':') => {
                     program_state.command_line = create_command_line_textarea();
@@ -325,33 +324,35 @@ fn handle_user_input_pipette(event: Event, program_state: &mut ProgramState) -> 
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Char('g') => {
-                program_state.brush.character = program_state
-                    .canvas
-                    .get_character(program_state.cursor_position);
+                program_state.brush.character = Some(
+                    program_state
+                        .canvas
+                        .raw()
+                        .character(program_state.cursor_position),
+                );
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Char('f') => {
-                program_state.brush.fg = program_state
-                    .canvas
-                    .get_fg_color(program_state.cursor_position);
+                program_state.brush.fg =
+                    Some(program_state.canvas.raw().fg(program_state.cursor_position));
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Char('d') => {
-                program_state.brush.bg = program_state
-                    .canvas
-                    .get_bg_color(program_state.cursor_position);
+                program_state.brush.bg =
+                    Some(program_state.canvas.raw().bg(program_state.cursor_position));
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Char(' ') | KeyCode::Char('a') => {
-                program_state.brush.character = program_state
-                    .canvas
-                    .get_character(program_state.cursor_position);
-                program_state.brush.fg = program_state
-                    .canvas
-                    .get_fg_color(program_state.cursor_position);
-                program_state.brush.bg = program_state
-                    .canvas
-                    .get_bg_color(program_state.cursor_position);
+                program_state.brush.character = Some(
+                    program_state
+                        .canvas
+                        .raw()
+                        .character(program_state.cursor_position),
+                );
+                program_state.brush.fg =
+                    Some(program_state.canvas.raw().fg(program_state.cursor_position));
+                program_state.brush.bg =
+                    Some(program_state.canvas.raw().bg(program_state.cursor_position));
                 program_state.input_mode = InputMode::Normal;
             }
             _ => (),

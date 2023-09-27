@@ -20,7 +20,7 @@ use std::{
 };
 
 use upaint::{
-    canvas::{AnsiImport, Canvas, CanvasOperation},
+    canvas::{Canvas, CanvasOperation},
     command_line::create_command_line_textarea,
     rendering::draw_frame,
     user_input::handle_user_input,
@@ -51,11 +51,9 @@ fn application(
         program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     };
-    let canvas_dimensions = program_state.canvas.get_dimensions();
-    program_state.cursor_position = (
-        canvas_dimensions.upper_left_index.0 + canvas_dimensions.rows as i64 / 2,
-        canvas_dimensions.upper_left_index.1 + canvas_dimensions.columns as i64 / 2,
-    );
+    // let canvas_dimensions = program_state.canvas.get_dimensions();
+    let canvas_area = program_state.canvas.raw().area();
+    program_state.cursor_position = canvas_area.center();
     program_state.focus_position = program_state.cursor_position;
     program_state.command_line = create_command_line_textarea();
     let program_state = Arc::new(Mutex::new(program_state));

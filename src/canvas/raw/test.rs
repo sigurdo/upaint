@@ -1,16 +1,15 @@
-use crate::canvas::AnsiExport;
 use ratatui::style::{Color, Modifier};
 
-use crate::canvas::{CanvasCell, CanvasIndex};
+use crate::canvas::raw::CanvasCell;
 
-use super::{AnsiImport, Canvas};
+use super::RawCanvas;
 
 mod import {
     use super::*;
     #[test]
     fn basic() {
         let ansi = "ab\nc".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 3);
 
@@ -22,8 +21,8 @@ mod import {
             *cell,
             CanvasCell {
                 character: 'a',
-                color: Color::Reset,
-                background_color: Color::Reset,
+                fg: Color::Reset,
+                bg: Color::Reset,
                 modifiers: Modifier::default(),
             }
         );
@@ -34,8 +33,8 @@ mod import {
             *cell,
             CanvasCell {
                 character: 'b',
-                color: Color::Reset,
-                background_color: Color::Reset,
+                fg: Color::Reset,
+                bg: Color::Reset,
                 modifiers: Modifier::default(),
             }
         );
@@ -46,8 +45,8 @@ mod import {
             *cell,
             CanvasCell {
                 character: 'c',
-                color: Color::Reset,
-                background_color: Color::Reset,
+                fg: Color::Reset,
+                bg: Color::Reset,
                 modifiers: Modifier::default(),
             }
         );
@@ -56,7 +55,7 @@ mod import {
     #[test]
     fn indents() {
         let ansi = "    a\n  b".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 2);
 
@@ -68,8 +67,8 @@ mod import {
             *cell,
             CanvasCell {
                 character: 'a',
-                color: Color::Reset,
-                background_color: Color::Reset,
+                fg: Color::Reset,
+                bg: Color::Reset,
                 modifiers: Modifier::default(),
             }
         );
@@ -80,8 +79,8 @@ mod import {
             *cell,
             CanvasCell {
                 character: 'b',
-                color: Color::Reset,
-                background_color: Color::Reset,
+                fg: Color::Reset,
+                bg: Color::Reset,
                 modifiers: Modifier::default(),
             }
         );
@@ -90,7 +89,7 @@ mod import {
     #[test]
     fn fg() {
         let ansi = "\u{1b}[31ma".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 1);
 
@@ -103,8 +102,8 @@ mod import {
                 &(0, 0),
                 &CanvasCell {
                     character: 'a',
-                    color: Color::Red,
-                    background_color: Color::Reset,
+                    fg: Color::Red,
+                    bg: Color::Reset,
                     modifiers: Modifier::default(),
                 }
             ))
@@ -114,7 +113,7 @@ mod import {
     #[test]
     fn bg() {
         let ansi = "\u{1b}[41ma".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 1);
 
@@ -127,8 +126,8 @@ mod import {
                 &(0, 0),
                 &CanvasCell {
                     character: 'a',
-                    color: Color::Reset,
-                    background_color: Color::Red,
+                    fg: Color::Reset,
+                    bg: Color::Red,
                     modifiers: Modifier::default(),
                 }
             ))
@@ -138,7 +137,7 @@ mod import {
     #[test]
     fn modifiers() {
         let ansi = "\u{1b}[1m\u{1b}[3m\u{1b}[4ma".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 1);
 
@@ -150,8 +149,8 @@ mod import {
                 &(0, 0),
                 &CanvasCell {
                     character: 'a',
-                    color: Color::Reset,
-                    background_color: Color::Reset,
+                    fg: Color::Reset,
+                    bg: Color::Reset,
                     modifiers: Modifier::BOLD | Modifier::ITALIC | Modifier::UNDERLINED,
                 }
             ))
@@ -161,7 +160,7 @@ mod import {
     #[test]
     fn reset() {
         let ansi = "\u{1b}[31m\u{1b}[41m\u{1b}[1m\u{1b}[3m\u{1b}[4ma\u{1b}[0mb".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 2);
 
@@ -173,8 +172,8 @@ mod import {
                 &(0, 0),
                 &CanvasCell {
                     character: 'a',
-                    color: Color::Red,
-                    background_color: Color::Red,
+                    fg: Color::Red,
+                    bg: Color::Red,
                     modifiers: Modifier::BOLD | Modifier::ITALIC | Modifier::UNDERLINED,
                 }
             ))
@@ -186,8 +185,8 @@ mod import {
                 &(0, 1),
                 &CanvasCell {
                     character: 'b',
-                    color: Color::Reset,
-                    background_color: Color::Reset,
+                    fg: Color::Reset,
+                    bg: Color::Reset,
                     modifiers: Modifier::default(),
                 }
             ))
@@ -197,7 +196,7 @@ mod import {
     #[test]
     fn reset_fg() {
         let ansi = "\u{1b}[31m\u{1b}[41m\u{1b}[1ma\u{1b}[39mb".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 2);
 
@@ -209,8 +208,8 @@ mod import {
                 &(0, 0),
                 &CanvasCell {
                     character: 'a',
-                    color: Color::Red,
-                    background_color: Color::Red,
+                    fg: Color::Red,
+                    bg: Color::Red,
                     modifiers: Modifier::BOLD,
                 }
             ))
@@ -222,8 +221,8 @@ mod import {
                 &(0, 1),
                 &CanvasCell {
                     character: 'b',
-                    color: Color::Reset,
-                    background_color: Color::Red,
+                    fg: Color::Reset,
+                    bg: Color::Red,
                     modifiers: Modifier::BOLD,
                 }
             ))
@@ -233,7 +232,7 @@ mod import {
     #[test]
     fn reset_bg() {
         let ansi = "\u{1b}[31m\u{1b}[41m\u{1b}[1ma\u{1b}[49mb".to_string();
-        let canvas = Canvas::from_ansi(ansi).unwrap();
+        let canvas = RawCanvas::from_ansi(ansi).unwrap();
 
         assert_eq!(canvas.cells.len(), 2);
 
@@ -245,8 +244,8 @@ mod import {
                 &(0, 0),
                 &CanvasCell {
                     character: 'a',
-                    color: Color::Red,
-                    background_color: Color::Red,
+                    fg: Color::Red,
+                    bg: Color::Red,
                     modifiers: Modifier::BOLD,
                 }
             ))
@@ -258,8 +257,8 @@ mod import {
                 &(0, 1),
                 &CanvasCell {
                     character: 'b',
-                    color: Color::Red,
-                    background_color: Color::Reset,
+                    fg: Color::Red,
+                    bg: Color::Reset,
                     modifiers: Modifier::BOLD,
                 }
             ))
@@ -269,7 +268,7 @@ mod import {
     #[test]
     fn no_underline_color() {
         let ansi = "\u{1b}[58;2;1ma".to_string();
-        let result = Canvas::from_ansi(ansi);
+        let result = RawCanvas::from_ansi(ansi);
         assert!(result.is_err());
     }
 }
@@ -282,7 +281,10 @@ mod import_export {
     #[test]
     fn basic() {
         let input = "abc".to_string();
-        let output = Canvas::from_ansi(input.clone()).unwrap().to_ansi().unwrap();
+        let output = RawCanvas::from_ansi(input.clone())
+            .unwrap()
+            .to_ansi()
+            .unwrap();
         assert_eq!(output, format!("{SET_COLORS_NORMAL}{input}\u{1b}[0m\n"));
     }
 }

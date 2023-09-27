@@ -51,9 +51,9 @@ pub enum InputMode {
 pub struct ProgramState<'a> {
     pub a: u64,
     pub input_mode: InputMode,
-    pub cursor_position: (i64, i64),                  // (row, column)
-    pub cursor_position_previous: Option<(i64, i64)>, // (row, column)
-    pub focus_position: (i64, i64),                   // (row, column)
+    pub cursor_position: (i16, i16),                  // (row, column)
+    pub cursor_position_previous: Option<(i16, i16)>, // (row, column)
+    pub focus_position: (i16, i16),                   // (row, column)
     pub canvas_visible: CanvasRect,
     pub canvas: Canvas,
     pub chosen_color: Option<Color>,

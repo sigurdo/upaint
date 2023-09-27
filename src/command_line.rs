@@ -4,7 +4,6 @@ use ratatui::text::{self, Line, Span, Text};
 use ratatui::widgets::{Paragraph, Widget};
 use ratatui_textarea::{CursorMove, Input, TextArea};
 
-use crate::canvas::AnsiExport;
 use crate::{ErrorCustom, InputMode, ProgramState, ResultCustom};
 
 #[derive(Clone)]
@@ -31,9 +30,9 @@ impl<'a> Default for CommandLine<'a> {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct CommandLineWidget<'a> {
-    pub textarea: TextArea<'a>,
+    pub textarea: &'a TextArea<'a>,
     pub active: bool,
 }
 

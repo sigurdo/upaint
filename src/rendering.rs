@@ -13,7 +13,7 @@ use ratatui::{
 use std::io::{self};
 
 use crate::{
-    canvas::{calculate_canvas_render_translation, rect::CanvasRect, CanvasIndex, CanvasWidget},
+    canvas::{rect::CanvasRect, CanvasIndex},
     command_line::CommandLineWidget,
     status_bar::StatusBar,
     InputMode, ProgramState, ResultCustom,
@@ -92,18 +92,22 @@ pub fn draw_frame(
         let inner_area = block.inner(chunks[0]);
         f.render_widget(block, canvas_chunk);
 
-        let canvas_render_translation = calculate_canvas_render_translation(
-            &program_state.canvas,
-            program_state.focus_position,
-            &inner_area,
-        );
+        // let canvas_render_translation = calculate_canvas_render_translation(
+        //     &program_state.canvas,
+        //     program_state.focus_position,
+        //     &inner_area,
+        // );
 
-        let canvas_visible = CanvasRect {
-            row: 0 - canvas_render_translation.0,
-            column: 0 - canvas_render_translation.1,
-            rows: inner_area.height as u64,
-            columns: inner_area.width as u64,
-        };
+        // let canvas_visible = CanvasRect {
+        //     row: 0 - canvas_render_translation.0,
+        //     column: 0 - canvas_render_translation.1,
+        //     rows: inner_area.height as u64,
+        //     columns: inner_area.width as u64,
+        // };
+
+        let mut canvas = program_state.canvas.widget();
+        canvas.focus = program_state.focus_position;
+        let canvas_visible = canvas.visible(inner_area);
 
         match program_state.input_mode {
             InputMode::Command => (),
@@ -125,26 +129,21 @@ pub fn draw_frame(
                 }
 
                 program_state.canvas_visible = canvas_visible;
+                canvas.cursor = Some(program_state.cursor_position);
 
-                {
-                    let cursor_x = inner_area.x as i64
-                        + program_state.cursor_position.1
-                        + canvas_render_translation.1;
-                    let cursor_y = inner_area.y as i64
-                        + program_state.cursor_position.0
-                        + canvas_render_translation.0;
-                    f.set_cursor(cursor_x as u16, cursor_y as u16);
-                }
+                // {
+                //     let cursor_x = inner_area.x as i16
+                //         + program_state.cursor_position.1
+                //         + canvas_render_translation.1;
+                //     let cursor_y = inner_area.y as i16
+                //         + program_state.cursor_position.0
+                //         + canvas_render_translation.0;
+                //     f.set_cursor(cursor_x as u16, cursor_y as u16);
+                // }
             }
         }
 
-        f.render_widget(
-            CanvasWidget {
-                canvas: program_state.canvas.clone(),
-                render_translation: canvas_render_translation,
-            },
-            inner_area,
-        );
+        f.render_widget(canvas, inner_area);
 
         let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(
             program_state
@@ -161,7 +160,7 @@ pub fn draw_frame(
 
         f.render_widget(
             CommandLineWidget {
-                textarea: program_state.command_line.clone(),
+                textarea: &program_state.command_line,
                 active: command_line_active,
             },
             command_line_chunk,
