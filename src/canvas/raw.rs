@@ -29,6 +29,10 @@ impl CanvasCell {
         cell.character = character;
         cell
     }
+
+    fn has_sgr_effects(&self) -> bool {
+        self.fg != Color::Reset || self.bg != Color::Reset || self.modifiers != Modifier::empty()
+    }
 }
 
 const DEFAULT_CHARACTER: char = ' ';

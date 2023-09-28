@@ -11,6 +11,9 @@ use crate::{canvas::raw::CanvasIndex, ErrorCustom, ResultCustom};
 
 use super::{CanvasCell, RawCanvas};
 
+#[cfg(test)]
+mod test;
+
 impl RawCanvas {
     pub fn from_ansi(ansi: String) -> ResultCustom<Self>
     where
