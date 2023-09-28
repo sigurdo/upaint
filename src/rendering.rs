@@ -141,7 +141,6 @@ pub fn draw_frame(
         );
 
         if let InputMode::ColorPicker(_) = program_state.input_mode {
-            // let block =
             f.render_widget(program_state.color_picker.widget(), color_picker_chunk);
         }
     })?;

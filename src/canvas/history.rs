@@ -36,7 +36,7 @@ impl UndoRedoCanvas {
 
     /// Rebuilds `self.cells` from `self.cells_initial` by applying all commits in `self.commits`
     fn rebuild(&mut self) {
-        self.current = self.current.clone();
+        self.current = self.initial.clone();
         for commit in self.commits.clone() {
             self.apply_commit(&commit);
         }

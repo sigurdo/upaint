@@ -34,8 +34,8 @@ impl<'a> CanvasWidget<'a> {
     pub fn visible(&self, area: Rect) -> CanvasRect {
         let (row_to_y_translation, column_to_x_translation) = self.render_translation(area);
         CanvasRect {
-            row: 0 - row_to_y_translation,
-            column: 0 - column_to_x_translation,
+            row: area.y as i16 - row_to_y_translation,
+            column: area.x as i16 - column_to_x_translation,
             rows: area.height,
             columns: area.width,
         }
