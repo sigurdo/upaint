@@ -10,15 +10,15 @@ use ratatui::{
     widgets::canvas::Canvas,
 };
 
-use crate::ResultCustom;
+use crate::{ErrorCustom, ResultCustom};
 
-use super::{CanvasCell, RawCanvas};
+use super::{CanvasCell, CanvasIndex, RawCanvas};
 
 #[cfg(test)]
 mod test;
 
 impl RawCanvas {
-    pub fn to_ansi(&self) -> ResultCustom<String> {
+    pub fn to_ansi(&self, reset_sgr_effects_at_start: bool) -> ResultCustom<String> {
         fn reset_all_sgr_effects(result: &mut String) -> ResultCustom<()> {
             ResetColor.write_ansi(result)?;
             Ok(())
@@ -66,7 +66,7 @@ impl RawCanvas {
         }
 
         let mut result = String::new();
-        if self.cells.values().any(|cell| cell.has_sgr_effects()) {
+        if reset_sgr_effects_at_start {
             reset_all_sgr_effects(&mut result)?;
         };
         let default_cell = CanvasCell {
@@ -128,5 +128,39 @@ impl RawCanvas {
         }
         result.push('\n');
         Ok(result)
+    }
+
+    pub fn export_ansi(&self) -> ResultCustom<String> {
+        self.to_ansi(true)
+    }
+}
+
+#[derive(Debug)]
+pub enum TxtExportError {
+    CellHasSgrEffects(CanvasIndex),
+    Other(ErrorCustom),
+}
+
+impl RawCanvas {
+    pub fn export_txt_preserve(&self) -> Result<String, TxtExportError> {
+        for (index, cell) in self.cells.iter() {
+            if cell.has_sgr_effects() {
+                return Err(TxtExportError::CellHasSgrEffects(*index));
+            }
+        }
+        match self.to_ansi(false) {
+            Ok(txt) => Ok(txt),
+            Err(e) => Err(TxtExportError::Other(e)),
+        }
+    }
+
+    pub fn export_txt_decolorize(&self) -> ResultCustom<String> {
+        let mut canvas = self.clone();
+        for (index, cell) in canvas.cells.iter_mut() {
+            cell.fg = Color::Reset;
+            cell.bg = Color::Reset;
+            cell.modifiers = Modifier::empty();
+        }
+        canvas.to_ansi(false)
     }
 }

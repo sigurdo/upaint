@@ -40,24 +40,24 @@ mod import_export {
     fn assert_preserved(input: &str) {
         let output = RawCanvas::from_ansi(input.to_string())
             .unwrap()
-            .to_ansi()
+            .export_ansi()
             .unwrap();
         assert_eq!(input, output);
     }
 
     #[test]
     fn basic() {
-        assert_preserved("abc\n");
+        assert_preserved(format!("{RESET_ALL}abc\n").as_str());
     }
 
     #[test]
     fn spacing() {
-        assert_preserved("  a     bc\n");
+        assert_preserved(format!("{RESET_ALL}  a     bc\n").as_str());
     }
 
     #[test]
     fn indents() {
-        assert_preserved("  a\n     bc\n");
+        assert_preserved(format!("{RESET_ALL}  a\n     bc\n").as_str());
     }
 
     #[test]
@@ -116,7 +116,7 @@ mod import_export {
     fn converts_basic_colors_to_indexed() {
         let input = format!("{RESET_ALL}\u{1b}[31ma{RESET_ALL}\n");
         let expected = format!("{RESET_ALL}{}a{RESET_ALL}\n", FG_INDEXED(1));
-        let output = RawCanvas::from_ansi(input).unwrap().to_ansi().unwrap();
+        let output = RawCanvas::from_ansi(input).unwrap().export_ansi().unwrap();
         assert_eq!(output, expected);
     }
 

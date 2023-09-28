@@ -1,8 +1,10 @@
 use std::collections::LinkedList;
 
-use crate::ResultCustom;
+use crate::{ErrorCustom, ResultCustom};
 
-use super::raw::{operations::CanvasOperation, rendering::CanvasWidget, RawCanvas};
+use super::raw::{
+    ansi_import::AnsiImportError, operations::CanvasOperation, rendering::CanvasWidget, RawCanvas,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct CanvasCommit {
@@ -77,18 +79,48 @@ impl UndoRedoCanvas {
     }
 
     pub fn to_ansi(&self) -> ResultCustom<String> {
-        self.current.to_ansi()
+        self.current.to_ansi(true)
     }
 
     pub fn from_ansi(ansi: String) -> ResultCustom<Self>
     where
         Self: Sized,
     {
-        let canvas = RawCanvas::from_ansi(ansi)?;
-        let mut result = Self::default();
-        result.initial = canvas.clone();
-        result.current = canvas;
-        Ok(result)
+        match RawCanvas::from_ansi(ansi) {
+            Ok(canvas) => {
+                let mut result = Self::default();
+                result.initial = canvas.clone();
+                result.current = canvas;
+                Ok(result)
+            }
+            Err(e) => match e {
+                AnsiImportError::IllegalCharacter((row, column)) => {
+                    Err(ErrorCustom::String(format!(
+                        "ANSI file contains an illegal character on line {row}, column {column}"
+                    )))
+                }
+                AnsiImportError::IllegalEscapeSequence((row, column)) => {
+                    Err(ErrorCustom::String(format!(
+                        "ANSI file contains an illegal escape sequence on line {row}, collumn {column}"
+                    )))
+                }
+                AnsiImportError::UnfinishedEscapeSequence((row, column)) => {
+                    Err(ErrorCustom::String(format!(
+                        "ANSI file contains an unfinished escape sequence on line {row}, collumn {column}"
+                    )))
+                }
+                AnsiImportError::BadSgrSequence((row, column)) => {
+                    Err(ErrorCustom::String(format!(
+                        "ANSI file contains a bad SGR escape sequence on line {row}, collumn {column}"
+                    )))
+                }
+                AnsiImportError::UnsupportedSgrSequence((row, column)) => {
+                    Err(ErrorCustom::String(format!(
+                        "ANSI file contains an unsupported SGR escape sequence on line {row}, collumn {column}"
+                    )))
+                }
+            },
+        }
     }
 
     pub fn widget(&self) -> CanvasWidget {

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crossterm::{
     style::{
         Attribute as CAttribute, Attributes as CAttributes, Color as CColor, Colored as CColored,
@@ -14,35 +16,56 @@ use super::{CanvasCell, RawCanvas};
 #[cfg(test)]
 mod test;
 
+#[derive(Debug)]
+pub enum AnsiImportError {
+    IllegalCharacter(CanvasIndex),
+    IllegalEscapeSequence(CanvasIndex),
+    UnfinishedEscapeSequence(CanvasIndex),
+    BadSgrSequence(CanvasIndex),
+    UnsupportedSgrSequence(CanvasIndex),
+}
+
+impl Display for AnsiImportError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
+}
+
 impl RawCanvas {
-    pub fn from_ansi(ansi: String) -> ResultCustom<Self>
+    pub fn from_ansi_or_txt(
+        ansi: String,
+        allow_sgr_sequences: bool,
+    ) -> Result<Self, AnsiImportError>
     where
         Self: Sized,
     {
         fn escape_sequence(
             character: char,
-            i: usize,
+            index: CanvasIndex,
             characters: &mut std::iter::Enumerate<std::str::Chars>,
             fg_color: &mut Color,
             bg_color: &mut Color,
             modifiers: &mut Modifier,
-        ) -> ResultCustom<()> {
-            fn sgr_set_color(values: &mut std::str::Split<char>, i: usize) -> ResultCustom<Color> {
+        ) -> Result<(), AnsiImportError> {
+            fn sgr_set_color(
+                values: &mut std::str::Split<char>,
+                index: CanvasIndex,
+            ) -> Result<Color, AnsiImportError> {
                 let Some(second_value) = values.next() else {
-                                return Err(ErrorCustom::String(format!("SGR sequence missing second argument at character {}", i)));
+                                return Err(AnsiImportError::BadSgrSequence(index));
                             };
                 let second_value = second_value.parse::<u64>().unwrap();
                 match second_value {
                     5 => {
                         let Some(third_value) = values.next() else {
-                                        return Err(ErrorCustom::String(format!("SGR sequence missing third argument at character {}", i)));
+                                        return Err(AnsiImportError::BadSgrSequence(index));
                                     };
                         let third_value = third_value.parse::<u8>().unwrap();
                         return Ok(Color::Indexed(third_value as u8));
                     }
                     2 => {
                         let (Some(r), Some(g), Some(b)) = (values.next(), values.next(), values.next()) else {
-                                        return Err(ErrorCustom::String(format!("SGR sequence missing RGB arguments at character {}", i)));
+                                        return Err(AnsiImportError::BadSgrSequence(index));
                                     };
                         return Ok(Color::Rgb(
                             r.parse::<u8>().unwrap(),
@@ -51,10 +74,7 @@ impl RawCanvas {
                         ));
                     }
                     _ => {
-                        return Err(ErrorCustom::String(format!(
-                            "SGR sequence with illegal second argument at character {}",
-                            i
-                        )));
+                        return Err(AnsiImportError::BadSgrSequence(index));
                     }
                 };
             }
@@ -63,8 +83,8 @@ impl RawCanvas {
             match result {
                 // Only allow CSI sequences
                 Some((_i, '[')) => (),
-                Some((_i, character)) => return Err(ErrorCustom::String(format!("Illegal escape sequence at character {}, only SGR sequences (ESC [ ... m) are allowed", i))),
-                None => return Err(ErrorCustom::String(format!("Unfinished escape sequence at character {}", i))),
+                Some((_i, character)) => return Err(AnsiImportError::IllegalEscapeSequence(index)),
+                None => return Err(AnsiImportError::UnfinishedEscapeSequence(index)),
             }
             let mut sgr_sequence = String::new();
             loop {
@@ -78,21 +98,16 @@ impl RawCanvas {
                             // Add legal character to `sgr_sequence`
                             sgr_sequence.push(character);
                         } else {
-                            return Err(ErrorCustom::String(format!("Illegal escape sequence at character {}, only SGR sequences (ESC [ ... m) are allowed", i)));
+                            return Err(AnsiImportError::IllegalEscapeSequence(index));
                         }
                     }
-                    None => {
-                        return Err(ErrorCustom::String(format!(
-                            "Unfinished escape sequence at character {}",
-                            i
-                        )))
-                    }
+                    None => return Err(AnsiImportError::UnfinishedEscapeSequence(index)),
                 }
             }
 
             let mut values = sgr_sequence.split(';');
             let Some(first_value) = values.next() else {
-                            return Err(ErrorCustom::String(format!("Empty SGR sequence at character {}", i)));
+                            return Err(AnsiImportError::BadSgrSequence(index));
                         };
             let first_value = first_value.parse::<u64>().unwrap();
             match first_value {
@@ -142,15 +157,12 @@ impl RawCanvas {
                 105 => *bg_color = Color::LightMagenta,
                 106 => *bg_color = Color::LightCyan,
                 107 => *bg_color = Color::White,
-                38 => *fg_color = sgr_set_color(&mut values, i)?,
+                38 => *fg_color = sgr_set_color(&mut values, index)?,
                 39 => *fg_color = Color::Reset,
-                48 => *bg_color = sgr_set_color(&mut values, i)?,
+                48 => *bg_color = sgr_set_color(&mut values, index)?,
                 49 => *bg_color = Color::Reset,
                 _ => {
-                    return Err(ErrorCustom::String(format!(
-                        "SGR sequence with illegal first argument at character {}",
-                        i
-                    )));
+                    return Err(AnsiImportError::UnsupportedSgrSequence(index));
                 }
             };
             Ok(())
@@ -178,11 +190,11 @@ impl RawCanvas {
                         canvas_index.0 += 1;
                         continue;
                     }
-                    '\u{1b}' => {
+                    '\u{1b}' if allow_sgr_sequences => {
                         // Escape sequence
                         escape_sequence(
                             character,
-                            i,
+                            canvas_index,
                             &mut characters,
                             &mut fg_color,
                             &mut bg_color,
@@ -190,7 +202,7 @@ impl RawCanvas {
                         )?;
                     }
                     _ => {
-                        return Err(ErrorCustom::String("Not allowed".to_string()));
+                        return Err(AnsiImportError::IllegalCharacter(canvas_index));
                     }
                 }
                 continue;
@@ -210,5 +222,32 @@ impl RawCanvas {
             canvas_index.1 += 1;
         }
         Ok(canvas)
+    }
+
+    pub fn from_ansi(ansi: String) -> Result<Self, AnsiImportError>
+    where
+        Self: Sized,
+    {
+        Self::from_ansi_or_txt(ansi, true)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TxtImportError {
+    IllegalCharacter(CanvasIndex),
+}
+
+impl RawCanvas {
+    pub fn from_txt(txt: String) -> Result<Self, TxtImportError> {
+        match Self::from_ansi_or_txt(txt, false) {
+            Ok(imported) => Ok(imported),
+            Err(AnsiImportError::IllegalCharacter(index)) => {
+                Err(TxtImportError::IllegalCharacter(index))
+            }
+            Err(e) => panic!(
+                "from_ansi_or_txt() returned an error that should not be possible without allowing SGR sequences: {:?}",
+                e
+            ),
+        }
     }
 }

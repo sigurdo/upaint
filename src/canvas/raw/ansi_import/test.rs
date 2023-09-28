@@ -1,6 +1,6 @@
 use ratatui::style::{Color, Modifier};
 
-use crate::canvas::raw::{CanvasCell, RawCanvas};
+use crate::canvas::raw::{ansi_import::TxtImportError, CanvasCell, RawCanvas};
 
 #[test]
 fn basic() {
@@ -357,5 +357,30 @@ fn bg_rgb() {
                 modifiers: Modifier::default(),
             }
         ))
+    );
+}
+
+#[test]
+fn txt() {
+    let txt = "a   b\n  c\n".to_string();
+    let canvas = RawCanvas::from_txt(txt).unwrap();
+
+    assert_eq!(canvas.cells.len(), 3);
+
+    let mut cells = canvas.cells.iter();
+
+    assert_eq!(cells.next(), Some((&(0, 0), &CanvasCell::from_char('a'),)));
+    assert_eq!(cells.next(), Some((&(0, 4), &CanvasCell::from_char('b'),)));
+    assert_eq!(cells.next(), Some((&(1, 2), &CanvasCell::from_char('c'),)));
+}
+
+#[test]
+fn txt_with_sgr() {
+    let txt = "a   \u{1b}[38;5;20mb\n  c\n".to_string();
+    let result = RawCanvas::from_txt(txt);
+
+    assert_eq!(
+        result.unwrap_err(),
+        TxtImportError::IllegalCharacter((0, 4))
     );
 }
