@@ -8,6 +8,7 @@ pub mod canvas;
 pub mod brush;
 pub mod color_picker;
 pub mod command_line;
+pub mod file_formats;
 pub mod rendering;
 pub mod status_bar;
 pub mod user_input;
