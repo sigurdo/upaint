@@ -30,7 +30,6 @@ use upaint::{
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct UpaintCli {
-    #[arg(short, long)]
     ansi_file: Option<String>,
 }
 
