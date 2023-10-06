@@ -112,7 +112,7 @@ mod commands {
             };
             let ansi_output = program_state.canvas.to_ansi()?;
             match std::fs::write(file_name, ansi_output) {
-                Err(e) => return Err(e.to_string()),
+                Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
                 _ => (),
             }
             Ok(())
@@ -126,7 +126,7 @@ mod commands {
         fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
             let ansi_output = program_state.canvas.to_ansi()?;
             match std::fs::write(&self.filename, ansi_output) {
-                Err(e) => return Err(e.to_string()),
+                Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
                 _ => (),
             }
             program_state.last_saved_revision = program_state.canvas.get_current_revision();
@@ -142,7 +142,7 @@ mod commands {
             };
             let ansi_output = program_state.canvas.to_ansi()?;
             match std::fs::write(file_name, ansi_output) {
-                Err(e) => return Err(e.to_string()),
+                Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
                 _ => (),
             }
             program_state.last_saved_revision = program_state.canvas.get_current_revision();
