@@ -5,6 +5,7 @@ use std::fmt::Display;
 
 pub mod canvas;
 // pub mod program_state;
+pub mod actions;
 pub mod brush;
 pub mod color_picker;
 pub mod command_line;
