@@ -258,6 +258,13 @@ impl Default for Config {
                 ),
                 (
                     Keystroke {
+                        code: KeyCode::Char('p'),
+                        modifiers: KeyModifiers::empty(),
+                    },
+                    UserAction::ModePipette,
+                ),
+                (
+                    Keystroke {
                         code: KeyCode::Char(':'),
                         modifiers: KeyModifiers::empty(),
                     },
