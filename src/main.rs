@@ -20,6 +20,7 @@ use std::{
 };
 
 use upaint::{
+    actions::UserAction,
     canvas::{Canvas, CanvasOperation},
     command_line::create_command_line_textarea,
     rendering::draw_frame,
@@ -50,6 +51,8 @@ fn application(
         program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     };
+    let a = UserAction::CursorLeft;
+
     // let canvas_dimensions = program_state.canvas.get_dimensions();
     let canvas_area = program_state.canvas.raw().area();
     program_state.cursor_position = canvas_area.center();

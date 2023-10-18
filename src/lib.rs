@@ -1,6 +1,7 @@
 use ratatui::style::Modifier;
 use ratatui::{prelude::Rect, style::Color};
 use ratatui_textarea::TextArea;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 pub mod canvas;
@@ -9,17 +10,19 @@ pub mod actions;
 pub mod brush;
 pub mod color_picker;
 pub mod command_line;
+pub mod config;
 pub mod file_formats;
 pub mod rendering;
 pub mod status_bar;
 pub mod user_input;
 
+use crate::config::Config;
 use brush::Brush;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
 use command_line::CommandLine;
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Direction {
     Left,
     #[default]
@@ -28,7 +31,7 @@ pub enum Direction {
     Down,
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Ground {
     #[default]
     Foreground,
@@ -67,6 +70,7 @@ pub struct ProgramState<'a> {
     pub last_saved_revision: u64,
     pub user_feedback: Option<String>,
     pub exit: bool,
+    pub config: Config,
 }
 
 use std::{

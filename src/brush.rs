@@ -39,6 +39,23 @@ impl Brush {
         }
     }
 
+    pub fn paint_modifiers(&self, canvas: &mut Canvas, index: CanvasIndex) {
+        if let Some(modifiers) = self.modifiers {
+            canvas.create_commit(vec![CanvasOperation::SetModifiers(index, modifiers)]);
+        }
+    }
+
+    pub fn paint_fg_bg(&self, canvas: &mut Canvas, index: CanvasIndex) {
+        let mut operations = vec![];
+        if let Some(fg) = self.fg {
+            operations.push(CanvasOperation::SetFgColor(index, fg));
+        }
+        if let Some(bg) = self.bg {
+            operations.push(CanvasOperation::SetBgColor(index, bg));
+        }
+        canvas.create_commit(operations);
+    }
+
     pub fn paint(&self, canvas: &mut Canvas, index: CanvasIndex) {
         let mut operations = vec![];
         if let Some(character) = self.character {

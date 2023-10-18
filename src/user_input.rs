@@ -1,13 +1,16 @@
+use brush::BrushApply;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseEventKind};
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
 use ratatui_textarea::{CursorMove, TextArea};
 use std::sync::mpsc::{self};
 
 use crate::{
+    actions::{brush, cursor::MoveCursor, pan::Pan, Action, PipetteTake, UserAction},
     brush::Brush,
     canvas::CanvasOperation,
     color_picker::ColorPicker,
     command_line::{create_command_line_textarea, execute_command},
+    config::{BrushComponent, Keystroke},
     Direction, Ground, InputMode, ProgramState, ResultCustom,
 };
 
@@ -49,149 +52,49 @@ pub fn handle_user_input_command_mode(
     Ok(())
 }
 
-fn cursor_left(program_state: &mut ProgramState, cells: i16) {
-    program_state.cursor_position.1 -= cells;
-    let outside_edge =
-        program_state.canvas_visible.first_column() - program_state.cursor_position.1;
-    if outside_edge > 0 {
-        program_state.focus_position.1 -= outside_edge;
-        program_state.canvas_visible.column -= outside_edge;
-    }
-}
-
-fn cursor_right(program_state: &mut ProgramState, cells: i16) {
-    program_state.cursor_position.1 += cells;
-    let outside_edge = program_state.cursor_position.1 - program_state.canvas_visible.last_column();
-    if outside_edge > 0 {
-        program_state.focus_position.1 += outside_edge;
-        program_state.canvas_visible.column += outside_edge;
-    }
-}
-
-fn cursor_up(program_state: &mut ProgramState, cells: i16) {
-    program_state.cursor_position.0 -= cells;
-    let outside_edge = program_state.canvas_visible.first_row() - program_state.cursor_position.0;
-    if outside_edge > 0 {
-        program_state.focus_position.0 -= outside_edge;
-        program_state.canvas_visible.row -= outside_edge;
-    }
-}
-
-fn cursor_down(program_state: &mut ProgramState, cells: i16) {
-    program_state.cursor_position.0 += cells;
-    let outside_edge = program_state.cursor_position.0 - program_state.canvas_visible.last_row();
-    if outside_edge > 0 {
-        program_state.focus_position.0 += outside_edge;
-        program_state.canvas_visible.row += outside_edge;
-    }
-}
-
-fn focus_left(program_state: &mut ProgramState, cells: i16) {
-    program_state.focus_position.1 -= cells;
-}
-
-fn focus_right(program_state: &mut ProgramState, cells: i16) {
-    program_state.focus_position.1 += cells;
-}
-
-fn focus_up(program_state: &mut ProgramState, cells: i16) {
-    program_state.focus_position.0 -= cells;
-}
-
-fn focus_down(program_state: &mut ProgramState, cells: i16) {
-    program_state.focus_position.0 += cells;
-}
-
 pub fn handle_user_input_normal_mode(
     event: Event,
     program_state: &mut ProgramState,
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => {
-            match e.code {
-                KeyCode::Char(':') => {
-                    program_state.command_line = create_command_line_textarea();
-                    program_state.input_mode = InputMode::Command;
+            if let Some(action) = program_state.config.normal_mode_action(&Keystroke::from(e)) {
+                action.clone().execute(program_state);
+            } else if let Some(direction) = program_state.config.direction_keys.direction(&e.code) {
+                let mut cells = 1;
+                if e.modifiers.contains(KeyModifiers::SHIFT) {
+                    cells = 5;
+                } else if let KeyCode::Char(character) = e.code {
+                    if character.is_uppercase() {
+                        cells = 5;
+                    }
+                };
+                if e.modifiers.contains(KeyModifiers::CONTROL) {
+                    // For some reason, crossterm provides no way to distinguish a ctrl keystroke from a ctrl+shift
+                    // keystroke, meaning that `ctrl+shift+direction key` results in panning only 1 cell.
+                    Pan {
+                        direction: direction,
+                        cells: cells,
+                    }
+                    .execute(program_state);
+                } else {
+                    MoveCursor {
+                        direction: direction,
+                        cells: cells,
+                    }
+                    .execute(program_state);
                 }
-                KeyCode::Char('o') => {
-                    program_state.input_mode = InputMode::ChangeBrush;
-                }
-                KeyCode::Char('h') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_left(program_state, 1)
-                }
-                KeyCode::Char('j') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_down(program_state, 1)
-                }
-                KeyCode::Char('J') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_down(program_state, 5)
-                }
-                KeyCode::Char('k') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_up(program_state, 1)
-                }
-                KeyCode::Char('K') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_up(program_state, 5)
-                }
-                KeyCode::Char('l') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_right(program_state, 1)
-                }
-                KeyCode::Char('L') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    focus_right(program_state, 5)
-                }
-                KeyCode::Char('h') | KeyCode::Left => cursor_left(program_state, 1),
-                KeyCode::Char('j') | KeyCode::Down => cursor_down(program_state, 1),
-                KeyCode::Char('k') | KeyCode::Up => cursor_up(program_state, 1),
-                KeyCode::Char('l') | KeyCode::Right => cursor_right(program_state, 1),
-                KeyCode::Char('H') => cursor_left(program_state, 5),
-                KeyCode::Char('J') => cursor_down(program_state, 5),
-                KeyCode::Char('K') => cursor_up(program_state, 5),
-                KeyCode::Char('L') => cursor_right(program_state, 5),
-                KeyCode::Char('n') => focus_left(program_state, 1),
-                KeyCode::Char('m') => focus_down(program_state, 1),
-                KeyCode::Char(',') => focus_up(program_state, 1),
-                KeyCode::Char('.') => focus_right(program_state, 1),
-                KeyCode::Char('u') => program_state.canvas.undo(),
-                KeyCode::Char('r') if e.modifiers.contains(KeyModifiers::CONTROL) => {
-                    program_state.canvas.redo()
-                }
-                KeyCode::Char('i') => {
-                    program_state.cursor_position_previous = None;
-                    program_state.input_mode = InputMode::Insert(Direction::Right);
-                }
-                KeyCode::Char('s') => {
-                    program_state.cursor_position_previous = None;
-                    program_state.input_mode = InputMode::ChooseInsertDirection;
-                }
-                KeyCode::Char('r') => {
-                    program_state.input_mode = InputMode::Replace;
-                }
-                KeyCode::Char('p') => {
-                    program_state.input_mode = InputMode::Pipette;
-                }
-                KeyCode::Char('f') => {
-                    program_state
-                        .brush
-                        .paint_fg(&mut program_state.canvas, program_state.cursor_position);
-                }
-                KeyCode::Char('d') => {
-                    program_state
-                        .brush
-                        .paint_bg(&mut program_state.canvas, program_state.cursor_position);
-                }
-                KeyCode::Char('g') => {
-                    program_state
-                        .brush
-                        .paint_character(&mut program_state.canvas, program_state.cursor_position);
-                }
-                KeyCode::Char(' ') => {
-                    program_state
-                        .brush
-                        .paint(&mut program_state.canvas, program_state.cursor_position);
-                }
-                KeyCode::Char(character) => {}
-                _ => {
-                    program_state.a += 1;
+            } else if let Some(component) = program_state.config.brush_keys.component(&e.code) {
+                match component {
+                    BrushComponent::Fg => BrushApply::Fg.execute(program_state),
+                    BrushComponent::Bg => BrushApply::Bg.execute(program_state),
+                    BrushComponent::Colors => BrushApply::Colors.execute(program_state),
+                    BrushComponent::Character => BrushApply::Character.execute(program_state),
+                    BrushComponent::All => BrushApply::All.execute(program_state),
+                    BrushComponent::Modifiers => BrushApply::Modifiers.execute(program_state),
                 }
             }
+            program_state.a += 1;
             if e.modifiers.contains(KeyModifiers::CONTROL) {
                 program_state.a += 100;
             }
@@ -214,11 +117,13 @@ fn handle_user_input_replace(event: Event, program_state: &mut ProgramState) -> 
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Char(character) => {
-                program_state.brush.paint_with_character(
-                    &mut program_state.canvas,
-                    program_state.cursor_position,
-                    character,
-                );
+                Brush {
+                    character: Some(character),
+                    fg: None,
+                    bg: None,
+                    modifiers: None,
+                }
+                .paint(&mut program_state.canvas, program_state.cursor_position);
                 program_state.input_mode = InputMode::Normal;
             }
             _ => (),
@@ -246,7 +151,7 @@ fn handle_user_input_color_picker(
                 }
                 program_state.input_mode = InputMode::Normal;
             }
-            KeyCode::Char('n') => {
+            KeyCode::Delete | KeyCode::Backspace => {
                 match ground {
                     Ground::Foreground => {
                         program_state.brush.fg = None;
@@ -279,24 +184,27 @@ fn handle_user_input_change_brush(
     event: Event,
     program_state: &mut ProgramState,
 ) -> ResultCustom<()> {
+    let brush_keys = program_state.config.brush_keys.clone();
     match event {
-        Event::Key(e) => match e.code {
-            KeyCode::Char('f') => {
-                program_state.color_picker = ColorPicker::new("FG Color", program_state.brush.fg);
-                program_state.input_mode = InputMode::ColorPicker(Ground::Foreground);
+        Event::Key(e) => match brush_keys.component(&e.code) {
+            Some(BrushComponent::Fg) => {
+                UserAction::ModeColorPickerFg.execute(program_state);
             }
-            KeyCode::Char('d') => {
-                program_state.color_picker = ColorPicker::new("BG Color", program_state.brush.bg);
-                program_state.input_mode = InputMode::ColorPicker(Ground::Background);
+            Some(BrushComponent::Bg) => {
+                UserAction::ModeColorPickerBg.execute(program_state);
             }
-            KeyCode::Char('g') => {
-                program_state.input_mode = InputMode::ChooseBrushCharacter;
+            Some(BrushComponent::Character) => {
+                UserAction::ModeChooseBrushCharacter.execute(program_state);
             }
-            KeyCode::Char('c') => {
-                program_state.brush = Brush::default();
-                program_state.input_mode = InputMode::Normal;
-            }
-            _ => (),
+            Some(BrushComponent::Modifiers) => {}
+            _ => match e.code {
+                KeyCode::Delete | KeyCode::Backspace => {
+                    // Clear brush
+                    program_state.brush = Brush::default();
+                    program_state.input_mode = InputMode::Normal;
+                }
+                _ => (),
+            },
         },
         _ => (),
     }
@@ -321,41 +229,34 @@ fn handle_user_input_choose_brush_character(
 }
 
 fn handle_user_input_pipette(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    let brush_keys = program_state.config.brush_keys.clone();
     match event {
-        Event::Key(e) => match e.code {
-            KeyCode::Char('g') => {
-                program_state.brush.character = Some(
-                    program_state
-                        .canvas
-                        .raw()
-                        .character(program_state.cursor_position),
-                );
+        Event::Key(e) => match brush_keys.component(&e.code) {
+            Some(BrushComponent::Character) => {
+                PipetteTake::Character.execute(program_state);
                 program_state.input_mode = InputMode::Normal;
             }
-            KeyCode::Char('f') => {
-                program_state.brush.fg =
-                    Some(program_state.canvas.raw().fg(program_state.cursor_position));
+            Some(BrushComponent::Fg) => {
+                PipetteTake::Fg.execute(program_state);
                 program_state.input_mode = InputMode::Normal;
             }
-            KeyCode::Char('d') => {
-                program_state.brush.bg =
-                    Some(program_state.canvas.raw().bg(program_state.cursor_position));
+            Some(BrushComponent::Bg) => {
+                PipetteTake::Bg.execute(program_state);
                 program_state.input_mode = InputMode::Normal;
             }
-            KeyCode::Char(' ') | KeyCode::Char('a') => {
-                program_state.brush.character = Some(
-                    program_state
-                        .canvas
-                        .raw()
-                        .character(program_state.cursor_position),
-                );
-                program_state.brush.fg =
-                    Some(program_state.canvas.raw().fg(program_state.cursor_position));
-                program_state.brush.bg =
-                    Some(program_state.canvas.raw().bg(program_state.cursor_position));
+            Some(BrushComponent::Colors) => {
+                PipetteTake::Fg.execute(program_state);
+                PipetteTake::Bg.execute(program_state);
                 program_state.input_mode = InputMode::Normal;
             }
-            _ => (),
+            Some(BrushComponent::All) => {
+                PipetteTake::Character.execute(program_state);
+                PipetteTake::Fg.execute(program_state);
+                PipetteTake::Bg.execute(program_state);
+                program_state.input_mode = InputMode::Normal;
+            }
+            Some(BrushComponent::Modifiers) => (),
+            None => (),
         },
         _ => (),
     }

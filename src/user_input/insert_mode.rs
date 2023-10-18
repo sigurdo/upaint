@@ -1,7 +1,7 @@
 use crate::{
+    actions::{cursor::MoveCursor, Action, UserAction},
     brush::Brush,
     canvas::CanvasOperation,
-    user_input::{cursor_down, cursor_left, cursor_right, cursor_up},
     Direction, InputMode, ProgramState, ResultCustom,
 };
 use crossterm::event::{Event, KeyCode, KeyEvent};
@@ -40,18 +40,20 @@ pub fn handle_user_input_insert_mode(
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Char(character) => {
-                program_state.brush.paint_with_character(
-                    &mut program_state.canvas,
-                    program_state.cursor_position,
-                    character,
-                );
+                Brush {
+                    character: Some(character),
+                    fg: None,
+                    bg: None,
+                    modifiers: None,
+                }
+                .paint(&mut program_state.canvas, program_state.cursor_position);
                 let painted_position = program_state.cursor_position;
 
                 match direction {
-                    Direction::Left => cursor_left(program_state, 1),
-                    Direction::Right => cursor_right(program_state, 1),
-                    Direction::Up => cursor_up(program_state, 1),
-                    Direction::Down => cursor_down(program_state, 1),
+                    Direction::Left => MoveCursor::left(1).execute(program_state),
+                    Direction::Right => MoveCursor::right(1).execute(program_state),
+                    Direction::Up => MoveCursor::up(1).execute(program_state),
+                    Direction::Down => MoveCursor::down(1).execute(program_state),
                 }
 
                 // if let Some(previous) = program_state.cursor_position_previous {
@@ -72,16 +74,12 @@ pub fn handle_user_input_insert_mode(
 
                 program_state.cursor_position_previous = Some(painted_position);
             }
-            KeyCode::Left => cursor_left(program_state, 1),
-            KeyCode::Down => cursor_down(program_state, 1),
-            KeyCode::Up => cursor_up(program_state, 1),
-            KeyCode::Right => cursor_right(program_state, 1),
             KeyCode::Backspace => {
                 match direction {
-                    Direction::Left => cursor_right(program_state, 1),
-                    Direction::Right => cursor_left(program_state, 1),
-                    Direction::Up => cursor_down(program_state, 1),
-                    Direction::Down => cursor_up(program_state, 1),
+                    Direction::Left => MoveCursor::right(1).execute(program_state),
+                    Direction::Right => MoveCursor::left(1).execute(program_state),
+                    Direction::Up => MoveCursor::down(1).execute(program_state),
+                    Direction::Down => MoveCursor::up(1).execute(program_state),
                 }
 
                 // program_state.brush.paint_with_character(
@@ -92,13 +90,21 @@ pub fn handle_user_input_insert_mode(
 
                 Brush {
                     character: Some(' '),
-                    fg: Some(Color::Reset),
-                    bg: Some(Color::Reset),
-                    modifiers: Some(Modifier::default()),
+                    fg: None,
+                    bg: None,
+                    modifiers: None,
                 }
                 .paint(&mut program_state.canvas, program_state.cursor_position);
             }
-            _ => (),
+            code => {
+                if let Some(direction) = program_state.config.direction_keys.direction(&code) {
+                    MoveCursor {
+                        direction: direction,
+                        cells: 1,
+                    }
+                    .execute(program_state);
+                }
+            }
         },
         _ => (),
     }

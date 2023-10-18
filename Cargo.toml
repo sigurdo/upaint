@@ -44,3 +44,11 @@ path = "src/test_colors.rs"
 [[bin]]
 name = "test_unicode_width"
 path = "src/test_unicode_width.rs"
+
+[[bin]]
+name = "test_crossterm"
+path = "src/test_crossterm.rs"
+
+[[bin]]
+name = "test_macros"
+path = "src/test_macros.rs"

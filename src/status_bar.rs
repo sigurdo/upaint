@@ -56,6 +56,8 @@ impl<'a> Widget for StatusBar<'a> {
             ),
             Span::raw(" Mode: "),
             Span::raw(mode),
+            // Span::raw(" a: "),
+            // Span::raw(self.program_state.a.to_string()),
         ])]);
         status_bar.render(area, buf);
     }
