@@ -1,6 +1,7 @@
 use std::{char::ToLowercase, collections::HashMap, default};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -165,10 +166,34 @@ impl Default for BrushKeys {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
+pub struct ColorTheme {
+    pub canvas_base: Style,
+    pub status_bar: Style,
+}
+
+impl ColorTheme {
+    pub fn monokai() -> Self {
+        ColorTheme {
+            canvas_base: Style::new(),
+            status_bar: Style::new()
+                .fg(Color::Rgb(0xb1, 0xb1, 0xb1))
+                .bg(Color::Rgb(0x39, 0x3a, 0x31)),
+        }
+    }
+}
+
+impl Default for ColorTheme {
+    fn default() -> Self {
+        Self::monokai()
+    }
+}
+
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Config {
     normal_mode_keybindings: HashMap<Keystroke, UserAction>,
     pub direction_keys: DirectionKeys,
     pub brush_keys: BrushKeys,
+    pub color_theme: ColorTheme,
 }
 
 impl Default for Config {
@@ -226,6 +251,13 @@ impl Default for Config {
                 ),
                 (
                     Keystroke {
+                        code: KeyCode::Char('t'),
+                        modifiers: KeyModifiers::empty(),
+                    },
+                    UserAction::BrushSwapFgBg,
+                ),
+                (
+                    Keystroke {
                         code: KeyCode::Char(':'),
                         modifiers: KeyModifiers::empty(),
                     },
@@ -248,6 +280,7 @@ impl Default for Config {
             ]),
             direction_keys: DirectionKeys::default(),
             brush_keys: BrushKeys::default(),
+            color_theme: ColorTheme::default(),
         }
     }
 }

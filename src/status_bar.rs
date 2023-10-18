@@ -1,4 +1,5 @@
 use ratatui::{
+    prelude::{Constraint, Layout},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Paragraph, Widget},
@@ -20,45 +21,82 @@ impl<'a> From<&'a ProgramState<'a>> for StatusBar<'a> {
 
 impl<'a> Widget for StatusBar<'a> {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        let brush_character = if let Some(character) = self.program_state.brush.character {
-            character
+        let title = if let Some(filename) = &self.program_state.open_file {
+            filename.to_owned()
         } else {
-            ' '
-        };
-        let brush_fg = if let Some(fg) = self.program_state.brush.fg {
-            fg
-        } else {
-            Color::Reset
-        };
-        let brush_bg = if let Some(bg) = self.program_state.brush.bg {
-            bg
-        } else {
-            Color::Reset
+            "New canvas".to_string()
         };
 
-        let mode = match self.program_state.input_mode {
-            InputMode::Normal => "NORMAL",
-            InputMode::ChooseInsertDirection => "CHOOSE INSERT DIRECTION",
-            InputMode::Insert(_) => "INSERT",
-            InputMode::Replace => "REPLACE",
-            InputMode::Command => "COMMAND",
-            InputMode::ChangeBrush => "CHANGE BRUSH",
-            InputMode::ColorPicker(_) => "COLOR PICKER",
-            InputMode::ChooseBrushCharacter => "CHOOSE BRUSH CHARACTER",
-            InputMode::Pipette => "PIPETTE",
-        };
+        let chunks = Layout::default()
+            .direction(ratatui::prelude::Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Min(16),
+                    Constraint::Max(3),
+                    Constraint::Max(2 + 1 + 2),
+                    Constraint::Max(3 + 5 + 1 + 5 + 1),
+                ]
+                .as_ref(),
+            )
+            .split(area);
 
-        let status_bar = Paragraph::new(vec![Line::from(vec![
-            Span::raw("Brush: ".to_string()),
+        let open_file = format!(
+            "{title}{}",
+            if self.program_state.last_saved_revision
+                == self.program_state.canvas.get_current_revision()
+            {
+                ""
+            } else {
+                " [+]"
+            }
+        );
+        let open_file = Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])])
+            .style(self.program_state.config.color_theme.status_bar);
+
+        let brush_character = Paragraph::new(vec![Line::from(vec![Span::raw(
+            if let Some(character) = self.program_state.brush.character {
+                format!("{character}")
+            } else {
+                format!("")
+            },
+        )])])
+        .style(self.program_state.config.color_theme.status_bar);
+
+        let brush_colors = Paragraph::new(vec![Line::from(vec![
             Span::styled(
-                String::from(brush_character),
-                Style::new().fg(brush_fg).bg(brush_bg),
+                "  ",
+                Style::new().bg(if let Some(fg) = self.program_state.brush.fg {
+                    fg
+                } else if let Some(bg) = self.program_state.config.color_theme.status_bar.bg {
+                    bg
+                } else {
+                    Color::Reset
+                }),
             ),
-            Span::raw(" Mode: "),
-            Span::raw(mode),
-            // Span::raw(" a: "),
-            // Span::raw(self.program_state.a.to_string()),
-        ])]);
-        status_bar.render(area, buf);
+            Span::raw(" "),
+            Span::styled(
+                "  ",
+                Style::new().bg(if let Some(bg) = self.program_state.brush.bg {
+                    bg
+                } else if let Some(bg) = self.program_state.config.color_theme.status_bar.bg {
+                    bg
+                } else {
+                    Color::Reset
+                }),
+            ),
+        ])])
+        .style(self.program_state.config.color_theme.status_bar);
+
+        let cursor_index = format!(
+            " │ {},{}",
+            self.program_state.cursor_position.0, self.program_state.cursor_position.1
+        );
+        let cursor_index = Paragraph::new(vec![Line::from(vec![Span::raw(cursor_index)])])
+            .style(self.program_state.config.color_theme.status_bar);
+
+        open_file.render(chunks[0], buf);
+        brush_character.render(chunks[1], buf);
+        brush_colors.render(chunks[2], buf);
+        cursor_index.render(chunks[3], buf);
     }
 }

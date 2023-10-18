@@ -76,3 +76,12 @@ impl Action for BrushApply {
         }
     }
 }
+
+pub struct BrushSwapFgBg {}
+impl Action for BrushSwapFgBg {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let fg = program_state.brush.fg;
+        program_state.brush.fg = program_state.brush.bg;
+        program_state.brush.bg = fg;
+    }
+}

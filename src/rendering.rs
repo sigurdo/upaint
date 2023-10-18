@@ -6,6 +6,7 @@ use crossterm::{
 use ratatui::{
     backend::CrosstermBackend,
     prelude::{Backend, Constraint, Layout, Rect},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Padding, Paragraph, Wrap},
     Frame, Terminal,
@@ -41,12 +42,14 @@ pub fn draw_frame(
             .constraints(
                 [
                     Constraint::Min(1), // Rest
+                    Constraint::Max(1), // Status bar
                     Constraint::Max(1), // Command line
                 ]
                 .as_ref(),
             )
             .split(f.size());
-        let command_line_chunk = chunks[1];
+        let status_bar_chunk = chunks[1];
+        let command_line_chunk = chunks[2];
         let chunks = Layout::default()
             .direction(ratatui::prelude::Direction::Horizontal)
             .constraints(
@@ -62,32 +65,25 @@ pub fn draw_frame(
             .direction(ratatui::prelude::Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Max(10), // Color picker
                     Constraint::Min(1),  // Rest
+                    Constraint::Max(10), // Color picker
                 ]
                 .as_ref(),
             )
-            .split(sidebar_chunk)[0];
+            .split(sidebar_chunk)[1];
         let chunks = Layout::default()
             .direction(ratatui::prelude::Direction::Vertical)
             .constraints(
                 [
                     Constraint::Min(1),                    // Canvas
                     Constraint::Max(user_feedback_height), // User feedback
-                    Constraint::Max(1),                    // Status bar
                 ]
                 .as_ref(),
             )
             .split(chunks[0]);
         let canvas_chunk = chunks[0];
         let user_feedback_chunk = chunks[1];
-        let status_bar_chunk = chunks[2];
-        let title = if let Some(filename) = &program_state.open_file {
-            filename.to_owned()
-        } else {
-            "New canvas".to_string()
-        };
-        let block = Block::default().title(title).borders(Borders::ALL);
+        let block = Block::default();
         let inner_area = block.inner(chunks[0]);
         f.render_widget(block, canvas_chunk);
 
@@ -132,13 +128,29 @@ pub fn draw_frame(
         let status_bar = StatusBar::from(&(*program_state));
         f.render_widget(status_bar, status_bar_chunk);
 
-        f.render_widget(
-            CommandLineWidget {
-                textarea: &program_state.command_line,
-                active: command_line_active,
-            },
-            command_line_chunk,
-        );
+        if command_line_active {
+            f.render_widget(
+                CommandLineWidget {
+                    textarea: &program_state.command_line,
+                    active: command_line_active,
+                },
+                command_line_chunk,
+            );
+        } else {
+            let input_mode = match program_state.input_mode {
+                InputMode::Insert(_) => "-- INSERT --",
+                InputMode::Replace => "-- REPLACE --",
+                InputMode::ChooseInsertDirection => "-- CHOOSE INSERT DIRECTION --",
+                InputMode::ChangeBrush => "-- CHANGE BRUSH --",
+                InputMode::ColorPicker(_) => "-- COLOR PICKER --",
+                InputMode::ChooseBrushCharacter => "-- CHOOSE BRUSH CHARACTER --",
+                InputMode::Pipette => "-- PIPETTE --",
+                _ => "",
+            };
+            let input_mode = Paragraph::new(vec![Line::from(vec![Span::raw(input_mode)])])
+                .style(Style::new().add_modifier(Modifier::BOLD));
+            f.render_widget(input_mode, command_line_chunk);
+        }
 
         if let InputMode::ColorPicker(_) = program_state.input_mode {
             f.render_widget(program_state.color_picker.widget(), color_picker_chunk);

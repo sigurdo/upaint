@@ -17,6 +17,8 @@ pub use mode::{
 };
 pub use pan::Pan;
 
+use self::brush::BrushSwapFgBg;
+
 pub trait Action {
     fn execute(&self, program_state: &mut ProgramState);
 }
@@ -84,6 +86,7 @@ generate_user_action_enum!(
     BrushApplyColors = BrushApply::Colors,
     BrushApplyCharacter = BrushApply::Character,
     BrushApplyAll = BrushApply::All,
+    BrushSwapFgBg = BrushSwapFgBg {},
     Undo = Undo {},
     Redo = Redo {},
     ModeCommand = ModeCommand {},

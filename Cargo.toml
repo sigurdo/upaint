@@ -7,7 +7,7 @@ default-run = "main"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ratatui = { version = "0.23.0", features = ["all-widgets"] }
+ratatui = { version = "0.23.0", features = ["all-widgets", "serde"] }
 anyhow = "1.0.75"
 crossterm = { version = "0.27.0", features = ["serde"] }
 clap = { version= "4.4.2", features = ["derive"] }
