@@ -10,7 +10,7 @@ use crate::{
     Direction, Ground, ProgramState,
 };
 
-#[derive(Hash, PartialEq, Eq, Clone, Deserialize, Serialize)]
+#[derive(Hash, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Keystroke {
     pub code: KeyCode,
     pub modifiers: KeyModifiers,
@@ -25,7 +25,82 @@ impl From<KeyEvent> for Keystroke {
     }
 }
 
-#[derive(Default, Clone, Deserialize, Serialize)]
+pub fn default_keybindings() -> HashMap<Keystroke, UserAction> {
+    HashMap::from([
+        (
+            Keystroke {
+                code: KeyCode::Char('d'), // Direction
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::ModeChooseInsertDirection,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('i'),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::ModeInsertRight,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('r'),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::ModeReplace,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('e'), // Edit
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::ModeChangeBrush,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::Undo,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('r'),
+                modifiers: KeyModifiers::CONTROL,
+            },
+            UserAction::Redo,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char(' '),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::BrushApplyAll,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('s'),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::BrushSwapFgBg,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char('p'),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::ModePipette,
+        ),
+        (
+            Keystroke {
+                code: KeyCode::Char(':'),
+                modifiers: KeyModifiers::empty(),
+            },
+            UserAction::ModeCommand,
+        ),
+    ])
+}
+
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
 pub enum DirectionKeys {
     #[default]
     HjklAndArrows,
@@ -126,7 +201,7 @@ pub enum BrushComponent {
     All,
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BrushKeys {
     pub fg: KeyCode,
     pub bg: KeyCode,
@@ -157,7 +232,7 @@ impl Default for BrushKeys {
     fn default() -> Self {
         BrushKeys {
             fg: KeyCode::Char('f'),
-            bg: KeyCode::Char('d'),
+            bg: KeyCode::Char('b'),
             character: KeyCode::Char('c'),
             modifiers: KeyCode::Char('m'),
             all: KeyCode::Char('a'),
@@ -165,7 +240,7 @@ impl Default for BrushKeys {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ColorTheme {
     pub canvas_base: Style,
     pub status_bar: Style,
@@ -188,6 +263,29 @@ impl Default for ColorTheme {
     }
 }
 
+macro_rules! color_theme_presets {
+    ($($variant:ident = $definition:expr),*,) => {
+        #[derive(Clone, Debug, Deserialize, Serialize)]
+        pub enum ColorThemePreset {
+            $(
+                $variant,
+            )*
+        }
+
+        impl From<ColorThemePreset> for ColorTheme {
+            fn from(value: ColorThemePreset) -> Self {
+                match value {
+                    $(
+                        ColorThemePreset::$variant => $definition
+                    )*
+                }
+            }
+        }
+    };
+}
+
+color_theme_presets!(Monokai = Self::monokai(),);
+
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Config {
     normal_mode_keybindings: HashMap<Keystroke, UserAction>,
@@ -199,92 +297,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            normal_mode_keybindings: HashMap::from([
-                (
-                    Keystroke {
-                        code: KeyCode::Char('s'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::ModeChooseInsertDirection,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('i'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::ModeInsertRight,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('r'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::ModeReplace,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('o'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::ModeChangeBrush,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('u'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::Undo,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('r'),
-                        modifiers: KeyModifiers::CONTROL,
-                    },
-                    UserAction::Redo,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char(' '),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::BrushApplyAll,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('t'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::BrushSwapFgBg,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('p'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::ModePipette,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char(':'),
-                        modifiers: KeyModifiers::empty(),
-                    },
-                    UserAction::ModeCommand,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('H'),
-                        modifiers: KeyModifiers::SHIFT,
-                    },
-                    UserAction::CursorLeftDoubleLong,
-                ),
-                (
-                    Keystroke {
-                        code: KeyCode::Char('L'),
-                        modifiers: KeyModifiers::SHIFT,
-                    },
-                    UserAction::CursorRightDoubleLong,
-                ),
-            ]),
+            normal_mode_keybindings: default_keybindings(),
             direction_keys: DirectionKeys::default(),
             brush_keys: BrushKeys::default(),
             color_theme: ColorTheme::default(),
@@ -296,4 +309,73 @@ impl Config {
     pub fn normal_mode_action(&self, keystroke: &Keystroke) -> Option<&UserAction> {
         self.normal_mode_keybindings.get(keystroke)
     }
+}
+
+impl From<ConfigFile> for Config {
+    fn from(value: ConfigFile) -> Self {
+        let mut keybindings_map: HashMap<Keystroke, UserAction> = default_keybindings();
+        if let Some(keybindings) = value.normal_mode_keybindings {
+            for keybinding in keybindings {
+                keybindings_map.insert(keybinding.keystroke, keybinding.action);
+            }
+        }
+
+        let direction_keys = if let Some(direction_keys) = value.direction_keys {
+            direction_keys
+        } else {
+            DirectionKeys::default()
+        };
+
+        let brush_keys = if let Some(brush_keys) = value.brush_keys {
+            brush_keys
+        } else {
+            BrushKeys::default()
+        };
+
+        let color_theme = if let Some(theme) = value.color_theme {
+            theme
+        } else if let Some(preset) = value.color_theme_preset {
+            ColorTheme::from(preset)
+        } else {
+            ColorTheme::default()
+        };
+
+        Self {
+            normal_mode_keybindings: keybindings_map,
+            direction_keys: direction_keys,
+            brush_keys: brush_keys,
+            color_theme: color_theme,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ConfigFileKeybinding {
+    keystroke: Keystroke,
+    action: UserAction,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ConfigFile {
+    normal_mode_keybindings: Option<Vec<ConfigFileKeybinding>>,
+    pub direction_keys: Option<DirectionKeys>,
+    pub brush_keys: Option<BrushKeys>,
+    pub color_theme: Option<ColorTheme>,
+    pub color_theme_preset: Option<ColorThemePreset>,
+}
+
+pub fn load_config() -> Config {
+    let mut config_file_path = dirs::config_dir().unwrap();
+    config_file_path.push("upaint");
+    config_file_path.push("upaint.toml");
+    let config = config::Config::builder()
+        .add_source(config::File::with_name(config_file_path.to_str().unwrap()))
+        .build()
+        .unwrap();
+
+    let config_file: ConfigFile = config.try_deserialize().unwrap();
+
+    let config = Config::from(config_file);
+
+    config
 }

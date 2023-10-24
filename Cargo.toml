@@ -19,6 +19,7 @@ hsv = "0.1.1"
 prisma = "0.1.1"
 angular-units = "0.2.4"
 unicode-width = "0.1.11"
+dirs = "5.0.1"
 
 
 [[bin]]

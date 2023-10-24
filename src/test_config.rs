@@ -1,8 +1,11 @@
+use std::path::PathBuf;
+
 use config::{Config, ConfigError, Environment, File};
 // use ;
 // use serde::Serialize;
 use crossterm::event::{KeyCode, KeyModifiers};
 use serde::{Deserialize, Serialize};
+use upaint::config::ConfigFile;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SpecialAction {
@@ -78,13 +81,27 @@ action = { GoOnToilet = {} }
 "##;
 
 fn main() {
-    let config = UpaintConfig::default();
-    let serialized = toml::to_string(&config).unwrap();
-    println!("{}", serialized);
-    let deserialized: UpaintConfig = toml::de::from_str(&input).unwrap();
-    println!("{:?}", deserialized);
+    // let config = UpaintConfig::default();
+    // let serialized = toml::to_string(&config).unwrap();
+    // println!("{}", serialized);
+    // let deserialized: UpaintConfig = toml::de::from_str(&input).unwrap();
+    // println!("{:?}", deserialized);
 
-    let config = upaint::config::Config::default();
-    let serialized = toml::to_string(&config).unwrap();
-    println!("{}", serialized);
+    // let config = upaint::config::Config::default();
+    // let serialized = toml::to_string(&config).unwrap();
+    // println!("{}", serialized);
+
+    // let config_file_path: PathBuf = [dirs::config_dir().unwrap(), "upaint"].iter().collect();
+
+    let mut config_file_path = dirs::config_dir().unwrap();
+    config_file_path.push("upaint");
+    config_file_path.push("upaint.toml");
+    let config = Config::builder()
+        .add_source(config::File::with_name(config_file_path.to_str().unwrap()))
+        .build()
+        .unwrap();
+
+    let config: ConfigFile = config.try_deserialize().unwrap();
+
+    dbg!(config);
 }

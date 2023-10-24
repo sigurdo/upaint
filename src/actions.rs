@@ -25,7 +25,7 @@ pub trait Action {
 
 macro_rules! generate_user_action_enum {
     ($($variant:ident = $action:expr),*,) => {
-        #[derive(Clone, Deserialize, Serialize)]
+        #[derive(Clone, Debug, Deserialize, Serialize)]
         pub enum UserAction {
             $(
                 $variant,
