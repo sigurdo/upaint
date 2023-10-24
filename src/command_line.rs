@@ -115,6 +115,7 @@ mod commands {
                 Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
                 _ => (),
             }
+            program_state.last_saved_revision = program_state.canvas.get_current_revision();
             Ok(())
         }
     }
