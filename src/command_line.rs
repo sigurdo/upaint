@@ -4,6 +4,8 @@ use ratatui::text::{self, Line, Span, Text};
 use ratatui::widgets::{Paragraph, Widget};
 use ratatui_textarea::{CursorMove, Input, TextArea};
 
+use crate::actions::session::{ForceQuit, Quit, Save, SaveAs, SaveQuit};
+use crate::actions::{Action, FallibleAction};
 use crate::{ErrorCustom, InputMode, ProgramState, ResultCustom};
 
 #[derive(Clone)]
@@ -73,89 +75,7 @@ fn save(program_state: &ProgramState) -> ResultCustom<()> {
     Ok(())
 }
 
-// Contains Ok(())) or Err(error_message)
-type ExecuteCommandResult = Result<(), String>;
-
-trait Command {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult;
-}
-
-mod commands {
-    use super::*;
-
-    pub struct Quit {}
-    impl Command for Quit {
-        fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
-            // Todo: check that no changes are made since last save (requires revision system)
-            if program_state.last_saved_revision == program_state.canvas.get_current_revision() {
-                program_state.exit = true;
-                Ok(())
-            } else {
-                Err(format!("Changes have been made since last save. Use :x to save changes and quit or :q! to quit without saving changes."))
-            }
-        }
-    }
-
-    pub struct ForceQuit {}
-    impl Command for ForceQuit {
-        fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
-            program_state.exit = true;
-            return Ok(());
-        }
-    }
-
-    pub struct Save {}
-    impl Command for Save {
-        fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
-            let Some(file_name) = &program_state.open_file else {
-                return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
-            };
-            let ansi_output = program_state.canvas.to_ansi()?;
-            match std::fs::write(file_name, ansi_output) {
-                Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
-                _ => (),
-            }
-            program_state.last_saved_revision = program_state.canvas.get_current_revision();
-            Ok(())
-        }
-    }
-
-    pub struct SaveAs {
-        pub filename: String,
-    }
-    impl Command for SaveAs {
-        fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
-            let ansi_output = program_state.canvas.to_ansi()?;
-            match std::fs::write(&self.filename, ansi_output) {
-                Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
-                _ => (),
-            }
-            program_state.last_saved_revision = program_state.canvas.get_current_revision();
-            Ok(())
-        }
-    }
-
-    pub struct SaveQuit {}
-    impl Command for SaveQuit {
-        fn execute(&self, program_state: &mut ProgramState) -> ExecuteCommandResult {
-            let Some(file_name) = &program_state.open_file else {
-                return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
-            };
-            let ansi_output = program_state.canvas.to_ansi()?;
-            match std::fs::write(file_name, ansi_output) {
-                Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
-                _ => (),
-            }
-            program_state.last_saved_revision = program_state.canvas.get_current_revision();
-            program_state.exit = true;
-            Ok(())
-        }
-    }
-}
-
 /// Executes the command stored in `program_state.command_line`
-///
-/// If the returned boolean is `true`, it should be treated as a request to exit the program.
 pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
     // Clear eventual old feedback
     program_state.user_feedback = None;
@@ -166,19 +86,22 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
         return Ok(());
     };
     let result = match command_name {
-        "q" => commands::Quit {}.execute(program_state),
-        "q!" => commands::ForceQuit {}.execute(program_state),
+        "q" => Quit {}.execute(program_state),
+        "q!" => {
+            ForceQuit {}.execute(program_state);
+            Ok(())
+        }
         "w" => {
             if let Some(filename) = command_split.next() {
-                commands::SaveAs {
+                SaveAs {
                     filename: filename.to_string(),
                 }
                 .execute(program_state)
             } else {
-                commands::Save {}.execute(program_state)
+                Save {}.execute(program_state)
             }
         }
-        "x" | "wq" => commands::SaveQuit {}.execute(program_state),
+        "x" | "wq" => SaveQuit {}.execute(program_state),
         command => Err(format!("Command not found: {}", command)),
     };
     match result {

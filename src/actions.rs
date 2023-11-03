@@ -7,6 +7,7 @@ pub mod cursor;
 pub mod misc;
 pub mod mode;
 pub mod pan;
+pub mod session;
 
 pub use brush::{BrushApply, PipetteTake};
 pub use cursor::MoveCursor;
@@ -23,16 +24,24 @@ pub trait Action {
     fn execute(&self, program_state: &mut ProgramState);
 }
 
-macro_rules! generate_user_action_enum {
-    ($($variant:ident = $action:expr),*,) => {
+// Contains Ok(()) or Err(error_message)
+type ExecuteActionResult = Result<(), String>;
+
+pub trait FallibleAction {
+    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult;
+}
+
+// #[macro_export]
+macro_rules! action_collection {
+    ($name:ident,$($variant:ident = $action:expr),*,) => {
         #[derive(Clone, Debug, Deserialize, Serialize)]
-        pub enum UserAction {
+        pub enum $name {
             $(
                 $variant,
             )*
         }
 
-        impl Action for UserAction {
+        impl Action for $name {
             fn execute(&self, program_state: &mut ProgramState) {
                 match self {
                     $(
@@ -46,7 +55,8 @@ macro_rules! generate_user_action_enum {
     };
 }
 
-generate_user_action_enum!(
+action_collection!(
+    UserAction,
     CursorLeft = MoveCursor::left(1),
     CursorRight = MoveCursor::right(1),
     CursorUp = MoveCursor::up(1),
