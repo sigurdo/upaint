@@ -4,7 +4,7 @@ use ratatui::text::{self, Line, Span, Text};
 use ratatui::widgets::{Paragraph, Widget};
 use ratatui_textarea::{CursorMove, Input, TextArea};
 
-use crate::actions::session::{ForceQuit, Quit, Save, SaveAs, SaveQuit};
+use crate::actions::session::{ForceQuit, LossySave, LossySaveAs, Quit, Save, SaveAs, SaveQuit};
 use crate::actions::{Action, FallibleAction};
 use crate::{ErrorCustom, InputMode, ProgramState, ResultCustom};
 
@@ -66,15 +66,6 @@ impl<'a> Widget for CommandLineWidget<'a> {
     }
 }
 
-fn save(program_state: &ProgramState) -> ResultCustom<()> {
-    let ansi_output = program_state.canvas.to_ansi()?;
-    let Some(file_name) = &program_state.open_file else {
-        return Err(ErrorCustom::String("No file open. Use save as instead (:w <filename>)".to_string()));
-    };
-    std::fs::write(file_name, ansi_output)?;
-    Ok(())
-}
-
 /// Executes the command stored in `program_state.command_line`
 pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
     // Clear eventual old feedback
@@ -99,6 +90,16 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
                 .execute(program_state)
             } else {
                 Save {}.execute(program_state)
+            }
+        }
+        "w!" => {
+            if let Some(filename) = command_split.next() {
+                LossySaveAs {
+                    filename: filename.to_string(),
+                }
+                .execute(program_state)
+            } else {
+                LossySave {}.execute(program_state)
             }
         }
         "x" | "wq" => SaveQuit {}.execute(program_state),

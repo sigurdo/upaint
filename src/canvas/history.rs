@@ -1,6 +1,6 @@
 use std::collections::LinkedList;
 
-use crate::{ErrorCustom, ResultCustom};
+use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::raw::{
     ansi_import::AnsiImportError, operations::CanvasOperation, rendering::CanvasWidget, RawCanvas,
@@ -78,8 +78,12 @@ impl UndoRedoCanvas {
         }
     }
 
-    pub fn to_ansi(&self) -> ResultCustom<String> {
-        self.current.to_ansi(true)
+    pub fn export(&self, format: FileFormat) -> ResultCustom<String> {
+        self.current.export(format)
+    }
+
+    pub fn export_lossy(&self, format: FileFormat) -> ResultCustom<String> {
+        self.current.export_lossy(format)
     }
 
     pub fn from_ansi(ansi: String) -> ResultCustom<Self>

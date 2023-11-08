@@ -1,6 +1,9 @@
 use ratatui::style::{Color, Modifier};
 
-use upaint::canvas::{Canvas, CanvasOperation};
+use upaint::{
+    canvas::{Canvas, CanvasOperation},
+    file_formats::FileFormat,
+};
 
 fn main() {
     let mut canvas = Canvas::default();
@@ -16,7 +19,7 @@ fn main() {
         CanvasOperation::AddModifier((2, 11), Modifier::UNDERLINED),
         CanvasOperation::AddModifier((2, 7), Modifier::UNDERLINED),
     ]);
-    println!("{}", canvas.to_ansi().unwrap());
-    dbg!(canvas.to_ansi().unwrap());
+    println!("{}", canvas.export(FileFormat::Ansi).unwrap());
+    dbg!(canvas.export(FileFormat::Ansi).unwrap());
     std::process::exit(0);
 }

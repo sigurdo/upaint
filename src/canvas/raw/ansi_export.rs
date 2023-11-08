@@ -10,7 +10,7 @@ use ratatui::{
     widgets::canvas::Canvas,
 };
 
-use crate::{ErrorCustom, ResultCustom};
+use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::{CanvasCell, CanvasIndex, RawCanvas};
 
@@ -141,6 +141,23 @@ pub enum TxtExportError {
     Other(ErrorCustom),
 }
 
+impl From<TxtExportError> for String {
+    fn from(value: TxtExportError) -> Self {
+        match value {
+            TxtExportError::CellHasSgrEffects((row, column)) => format!(
+                "Canvas contains SGR effects on line {row}, column {column}, which will be lost when saving as .txt. Use :w! to save anyways."
+            ),
+            TxtExportError::Other(error) => error.to_string(),
+        }
+    }
+}
+
+impl From<TxtExportError> for ErrorCustom {
+    fn from(value: TxtExportError) -> Self {
+        ErrorCustom::String(value.into())
+    }
+}
+
 impl RawCanvas {
     pub fn export_txt_preserve(&self) -> Result<String, TxtExportError> {
         for (index, cell) in self.cells.iter() {
@@ -162,5 +179,21 @@ impl RawCanvas {
             cell.modifiers = Modifier::empty();
         }
         canvas.to_ansi(false)
+    }
+}
+
+impl RawCanvas {
+    pub fn export(&self, format: FileFormat) -> ResultCustom<String> {
+        match format {
+            FileFormat::Ansi => self.export_ansi(),
+            FileFormat::Txt => Ok(self.export_txt_preserve()?),
+        }
+    }
+
+    pub fn export_lossy(&self, format: FileFormat) -> ResultCustom<String> {
+        match format {
+            FileFormat::Ansi => self.export_ansi(),
+            FileFormat::Txt => self.export_txt_decolorize(),
+        }
     }
 }

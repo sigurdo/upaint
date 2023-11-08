@@ -1,4 +1,4 @@
-use crate::ProgramState;
+use crate::{file_formats::FileFormat, ProgramState};
 
 use super::{Action, ExecuteActionResult, FallibleAction};
 
@@ -28,8 +28,26 @@ impl FallibleAction for Save {
         let Some(file_name) = &program_state.open_file else {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
-        let ansi_output = program_state.canvas.to_ansi()?;
-        match std::fs::write(file_name, ansi_output) {
+        let format = FileFormat::try_from(file_name.as_str())?;
+        let output = program_state.canvas.export(format)?;
+        match std::fs::write(file_name, output) {
+            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            _ => (),
+        }
+        program_state.last_saved_revision = program_state.canvas.get_current_revision();
+        Ok(())
+    }
+}
+
+pub struct LossySave {}
+impl FallibleAction for LossySave {
+    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+        let Some(file_name) = &program_state.open_file else {
+            return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
+        };
+        let format = FileFormat::try_from(file_name.as_str())?;
+        let output = program_state.canvas.export_lossy(format)?;
+        match std::fs::write(file_name, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
             _ => (),
         }
@@ -43,8 +61,25 @@ pub struct SaveAs {
 }
 impl FallibleAction for SaveAs {
     fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
-        let ansi_output = program_state.canvas.to_ansi()?;
-        match std::fs::write(&self.filename, ansi_output) {
+        let format = FileFormat::try_from(self.filename.as_str())?;
+        let output = program_state.canvas.export(format)?;
+        match std::fs::write(&self.filename, output) {
+            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            _ => (),
+        }
+        program_state.last_saved_revision = program_state.canvas.get_current_revision();
+        Ok(())
+    }
+}
+
+pub struct LossySaveAs {
+    pub filename: String,
+}
+impl FallibleAction for LossySaveAs {
+    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+        let format = FileFormat::try_from(self.filename.as_str())?;
+        let output = program_state.canvas.export_lossy(format)?;
+        match std::fs::write(&self.filename, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
             _ => (),
         }
@@ -59,8 +94,9 @@ impl FallibleAction for SaveQuit {
         let Some(file_name) = &program_state.open_file else {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
-        let ansi_output = program_state.canvas.to_ansi()?;
-        match std::fs::write(file_name, ansi_output) {
+        let format = FileFormat::try_from(file_name.as_str())?;
+        let output = program_state.canvas.export(format)?;
+        match std::fs::write(file_name, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
             _ => (),
         }
