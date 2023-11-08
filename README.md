@@ -50,10 +50,10 @@ cd upaint
 cargo build --release
 ```
 
-4\. Create a symbolic link from `/usr/bin`
+4\. Create a symbolic link in `/usr/bin`
 
 ```
-ln -s $(pwd)/target/release/main /usr/bin/upaint
+ln -s $(pwd)/target/release/upaint /usr/bin/upaint
 ```
 
 ## Usage
