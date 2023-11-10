@@ -2,12 +2,16 @@ use std::{char::ToLowercase, collections::HashMap, default};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{Expected, Visitor},
+    Deserialize, Serialize,
+};
+use toml::de::ValueDeserializer;
 
 use crate::{
     actions::{cursor::MoveCursor, Action, UserAction},
     brush::Brush,
-    Direction, Ground, ProgramState,
+    Direction, ErrorCustom, Ground, ProgramState,
 };
 
 #[derive(Hash, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -25,79 +29,83 @@ impl From<KeyEvent> for Keystroke {
     }
 }
 
-pub fn default_keybindings() -> HashMap<Keystroke, UserAction> {
-    HashMap::from([
-        (
-            Keystroke {
-                code: KeyCode::Char('d'), // Direction
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::ModeChooseInsertDirection,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('i'),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::ModeInsertRight,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('r'),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::ModeReplace,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('e'), // Edit
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::ModeChangeBrush,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('u'),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::Undo,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('r'),
-                modifiers: KeyModifiers::CONTROL,
-            },
-            UserAction::Redo,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char(' '),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::BrushApplyAll,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('s'),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::BrushSwapFgBg,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char('p'),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::ModePipette,
-        ),
-        (
-            Keystroke {
-                code: KeyCode::Char(':'),
-                modifiers: KeyModifiers::empty(),
-            },
-            UserAction::ModeCommand,
-        ),
-    ])
+impl From<ConfigFileKeybinding> for Keystroke {
+    fn from(value: ConfigFileKeybinding) -> Self {
+        Keystroke {
+            code: value.key.code,
+            modifiers: value.modifiers.unwrap_or(KeyModifiers::empty()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct ConfigFileKey {
+    code: KeyCode,
+}
+
+impl From<ConfigFileKey> for KeyCode {
+    fn from(value: ConfigFileKey) -> Self {
+        value.code
+    }
+}
+
+impl From<KeyCode> for ConfigFileKey {
+    fn from(value: KeyCode) -> Self {
+        ConfigFileKey { code: value }
+    }
+}
+
+struct ConfigFileKeyVisitor;
+
+impl Visitor<'_> for ConfigFileKeyVisitor {
+    type Value = ConfigFileKey;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            formatter,
+            "a string containing a character or the description of a special key"
+        )
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        if v.len() < 1 {
+            return Err(serde::de::Error::custom("Value is empty"));
+        }
+
+        let first_character = v.chars().next().unwrap();
+
+        // If string has length 1, use character
+        if v.len() == 1 {
+            return Ok(KeyCode::Char(first_character).into());
+        }
+
+        // Try interpreting as F-key
+        if first_character == 'F' {
+            if let Ok(number) = v[1..].parse::<u8>() {
+                return Ok(KeyCode::F(number).into());
+            }
+        }
+
+        // Try interpreting as a special key
+        match serde::Deserialize::deserialize(ValueDeserializer::new(format!("\"{v}\"").as_str())) {
+            Ok(code) => Ok(ConfigFileKey { code: code }),
+            Err(_) => Err(serde::de::Error::custom(format!(
+                "Invalid key for keybinding: {v:?}"
+            ))),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ConfigFileKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(ConfigFileKeyVisitor {})
+    }
 }
 
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
@@ -210,6 +218,27 @@ pub struct BrushKeys {
     pub all: KeyCode,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ConfigFileBrushKeys {
+    fg: ConfigFileKey,
+    bg: ConfigFileKey,
+    character: ConfigFileKey,
+    modifiers: ConfigFileKey,
+    all: ConfigFileKey,
+}
+
+impl From<ConfigFileBrushKeys> for BrushKeys {
+    fn from(value: ConfigFileBrushKeys) -> Self {
+        BrushKeys {
+            fg: value.fg.into(),
+            bg: value.bg.into(),
+            character: value.character.into(),
+            modifiers: value.modifiers.into(),
+            all: value.all.into(),
+        }
+    }
+}
+
 impl BrushKeys {
     pub fn component(&self, key: &KeyCode) -> Option<BrushComponent> {
         if *key == self.fg {
@@ -255,6 +284,20 @@ impl ColorTheme {
                 .bg(Color::Rgb(0x39, 0x3a, 0x31)),
         }
     }
+
+    pub fn light() -> Self {
+        ColorTheme {
+            canvas_base: Style::new(),
+            status_bar: Style::new().fg(Color::Black).bg(Color::White),
+        }
+    }
+
+    pub fn basic() -> Self {
+        ColorTheme {
+            canvas_base: Style::new(),
+            status_bar: Style::new(),
+        }
+    }
 }
 
 impl Default for ColorTheme {
@@ -276,7 +319,7 @@ macro_rules! color_theme_presets {
             fn from(value: ColorThemePreset) -> Self {
                 match value {
                     $(
-                        ColorThemePreset::$variant => $definition
+                        ColorThemePreset::$variant => $definition,
                     )*
                 }
             }
@@ -284,7 +327,11 @@ macro_rules! color_theme_presets {
     };
 }
 
-color_theme_presets!(Monokai = Self::monokai(),);
+color_theme_presets!(
+    Monokai = ColorTheme::monokai(),
+    Light = ColorTheme::light(),
+    Basic = ColorTheme::basic(),
+);
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Config {
@@ -297,7 +344,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            normal_mode_keybindings: default_keybindings(),
+            normal_mode_keybindings: HashMap::default(),
             direction_keys: DirectionKeys::default(),
             brush_keys: BrushKeys::default(),
             color_theme: ColorTheme::default(),
@@ -313,37 +360,23 @@ impl Config {
 
 impl From<ConfigFile> for Config {
     fn from(value: ConfigFile) -> Self {
-        let mut keybindings_map: HashMap<Keystroke, UserAction> = default_keybindings();
-        if let Some(keybindings) = value.normal_mode_keybindings {
-            for keybinding in keybindings {
-                keybindings_map.insert(keybinding.keystroke, keybinding.action);
-            }
+        let mut keybindings_map = HashMap::<Keystroke, UserAction>::default();
+        for keybinding in value.normal_mode_keybindings {
+            let action = keybinding.action.clone();
+            let keystroke = Keystroke::from(keybinding);
+            keybindings_map.insert(keystroke, action);
         }
-
-        let direction_keys = if let Some(direction_keys) = value.direction_keys {
-            direction_keys
-        } else {
-            DirectionKeys::default()
-        };
-
-        let brush_keys = if let Some(brush_keys) = value.brush_keys {
-            brush_keys
-        } else {
-            BrushKeys::default()
-        };
 
         let color_theme = if let Some(theme) = value.color_theme {
             theme
-        } else if let Some(preset) = value.color_theme_preset {
-            ColorTheme::from(preset)
         } else {
-            ColorTheme::default()
+            ColorTheme::from(value.color_theme_preset)
         };
 
         Self {
             normal_mode_keybindings: keybindings_map,
-            direction_keys: direction_keys,
-            brush_keys: brush_keys,
+            direction_keys: value.direction_keys,
+            brush_keys: value.brush_keys.into(),
             color_theme: color_theme,
         }
     }
@@ -351,31 +384,39 @@ impl From<ConfigFile> for Config {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ConfigFileKeybinding {
-    keystroke: Keystroke,
+    key: ConfigFileKey,
+    modifiers: Option<KeyModifiers>,
     action: UserAction,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
-    normal_mode_keybindings: Option<Vec<ConfigFileKeybinding>>,
-    pub direction_keys: Option<DirectionKeys>,
-    pub brush_keys: Option<BrushKeys>,
+    normal_mode_keybindings: Vec<ConfigFileKeybinding>,
+    pub direction_keys: DirectionKeys,
+    pub brush_keys: ConfigFileBrushKeys,
+    pub color_theme_preset: ColorThemePreset,
     pub color_theme: Option<ColorTheme>,
-    pub color_theme_preset: Option<ColorThemePreset>,
 }
 
-pub fn load_config() -> Config {
+pub fn load_config() -> Result<Config, ErrorCustom> {
     let mut config_file_path = dirs::config_dir().unwrap();
     config_file_path.push("upaint");
     config_file_path.push("upaint.toml");
     let config = config::Config::builder()
+        .add_source(config::File::from_str(
+            include_str!("default_config.toml"),
+            config::FileFormat::Toml,
+        ))
         .add_source(config::File::with_name(config_file_path.to_str().unwrap()))
         .build()
         .unwrap();
 
-    let config_file: ConfigFile = config.try_deserialize().unwrap();
+    // Todo: read color theme config file
+    // let stuff = config.cache.clone().into_table()?;
+
+    let config_file: ConfigFile = config.try_deserialize()?;
 
     let config = Config::from(config_file);
 
-    config
+    Ok(config)
 }

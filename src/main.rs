@@ -53,7 +53,7 @@ fn application(
     };
     let a = UserAction::CursorLeft;
 
-    program_state.config = upaint::config::load_config();
+    program_state.config = upaint::config::load_config()?;
     // let canvas_dimensions = program_state.canvas.get_dimensions();
     let canvas_area = program_state.canvas.raw().area();
     program_state.cursor_position = canvas_area.center();

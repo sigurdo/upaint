@@ -1,0 +1,50 @@
+direction_keys = "HjklAndArrows"
+color_theme_preset = "Monokai"
+
+[brush_keys]
+fg = "f"
+bg = "b"
+character = "c"
+modifiers = "m"
+all = "a"
+
+[[normal_mode_keybindings]]
+key = "d"
+action = "ModeChooseInsertDirection"
+
+[[normal_mode_keybindings]]
+key = "i"
+action = "ModeInsertRight"
+
+[[normal_mode_keybindings]]
+key = "r"
+action = "ModeReplace"
+
+[[normal_mode_keybindings]]
+key = "e"
+action = "ModeChangeBrush"
+
+[[normal_mode_keybindings]]
+key = "u"
+action = "Undo"
+
+[[normal_mode_keybindings]]
+key = "r"
+modifiers = "CONTROL"
+action = "Redo"
+
+[[normal_mode_keybindings]]
+key = " "
+action = "BrushApplyAll"
+
+[[normal_mode_keybindings]]
+key = "s"
+action = "BrushSwapFgBg"
+
+[[normal_mode_keybindings]]
+key = "p"
+action = "ModePipette"
+
+[[normal_mode_keybindings]]
+key = ":"
+action = "ModeCommand"

@@ -87,6 +87,7 @@ pub enum ErrorCustom {
     String(String),
     IoError(io::Error),
     FmtError(std::fmt::Error),
+    ConfigError(::config::ConfigError),
 }
 
 impl Display for ErrorCustom {
@@ -101,6 +102,12 @@ impl Display for ErrorCustom {
 impl From<ErrorCustom> for String {
     fn from(value: ErrorCustom) -> Self {
         value.to_string()
+    }
+}
+
+impl From<String> for ErrorCustom {
+    fn from(value: String) -> Self {
+        Self::String(value)
     }
 }
 
@@ -141,5 +148,11 @@ impl From<io::Error> for ErrorCustom {
 impl From<std::fmt::Error> for ErrorCustom {
     fn from(value: std::fmt::Error) -> Self {
         ErrorCustom::FmtError(value)
+    }
+}
+
+impl From<::config::ConfigError> for ErrorCustom {
+    fn from(value: ::config::ConfigError) -> Self {
+        Self::ConfigError(value)
     }
 }
