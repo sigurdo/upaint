@@ -1,0 +1,9 @@
+[canvas_base]
+fg = "Reset"
+bg = "Reset"
+modifiers = ""
+
+[status_bar]
+fg = "Reset"
+bg = "Reset"
+modifiers = ""

@@ -1,7 +1,11 @@
 use std::{char::ToLowercase, collections::HashMap, default};
 
+use config::{
+    builder::{ConfigBuilder, DefaultState},
+    Source, Value, ValueKind,
+};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
 use serde::{
     de::{Expected, Visitor},
     Deserialize, Serialize,
@@ -71,11 +75,9 @@ impl Visitor<'_> for ConfigFileKeyVisitor {
     where
         E: serde::de::Error,
     {
-        if v.len() < 1 {
+        let Some(first_character) = v.chars().next() else {
             return Err(serde::de::Error::custom("Value is empty"));
-        }
-
-        let first_character = v.chars().next().unwrap();
+        };
 
         // If string has length 1, use character
         if v.len() == 1 {
@@ -275,39 +277,14 @@ pub struct ColorTheme {
     pub status_bar: Style,
 }
 
-impl ColorTheme {
-    pub fn monokai() -> Self {
-        ColorTheme {
-            canvas_base: Style::new(),
-            status_bar: Style::new()
-                .fg(Color::Rgb(0xb1, 0xb1, 0xb1))
-                .bg(Color::Rgb(0x39, 0x3a, 0x31)),
-        }
-    }
-
-    pub fn light() -> Self {
-        ColorTheme {
-            canvas_base: Style::new(),
-            status_bar: Style::new().fg(Color::Black).bg(Color::White),
-        }
-    }
-
-    pub fn basic() -> Self {
-        ColorTheme {
-            canvas_base: Style::new(),
-            status_bar: Style::new(),
-        }
-    }
-}
-
 impl Default for ColorTheme {
     fn default() -> Self {
-        Self::monokai()
+        ColorThemePreset::Monokai.into()
     }
 }
 
 macro_rules! color_theme_presets {
-    ($($variant:ident = $definition:expr),*,) => {
+    ($($variant:ident = $filename:literal),*,) => {
         #[derive(Clone, Debug, Deserialize, Serialize)]
         pub enum ColorThemePreset {
             $(
@@ -315,23 +292,163 @@ macro_rules! color_theme_presets {
             )*
         }
 
-        impl From<ColorThemePreset> for ColorTheme {
-            fn from(value: ColorThemePreset) -> Self {
-                match value {
-                    $(
-                        ColorThemePreset::$variant => $definition,
-                    )*
-                }
-            }
+        fn load_color_theme_preset(preset: ColorThemePreset) -> ConfigBuilder<DefaultState> {
+            let preset_file = match preset {
+                $(
+                    ColorThemePreset::$variant => {
+                        include_str!(concat!("color_theme_presets/", $filename))
+                    },
+                )*
+                _ => unreachable!(),
+            };
+            config::Config::builder()
+                .add_source(config::File::from_str(
+                    include_str!("color_theme_presets/base.toml"),
+                    config::FileFormat::Toml,
+                ))
+                .add_source(config::File::from_str(
+                    preset_file,
+                    config::FileFormat::Toml,
+                ))
         }
     };
 }
 
+impl From<ColorThemePreset> for ConfigFileColorTheme {
+    fn from(value: ColorThemePreset) -> Self {
+        let config = load_color_theme_preset(value).build().unwrap();
+        config.try_deserialize().unwrap()
+    }
+}
+
+impl From<ColorThemePreset> for ColorTheme {
+    fn from(value: ColorThemePreset) -> Self {
+        Self::from(ConfigFileColorTheme::from(value))
+    }
+}
+
 color_theme_presets!(
-    Monokai = ColorTheme::monokai(),
-    Light = ColorTheme::light(),
-    Basic = ColorTheme::basic(),
+    Monokai = "monokai.toml",
+    Light = "light.toml",
+    Basic = "basic.toml",
 );
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ConfigFileColor {
+    color: Color,
+}
+
+impl From<ConfigFileColor> for Color {
+    fn from(value: ConfigFileColor) -> Self {
+        value.color
+    }
+}
+
+impl From<Color> for ConfigFileColor {
+    fn from(value: Color) -> Self {
+        ConfigFileColor { color: value }
+    }
+}
+
+struct ConfigFileColorVisitor;
+
+impl Visitor<'_> for ConfigFileColorVisitor {
+    type Value = ConfigFileColor;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            formatter,
+            "a string containing a hex color code or the description of a named color, or an integer for a 256-color code"
+        )
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        let Some(first_character) = v.chars().next() else {
+            return Err(serde::de::Error::custom("Value is empty"));
+        };
+
+        // Try interpreting as hex code
+        if first_character == '#' {
+            let err = Err(serde::de::Error::custom(format!(
+                "Could not parse hex color code: {v}"
+            )));
+            let Ok(r) = u8::from_str_radix(&v[1..3], 16) else {
+                return err;
+            };
+            let Ok(g) = u8::from_str_radix(&v[3..5], 16) else {
+                return err;
+            };
+            let Ok(b) = u8::from_str_radix(&v[5..7], 16) else {
+                return err;
+            };
+            return Ok(Color::Rgb(r, g, b).into());
+        }
+
+        // Try interpreting as a named color
+        match serde::Deserialize::deserialize(ValueDeserializer::new(format!("\"{v}\"").as_str())) {
+            Ok(color) => Ok(ConfigFileColor { color: color }),
+            Err(_) => Err(serde::de::Error::custom(format!(
+                "Could not parse named color: {v}"
+            ))),
+        }
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        // Try interpreting as indexed color
+        match u8::try_from(v) {
+            Ok(number) => Ok(Color::Indexed(number).into()),
+            Err(_) => Err(serde::de::Error::custom(format!(
+                "Invalid color index: {v}"
+            ))),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ConfigFileColor {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(ConfigFileColorVisitor {})
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ConfigFileStyle {
+    fg: ConfigFileColor,
+    bg: ConfigFileColor,
+    modifiers: Modifier,
+}
+
+impl From<ConfigFileStyle> for Style {
+    fn from(value: ConfigFileStyle) -> Self {
+        Style::new()
+            .fg(value.fg.into())
+            .bg(value.bg.into())
+            .add_modifier(value.modifiers)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ConfigFileColorTheme {
+    canvas_base: ConfigFileStyle,
+    status_bar: ConfigFileStyle,
+}
+
+impl From<ConfigFileColorTheme> for ColorTheme {
+    fn from(value: ConfigFileColorTheme) -> Self {
+        Self {
+            canvas_base: value.canvas_base.into(),
+            status_bar: value.status_bar.into(),
+        }
+    }
+}
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Config {
@@ -367,17 +484,11 @@ impl From<ConfigFile> for Config {
             keybindings_map.insert(keystroke, action);
         }
 
-        let color_theme = if let Some(theme) = value.color_theme {
-            theme
-        } else {
-            ColorTheme::from(value.color_theme_preset)
-        };
-
         Self {
             normal_mode_keybindings: keybindings_map,
             direction_keys: value.direction_keys,
             brush_keys: value.brush_keys.into(),
-            color_theme: color_theme,
+            color_theme: value.color_theme.into(),
         }
     }
 }
@@ -395,7 +506,7 @@ pub struct ConfigFile {
     pub direction_keys: DirectionKeys,
     pub brush_keys: ConfigFileBrushKeys,
     pub color_theme_preset: ColorThemePreset,
-    pub color_theme: Option<ColorTheme>,
+    pub color_theme: ConfigFileColorTheme,
 }
 
 pub fn load_config() -> Result<Config, ErrorCustom> {
@@ -411,8 +522,35 @@ pub fn load_config() -> Result<Config, ErrorCustom> {
         .build()
         .unwrap();
 
-    // Todo: read color theme config file
-    // let stuff = config.cache.clone().into_table()?;
+    // Read and load color theme preset, apply customizations
+    let mut config_table = config.cache.into_table()?;
+    if let Some(preset) = config_table.get("color_theme_preset") {
+        if let ValueKind::String(preset) = preset.kind.clone() {
+            let preset: ColorThemePreset = serde::Deserialize::deserialize(ValueDeserializer::new(
+                format!("\"{preset}\"").as_str(),
+            ))
+            .unwrap();
+
+            let mut theme_config = load_color_theme_preset(preset).build().unwrap();
+            let theme_custom = if let Some(theme) = config_table.get("color_theme") {
+                theme.clone()
+            } else {
+                Value::from(ValueKind::Table(Default::default()))
+            };
+
+            let mut theme_custom_config = config::Config::default();
+            theme_custom_config.cache = theme_custom;
+            theme_custom_config
+                .collect_to(&mut theme_config.cache)
+                .unwrap();
+
+            config_table.insert("color_theme".to_string(), theme_config.cache);
+        }
+    }
+
+    // Put modified `config_table` back into `config` variable
+    let mut config = config::Config::default();
+    config.cache = Value::from(config_table);
 
     let config_file: ConfigFile = config.try_deserialize()?;
 
