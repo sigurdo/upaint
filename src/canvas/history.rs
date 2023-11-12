@@ -1,5 +1,7 @@
 use std::collections::LinkedList;
 
+use ratatui::style::Style;
+
 use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::raw::{
@@ -127,8 +129,8 @@ impl UndoRedoCanvas {
         }
     }
 
-    pub fn widget(&self) -> CanvasWidget {
-        CanvasWidget::from_canvas(&self.current)
+    pub fn widget(&self, base_style: Style) -> CanvasWidget {
+        CanvasWidget::from_canvas(&self.current, base_style)
     }
 
     pub fn raw(&self) -> &RawCanvas {

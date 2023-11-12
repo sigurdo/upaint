@@ -1,6 +1,6 @@
 use ratatui::{
     prelude::{Buffer, Rect},
-    style::Modifier,
+    style::{Color, Modifier, Style},
     widgets::Widget,
 };
 
@@ -12,14 +12,16 @@ pub struct CanvasWidget<'a> {
     pub canvas: &'a RawCanvas,
     pub focus: CanvasIndex,
     pub cursor: Option<CanvasIndex>,
+    pub base_style: Style,
 }
 
 impl<'a> CanvasWidget<'a> {
-    pub fn from_canvas(canvas: &'a RawCanvas) -> Self {
+    pub fn from_canvas(canvas: &'a RawCanvas, base_style: Style) -> Self {
         CanvasWidget {
             canvas: canvas,
             focus: canvas.area().center(),
             cursor: None,
+            base_style: base_style,
         }
     }
 
@@ -42,25 +44,38 @@ impl<'a> CanvasWidget<'a> {
     }
 }
 
+fn apply_base_style(base_style: Option<Color>, color: Color) -> Color {
+    if let Some(base_color) = base_style {
+        if color == Color::Reset {
+            return base_color;
+        }
+    }
+    color
+}
+
 impl Widget for CanvasWidget<'_> {
     fn render(self, area: Rect, buffer: &mut Buffer) {
         let (row_to_y_translation, column_to_x_translation) = self.render_translation(area);
 
-        for ((row, column), cell) in self.canvas.cells.iter() {
-            let x = (column + column_to_x_translation) as u16;
-            let y = (row + row_to_y_translation) as u16;
+        let x_left = area.left();
+        let x_right = area.right();
+        let y_top = area.top();
+        let y_bottom = area.bottom();
 
-            let x_left = area.left();
-            let x_right = area.right();
-            let y_top = area.top();
-            let y_bottom = area.bottom();
+        for y in y_top..y_bottom {
+            for x in x_left..x_right {
+                let row = y as i16 - row_to_y_translation;
+                let column = x as i16 - column_to_x_translation;
 
-            if x >= x_left && x <= x_right - 1 && y >= y_top && y <= y_bottom - 1 {
-                let target = buffer.get_mut(x as u16, y as u16);
-                target.symbol = String::from(cell.character);
-                target.fg = cell.fg;
-                target.bg = cell.bg;
-                target.modifier = cell.modifiers;
+                let target = buffer.get_mut(x, y);
+                target.set_style(self.base_style);
+
+                if let Some(cell) = self.canvas.cells.get(&(row, column)) {
+                    target.symbol = String::from(cell.character);
+                    target.fg = apply_base_style(self.base_style.fg, cell.fg);
+                    target.bg = apply_base_style(self.base_style.bg, cell.bg);
+                    target.modifier |= cell.modifiers;
+                }
             }
         }
 

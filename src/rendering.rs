@@ -87,7 +87,9 @@ pub fn draw_frame(
         let inner_area = block.inner(chunks[0]);
         f.render_widget(block, canvas_chunk);
 
-        let mut canvas = program_state.canvas.widget();
+        let mut canvas = program_state
+            .canvas
+            .widget(program_state.config.color_theme.canvas_base);
         canvas.focus = program_state.focus_position;
         let canvas_visible = canvas.visible(inner_area);
 
