@@ -4,7 +4,7 @@ use super::{Action, ExecuteActionResult, FallibleAction};
 
 pub struct Quit {}
 impl FallibleAction for Quit {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         // Todo: check that no changes are made since last save (requires revision system)
         if program_state.last_saved_revision == program_state.canvas.get_current_revision() {
             program_state.exit = true;
@@ -24,7 +24,7 @@ impl Action for ForceQuit {
 
 pub struct Save {}
 impl FallibleAction for Save {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let Some(file_name) = &program_state.open_file else {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
@@ -41,7 +41,7 @@ impl FallibleAction for Save {
 
 pub struct LossySave {}
 impl FallibleAction for LossySave {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let Some(file_name) = &program_state.open_file else {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
@@ -60,7 +60,7 @@ pub struct SaveAs {
     pub filename: String,
 }
 impl FallibleAction for SaveAs {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let format = FileFormat::try_from(self.filename.as_str())?;
         let output = program_state.canvas.export(format)?;
         match std::fs::write(&self.filename, output) {
@@ -76,7 +76,7 @@ pub struct LossySaveAs {
     pub filename: String,
 }
 impl FallibleAction for LossySaveAs {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let format = FileFormat::try_from(self.filename.as_str())?;
         let output = program_state.canvas.export_lossy(format)?;
         match std::fs::write(&self.filename, output) {
@@ -90,7 +90,7 @@ impl FallibleAction for LossySaveAs {
 
 pub struct SaveQuit {}
 impl FallibleAction for SaveQuit {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let Some(file_name) = &program_state.open_file else {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };

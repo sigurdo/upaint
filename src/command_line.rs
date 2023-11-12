@@ -77,9 +77,9 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
         return Ok(());
     };
     let result = match command_name {
-        "q" => Quit {}.execute(program_state),
+        "q" => Quit {}.try_execute(program_state),
         "q!" => {
-            ForceQuit {}.execute(program_state);
+            ForceQuit {}.try_execute(program_state);
             Ok(())
         }
         "w" => {
@@ -87,9 +87,9 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
                 SaveAs {
                     filename: filename.to_string(),
                 }
-                .execute(program_state)
+                .try_execute(program_state)
             } else {
-                Save {}.execute(program_state)
+                Save {}.try_execute(program_state)
             }
         }
         "w!" => {
@@ -97,12 +97,12 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
                 LossySaveAs {
                     filename: filename.to_string(),
                 }
-                .execute(program_state)
+                .try_execute(program_state)
             } else {
-                LossySave {}.execute(program_state)
+                LossySave {}.try_execute(program_state)
             }
         }
-        "x" | "wq" => SaveQuit {}.execute(program_state),
+        "x" | "wq" => SaveQuit {}.try_execute(program_state),
         command => Err(format!("Command not found: {}", command)),
     };
     match result {

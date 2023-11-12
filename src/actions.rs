@@ -28,7 +28,16 @@ pub trait Action {
 type ExecuteActionResult = Result<(), String>;
 
 pub trait FallibleAction {
-    fn execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult;
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult;
+}
+
+impl<T> FallibleAction for T
+where
+    T: Action,
+{
+    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
+        Ok(self.execute(program_state))
+    }
 }
 
 // #[macro_export]
@@ -45,7 +54,7 @@ macro_rules! action_collection {
             fn execute(&self, program_state: &mut ProgramState) {
                 match self {
                     $(
-                        UserAction::$variant => {
+                        Self::$variant => {
                             $action.execute(program_state);
                         }
                     )*
