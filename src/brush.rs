@@ -10,6 +10,15 @@ pub struct Brush {
     pub modifiers: Option<Modifier>,
 }
 
+pub enum BrushComponent {
+    Fg,
+    Bg,
+    Colors,
+    Character,
+    Modifiers,
+    All,
+}
+
 impl Brush {
     pub fn paint_with_character(&self, canvas: &mut Canvas, index: CanvasIndex, character: char) {
         let brush = Brush {

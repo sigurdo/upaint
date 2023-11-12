@@ -29,28 +29,28 @@ path = "src/main.rs"
 
 [[bin]]
 name = "test_export"
-path = "src/test_export.rs"
+path = "src/testing/test_export.rs"
 
 [[bin]]
 name = "test_import"
-path = "src/test_import.rs"
+path = "src/testing/test_import.rs"
 
 [[bin]]
 name = "test_config"
-path = "src/test_config.rs"
+path = "src/testing/test_config.rs"
 
 [[bin]]
 name = "test_colors"
-path = "src/test_colors.rs"
+path = "src/testing/test_colors.rs"
 
 [[bin]]
 name = "test_unicode_width"
-path = "src/test_unicode_width.rs"
+path = "src/testing/test_unicode_width.rs"
 
 [[bin]]
 name = "test_crossterm"
-path = "src/test_crossterm.rs"
+path = "src/testing/test_crossterm.rs"
 
 [[bin]]
 name = "test_macros"
-path = "src/test_macros.rs"
+path = "src/testing/test_macros.rs"

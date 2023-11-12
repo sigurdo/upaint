@@ -6,11 +6,11 @@ use std::sync::mpsc::{self};
 
 use crate::{
     actions::{brush, cursor::MoveCursor, pan::Pan, Action, PipetteTake, UserAction},
-    brush::Brush,
+    brush::{Brush, BrushComponent},
     canvas::CanvasOperation,
     color_picker::ColorPicker,
     command_line::{create_command_line_textarea, execute_command},
-    config::{BrushComponent, Keystroke},
+    config::keybindings::Keystroke,
     Direction, Ground, InputMode, ProgramState, ResultCustom,
 };
 
