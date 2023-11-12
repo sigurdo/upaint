@@ -2,7 +2,7 @@ use std::{char::ToLowercase, collections::HashMap, default};
 
 use config::{
     builder::{ConfigBuilder, DefaultState},
-    Source, Value, ValueKind,
+    FileFormat, FileSourceFile, FileSourceString, Source, Value, ValueKind,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Modifier, Style};
@@ -31,6 +31,9 @@ use self::{
     keybindings::{keybindings_vec_to_map, ConfigFileKeybinding, Keystroke},
     keys::ConfigFileKey,
 };
+
+#[cfg(test)]
+mod test;
 
 /// Struct containing a set of finally loaded config options
 #[derive(Clone, Deserialize, Serialize)]
@@ -73,27 +76,34 @@ impl From<ConfigFile> for Config {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
     normal_mode_keybindings: Vec<ConfigFileKeybinding>,
-    pub direction_keys: DirectionKeys,
-    pub brush_keys: ConfigFileBrushKeys,
-    pub color_theme_preset: ColorThemePreset,
-    pub color_theme: ConfigFileColorTheme,
+    direction_keys: DirectionKeys,
+    brush_keys: ConfigFileBrushKeys,
+    color_theme_preset: ColorThemePreset,
+    color_theme: ConfigFileColorTheme,
 }
 
-pub fn load_config() -> Result<Config, ErrorCustom> {
-    let mut config_file_path = dirs::config_dir().unwrap();
+pub fn default_config_source() -> ::config::File<FileSourceString, FileFormat> {
+    ::config::File::from_str(
+        include_str!("config/default_config.toml"),
+        config::FileFormat::Toml,
+    )
+}
+
+pub fn local_config_source() -> Result<::config::File<FileSourceFile, FileFormat>, ErrorCustom> {
+    let Some(mut config_file_path) = dirs::config_dir() else {
+        return Err(ErrorCustom::String("Couldn't detect the system's config directory.".to_string()))
+    };
     config_file_path.push("upaint");
     config_file_path.push("upaint.toml");
-    let config = config::Config::builder()
-        .add_source(config::File::from_str(
-            include_str!("config/default_config.toml"),
-            config::FileFormat::Toml,
-        ))
-        .add_source(config::File::with_name(config_file_path.to_str().unwrap()))
-        .build()
-        .unwrap();
+    let Some(config_file_path) = config_file_path.to_str() else {
+        return Err(ErrorCustom::String("Couldn't derive the local upaint config file path.".to_string()))
+    };
+    Ok(::config::File::with_name(config_file_path))
+}
 
-    // Read and load color theme preset, apply customizations
-    let mut config_table = config.cache.into_table()?;
+/// Read and load color theme preset, apply customizations.
+fn load_color_preset(config: &mut ::config::Config) -> Result<(), ErrorCustom> {
+    let mut config_table = config.cache.clone().into_table()?;
     if let Some(preset) = config_table.get("color_theme_preset") {
         if let ValueKind::String(preset) = preset.kind.clone() {
             let preset: ColorThemePreset = serde::Deserialize::deserialize(ValueDeserializer::new(
@@ -119,12 +129,29 @@ pub fn load_config() -> Result<Config, ErrorCustom> {
     }
 
     // Put modified `config_table` back into `config` variable
-    let mut config = config::Config::default();
     config.cache = Value::from(config_table);
+
+    Ok(())
+}
+
+pub fn load_config_from_builder(
+    builder: ConfigBuilder<DefaultState>,
+) -> Result<Config, ErrorCustom> {
+    let mut config = builder.build()?;
+
+    load_color_preset(&mut config)?;
 
     let config_file: ConfigFile = config.try_deserialize()?;
 
     let config = Config::from(config_file);
 
     Ok(config)
+}
+
+pub fn load_config() -> Result<Config, ErrorCustom> {
+    let builder = ::config::Config::builder()
+        .add_source(default_config_source())
+        .add_source(local_config_source()?);
+
+    load_config_from_builder(builder)
 }
