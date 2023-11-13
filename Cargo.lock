@@ -988,6 +988,7 @@ dependencies = [
  "crossterm",
  "dirs",
  "hsv",
+ "log",
  "prisma",
  "ratatui",
  "ratatui-textarea",

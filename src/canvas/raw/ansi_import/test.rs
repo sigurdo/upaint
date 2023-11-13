@@ -384,3 +384,40 @@ fn txt_with_sgr() {
         TxtImportError::IllegalCharacter((0, 4))
     );
 }
+
+#[test]
+fn empty_sgr_sequence() {
+    // Test that `ESC [ m` is treated as `ESC [ 0 m`
+    let ansi = "\u{1b}[31ma\u{1b}[mb".to_string();
+    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+
+    assert_eq!(canvas.cells.len(), 2);
+
+    let mut cells = canvas.cells.iter();
+
+    assert_eq!(
+        cells.next(),
+        Some((
+            &(0, 0),
+            &CanvasCell {
+                character: 'a',
+                fg: Color::Red,
+                bg: Color::Reset,
+                modifiers: Modifier::default(),
+            }
+        ))
+    );
+
+    assert_eq!(
+        cells.next(),
+        Some((
+            &(0, 1),
+            &CanvasCell {
+                character: 'b',
+                fg: Color::Reset,
+                bg: Color::Reset,
+                modifiers: Modifier::default(),
+            }
+        ))
+    );
+}

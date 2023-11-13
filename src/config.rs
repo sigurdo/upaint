@@ -20,6 +20,7 @@ use crate::{
 
 pub mod brush_keys;
 pub mod color_theme;
+pub mod config_file_value;
 pub mod direction_keys;
 pub mod keybindings;
 pub mod keys;

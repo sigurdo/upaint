@@ -105,11 +105,20 @@ impl RawCanvas {
                 }
             }
 
+            // According to wikipedia (https://en.wikipedia.org/wiki/ANSI_escape_code):
+            // If no codes are given, `CSI m` is treated as `CSI 0 m` (reset / normal)
+            if sgr_sequence == "" {
+                sgr_sequence = "0".to_string()
+            }
+
             let mut values = sgr_sequence.split(';');
             let Some(first_value) = values.next() else {
-                            return Err(AnsiImportError::BadSgrSequence(index));
-                        };
-            let first_value = first_value.parse::<u64>().unwrap();
+                return Err(AnsiImportError::BadSgrSequence(index));
+            };
+            let Ok(first_value) = first_value.parse::<u64>() else {
+                unreachable!("Could not parse first value {:?} of SGR sequence {:?}", first_value, sgr_sequence);
+            };
+
             match first_value {
                 0 => {
                     *fg_color = Color::Reset;

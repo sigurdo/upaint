@@ -2,7 +2,10 @@ use std::collections::LinkedList;
 
 use ratatui::style::Style;
 
-use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
+use crate::{
+    config::color_theme::canvas::ColorThemeCanvas, file_formats::FileFormat, ErrorCustom,
+    ResultCustom,
+};
 
 use super::raw::{
     ansi_import::AnsiImportError, operations::CanvasOperation, rendering::CanvasWidget, RawCanvas,
@@ -129,8 +132,8 @@ impl UndoRedoCanvas {
         }
     }
 
-    pub fn widget(&self, base_style: Style) -> CanvasWidget {
-        CanvasWidget::from_canvas(&self.current, base_style)
+    pub fn widget(&self, color_theme: ColorThemeCanvas) -> CanvasWidget {
+        CanvasWidget::from_canvas(&self.current, color_theme)
     }
 
     pub fn raw(&self) -> &RawCanvas {

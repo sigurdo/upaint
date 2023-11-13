@@ -1,7 +1,25 @@
-[canvas_base]
+[canvas.default_style]
 fg = "Reset"
 bg = "Reset"
 modifiers = ""
+
+[canvas.standard_colors]
+black = "Black"
+red = "Red"
+green = "Green"
+yellow = "Yellow"
+blue = "Blue"
+magenta = "Magenta"
+cyan = "Cyan"
+white = "Gray"
+bright_black = "DarkGray"
+bright_red = "LightRed"
+bright_green = "LightGreen"
+bright_yellow = "LightYellow"
+bright_blue = "LightBlue"
+bright_magenta = "LightMagenta"
+bright_cyan = "LightCyan"
+bright_white = "White"
 
 [status_bar]
 fg = "Reset"

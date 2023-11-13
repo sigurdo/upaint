@@ -43,7 +43,7 @@ impl Visitor<'_> for ConfigFileColorVisitor {
 
         // Try interpreting as a named color
         match serde::Deserialize::deserialize(ValueDeserializer::new(format!("\"{v}\"").as_str())) {
-            Ok(color) => Ok(ConfigFileColor { color: color }),
+            Ok(color) => Ok(ConfigFileColor { value: color }),
             Err(_) => Err(serde::de::Error::custom(format!(
                 "Could not parse named color: {v}"
             ))),

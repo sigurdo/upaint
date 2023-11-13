@@ -8,9 +8,12 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log::Log;
 use ratatui::{backend::CrosstermBackend, style::Color, Terminal};
 use std::{
-    io::{self},
+    fs::File,
+    io::{self, Write},
+    path::{Path, PathBuf},
     sync::{
         mpsc::{self},
         Arc, Mutex,
@@ -34,10 +37,72 @@ pub struct UpaintCli {
     ansi_file: Option<String>,
 }
 
+struct FileLogger;
+
+fn log_file_path() -> Option<PathBuf> {
+    if cfg!(debug_assertions) {
+        Some(PathBuf::from("upaint.log"))
+    } else {
+        let mut log_file_path = if let Some(state_dir) = dirs::state_dir() {
+            state_dir
+        } else if let Some(data_dir) = dirs::data_dir() {
+            data_dir
+        } else {
+            return None;
+        };
+        log_file_path.push("upaint");
+        match std::fs::create_dir_all(log_file_path.clone()) {
+            Ok(_) => (),
+            Err(_) => return None,
+        }
+        log_file_path.push("upaint.log");
+        Some(log_file_path)
+    }
+}
+
+impl log::Log for FileLogger {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            if let Some(log_file_path) = log_file_path() {
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .append(true)
+                    .open(log_file_path)
+                    .unwrap()
+                    .write_all(format!("{} — {}\n", record.level(), record.args()).as_bytes())
+                    .unwrap();
+            }
+        }
+    }
+
+    fn flush(&self) {
+        if let Some(log_file_path) = log_file_path() {
+            std::fs::File::create(log_file_path)
+                .unwrap()
+                .write_all(b"")
+                .unwrap();
+        }
+    }
+}
+
+static LOGGER: FileLogger = FileLogger;
+
 fn application(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
     args: UpaintCli,
 ) -> ResultCustom<()> {
+    LOGGER.flush();
+
+    log::set_logger(&LOGGER)
+        .map(|()| log::set_max_level(log::LevelFilter::Debug))
+        .unwrap();
+
+    log::info!("Starting upaint");
+
     let mut program_state = ProgramState::default();
     program_state.exit = false;
     program_state.open_file = args.ansi_file;

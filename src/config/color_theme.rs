@@ -3,11 +3,18 @@ use ratatui::style::{Color, Modifier, Style};
 use serde::{de::Visitor, Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
+use crate::basic_config_file_value;
+
+use self::canvas::{ColorThemeCanvas, ConfigFileColorThemeCanvas};
+
+use super::config_file_value::ConfigFileValue;
+
+pub mod canvas;
 mod deserialize;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ColorTheme {
-    pub canvas_base: Style,
+    pub canvas: ColorThemeCanvas,
     pub status_bar: Style,
 }
 
@@ -65,24 +72,11 @@ color_theme_presets!(
     Monokai = "monokai.toml",
     Light = "light.toml",
     Basic = "basic.toml",
+    Classic = "classic.toml",
+    Ubuntu = "ubuntu.toml",
 );
 
-#[derive(Clone, Debug, Serialize)]
-pub struct ConfigFileColor {
-    color: Color,
-}
-
-impl From<ConfigFileColor> for Color {
-    fn from(value: ConfigFileColor) -> Self {
-        value.color
-    }
-}
-
-impl From<Color> for ConfigFileColor {
-    fn from(value: Color) -> Self {
-        ConfigFileColor { color: value }
-    }
-}
+basic_config_file_value!(ConfigFileColor: Color);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ConfigFileStyle {
@@ -91,26 +85,28 @@ pub struct ConfigFileStyle {
     modifiers: Modifier,
 }
 
-impl From<ConfigFileStyle> for Style {
-    fn from(value: ConfigFileStyle) -> Self {
+impl ConfigFileValue for ConfigFileStyle {
+    type ConfigValue = Style;
+
+    fn to_config_value(self) -> Self::ConfigValue {
         Style::new()
-            .fg(Color::from(value.fg))
-            .bg(Color::from(value.bg))
-            .add_modifier(value.modifiers)
+            .fg(self.fg.to_config_value())
+            .bg(self.bg.to_config_value())
+            .add_modifier(self.modifiers)
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ConfigFileColorTheme {
-    canvas_base: ConfigFileStyle,
+    canvas: ConfigFileColorThemeCanvas,
     status_bar: ConfigFileStyle,
 }
 
 impl From<ConfigFileColorTheme> for ColorTheme {
     fn from(value: ConfigFileColorTheme) -> Self {
         Self {
-            canvas_base: Style::from(value.canvas_base),
-            status_bar: Style::from(value.status_bar),
+            canvas: value.canvas.to_config_value(),
+            status_bar: value.status_bar.to_config_value(),
         }
     }
 }

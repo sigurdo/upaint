@@ -89,7 +89,7 @@ pub fn draw_frame(
 
         let mut canvas = program_state
             .canvas
-            .widget(program_state.config.color_theme.canvas_base);
+            .widget(program_state.config.color_theme.canvas.clone());
         canvas.focus = program_state.focus_position;
         let canvas_visible = canvas.visible(inner_area);
 
