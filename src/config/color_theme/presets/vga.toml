@@ -2,6 +2,7 @@
 fg = "Gray"
 bg = "Black"
 
+# VGA colors as described at https://en.wikipedia.org/wiki/ANSI_escape_code
 [color_theme.canvas.standard_colors]
 black = "#000000"
 red = "#aa0000"

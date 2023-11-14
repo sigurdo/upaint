@@ -2,6 +2,7 @@
 fg = "White"
 bg = "#300a24"
 
+# Ubuntu colors as described at https://en.wikipedia.org/wiki/ANSI_escape_code
 [color_theme.canvas.standard_colors]
 black = "#010101"
 red = "#de382b"

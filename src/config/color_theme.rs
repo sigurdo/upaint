@@ -32,7 +32,9 @@ color_theme_presets!(
     Basic = "basic.toml",
     Monokai = "monokai.toml",
     Light = "light.toml",
-    Classic = "classic.toml",
+    Vga = "vga.toml",
+    Campbell = "campbell.toml",
+    Xterm = "xterm.toml",
     Ubuntu = "ubuntu.toml",
 );
 
