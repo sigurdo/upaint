@@ -1,8 +1,8 @@
-[canvas.default_style]
+[color_theme.canvas.default_style]
 fg = "Gray"
 bg = "Black"
 
-[canvas.standard_colors]
+[color_theme.canvas.standard_colors]
 black = "#000000"
 red = "#aa0000"
 green = "#00aa00"

@@ -18,7 +18,7 @@ pub use mode::{
 };
 pub use pan::Pan;
 
-use self::brush::BrushSwapFgBg;
+use self::{brush::BrushSwapFgBg, misc::DoNothing};
 
 pub trait Action {
     fn execute(&self, program_state: &mut ProgramState);
@@ -66,6 +66,7 @@ macro_rules! action_collection {
 
 action_collection!(
     UserAction,
+    DoNothing = DoNothing,
     CursorLeft = MoveCursor::left(1),
     CursorRight = MoveCursor::right(1),
     CursorUp = MoveCursor::up(1),

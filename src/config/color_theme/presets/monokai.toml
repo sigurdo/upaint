@@ -1,12 +1,12 @@
-[status_bar]
+[color_theme.status_bar]
 fg = "#b1b1b1"
 bg = "#393a31"
 
-[canvas.default_style]
+[color_theme.canvas.default_style]
 fg = "#ffffff"
 bg = "#272822"
 
-[canvas.standard_colors]
+[color_theme.canvas.standard_colors]
 black = "#1a1a1a"
 red = "#f4005f"
 green = "#98e024"

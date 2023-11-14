@@ -218,7 +218,7 @@ fn load_color_preset(config: &mut ::config::Config) -> Result<(), ErrorCustom> {
             ))
             .unwrap();
 
-            let mut theme_config = config::Config::builder()
+            let theme_config = config::Config::builder()
                 .add_source(config::File::from_str(
                     include_str!("config/color_theme/base.toml"),
                     config::FileFormat::Toml,
@@ -230,6 +230,13 @@ fn load_color_preset(config: &mut ::config::Config) -> Result<(), ErrorCustom> {
                 .build()
                 .unwrap();
 
+            let mut theme_table = theme_config
+                .cache
+                .into_table()
+                .unwrap()
+                .remove("color_theme")
+                .unwrap();
+
             let theme_custom = if let Some(theme) = config_table.get("color_theme") {
                 theme.clone()
             } else {
@@ -238,11 +245,9 @@ fn load_color_preset(config: &mut ::config::Config) -> Result<(), ErrorCustom> {
 
             let mut theme_custom_config = config::Config::default();
             theme_custom_config.cache = theme_custom;
-            theme_custom_config
-                .collect_to(&mut theme_config.cache)
-                .unwrap();
+            theme_custom_config.collect_to(&mut theme_table).unwrap();
 
-            config_table.insert("color_theme".to_string(), theme_config.cache);
+            config_table.insert("color_theme".to_string(), theme_table);
         }
     }
 

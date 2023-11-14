@@ -1,6 +1,12 @@
+# All alternatives are listed in `pub enum DirectionKeys {...}` in `src/config/direction_keys.rs`
 direction_keys = "HjklAndArrows"
+
+# All alternatives are listed in `color_theme_presets!(...)` in `src/config/color_theme.rs`
 color_theme_preset = "Basic"
 
+# Each property of [brush_keys] is a `KeyCodeToml`, which allows either one of the special keys
+# ("Backspace", "Enter", "Left", "Right", "Up", "Down", "Home", "End", "PageUp", "PageDown", "Tab", "BackTab", "Delete", "Insert", "Null", "Esc")
+# , an F-key ("F1"-"F255"), or a single character for all other keys (e.g. "d" or "#").
 [brush_keys]
 fg = "f"
 bg = "b"
@@ -8,6 +14,12 @@ character = "c"
 modifiers = "m"
 all = "a"
 
+# A [[normal_mode_keybindings]] describes a single keybinding. Entries defined in local config sources
+# will be appended to the defaults. Each key can only have one action, meaning that you override default
+# keybindings by configuring another action to the same key. You can remove a keybinding by configuring
+# the key to the "DoNothing" action.
+# The value of the `key` property is a `KeyCodeToml`, just like the properties of [brush_keys]
+# All actions are listed in `action_collection!(UserAction, ...)` in `src/actions.rs`
 [[normal_mode_keybindings]]
 key = "d"
 action = "ModeChooseInsertDirection"

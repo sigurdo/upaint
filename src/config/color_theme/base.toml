@@ -1,9 +1,43 @@
-[canvas.default_style]
+# [color_theme.status_bar] is a `StyleToml`.
+# The properties `fg` (foreground) and `bg` (background) are `ColorToml`s.
+# A `ColorToml` accepts either the name of a standard color
+# ("Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "Gray", "DarkGray", "LightRed", "LightGreen", "LightYellow", "LightBlue", "LightMagenta", "LightCyan", "White")
+# , the index of an indexed color (0-255), or a hex color code (e.g. "#ff8800").
+# The `modifiers` property is a `Modifier`, which is a combination of modifiers the possible modifiers are:
+# ("BOLD", "DIM", "ITALIC", "UNDERLINED", "SLOW_BLINK", "RAPID_BLINK", "REVERSED", "HIDDEN", "CROSSED_OUT")
+# , and combinations are created with `|`, e.g. "BOLD | ITALIC".
+[color_theme.status_bar]
+fg = "White"
+bg = "DarkGray"
+modifiers = ""
+
+# [color_theme.command_line] is a `StyleToml`, just like [color_theme.status_bar]
+[color_theme.command_line]
 fg = "Reset"
 bg = "Reset"
 modifiers = ""
 
-[canvas.standard_colors]
+# [color_theme.input_mode] is a `StyleToml`, just like [color_theme.status_bar]
+[color_theme.input_mode]
+fg = "Reset"
+bg = "Reset"
+modifiers = "BOLD"
+
+# [color_theme.user_feedback] is a `StyleToml`, just like [color_theme.status_bar]
+[color_theme.user_feedback]
+fg = "Reset"
+bg = "Reset"
+modifiers = ""
+
+# [color_theme.canvas.default_style] is a `StyleToml`, just like [color_theme.status_bar]
+[color_theme.canvas.default_style]
+fg = "Reset"
+bg = "Reset"
+modifiers = ""
+
+# Each property of [color_theme.canvas.standard_colors] is a `ColorToml`, just like the
+# `fg` and `bg` properties of [color_theme.status_bar]
+[color_theme.canvas.standard_colors]
 black = "Black"
 red = "Red"
 green = "Green"
@@ -20,23 +54,3 @@ bright_blue = "LightBlue"
 bright_magenta = "LightMagenta"
 bright_cyan = "LightCyan"
 bright_white = "White"
-
-[status_bar]
-fg = "White"
-bg = "DarkGray"
-modifiers = ""
-
-[command_line]
-fg = "Reset"
-bg = "Reset"
-modifiers = ""
-
-[input_mode]
-fg = "Reset"
-bg = "Reset"
-modifiers = "BOLD"
-
-[user_feedback]
-fg = "Reset"
-bg = "Reset"
-modifiers = ""

@@ -94,6 +94,10 @@ In normal mode, press `SPACE` to paint the cell under the cursor with the chosen
 
 Press `p` followed by a brush aspect key to pick that brush aspect from the cell under the cursor and apply it to the paintbrush.
 
+## Configuring
+
+Keybindings and color theme is fully customizable by creating a local config file at `$XDG_CONFIG_HOME/upaint/upaint.toml` or `$HOME/.config/upaint/upaint.toml`. An explanation of the format is given in the default config file [`default_config.toml`](src/config/default_config.toml). The color theme preset can be customized further by modifying the `[color_theme]` table. An explanation of this table's format is given the base color theme config file [`base.toml`](src/config/color_theme/base.toml). More examples of configuring the `[color_theme]` table can be found in the config file for each color preset under [`src/config/color_theme/presets/`](src/config/color_theme/presets/).
+
 ## Licensing
 
 Upaint is dual-licensed under MÅKESODD v1 and GNU GPL v3. You are required to follow the terms from either one of the two licenses (your choice) when distributing modified or unmodified versions of Upaint.
