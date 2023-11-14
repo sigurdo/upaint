@@ -7,20 +7,24 @@ use crate::canvas::{
 
 const RESET_ALL: &str = "\u{1b}[0m";
 const RESET_FG: &str = "\u{1b}[39m";
-const RESET_BG: &str = "\u{1b}[49m";
+const _RESET_BG: &str = "\u{1b}[49m";
 
+#[allow(non_snake_case)]
 fn FG_INDEXED(index: u8) -> String {
     format!("\u{1b}[38;5;{index}m")
 }
 
+#[allow(non_snake_case)]
 fn BG_INDEXED(index: u8) -> String {
     format!("\u{1b}[48;5;{index}m")
 }
 
+#[allow(non_snake_case)]
 fn FG_RGB(r: u8, g: u8, b: u8) -> String {
     format!("\u{1b}[38;2;{r};{g};{b}m")
 }
 
+#[allow(non_snake_case)]
 fn BG_RGB(r: u8, g: u8, b: u8) -> String {
     format!("\u{1b}[48;2;{r};{g};{b}m")
 }
@@ -29,10 +33,10 @@ const BOLD: &str = "\u{1b}[1m";
 const DIM: &str = "\u{1b}[2m";
 const ITALIC: &str = "\u{1b}[3m";
 const UNDERLINED: &str = "\u{1b}[4m";
-const SLOW_BLINK: &str = "\u{1b}[5m";
-const RAPID_BLINK: &str = "\u{1b}[6m";
-const REVERSED: &str = "\u{1b}[7m";
-const HIDDEN: &str = "\u{1b}[8m";
+const _SLOW_BLINK: &str = "\u{1b}[5m";
+const _RAPID_BLINK: &str = "\u{1b}[6m";
+const _REVERSED: &str = "\u{1b}[7m";
+const _HIDDEN: &str = "\u{1b}[8m";
 const CROSSED_OUT: &str = "\u{1b}[9m";
 
 #[test]
