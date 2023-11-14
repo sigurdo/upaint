@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::actions::UserAction;
 
-use super::keys::ConfigFileKey;
+use super::{keys::KeyCodeToml, TomlValue};
 
 #[derive(Hash, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Keystroke {
@@ -23,45 +23,31 @@ impl From<KeyEvent> for Keystroke {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ConfigFileKeybinding {
-    key: ConfigFileKey,
+pub struct KeybindingToml {
+    key: KeyCodeToml,
     modifiers: Option<KeyModifiers>,
     action: UserAction,
 }
 
-impl From<ConfigFileKeybinding> for Keystroke {
-    fn from(value: ConfigFileKeybinding) -> Self {
-        Keystroke {
-            code: value.key.into(),
-            modifiers: value.modifiers.unwrap_or(KeyModifiers::empty()),
-        }
-    }
-}
-
-// impl From<Vec<ConfigFileKeybinding>> for HashMap<Keystroke, UserAction> {
-//     fn from(value: Vec<ConfigFileKeybinding>) -> Self {
-//         let mut keybindings_map = Self::default();
-//         for keybinding in value {
-//             let action = keybinding.action.clone();
-//             let keystroke = Keystroke::from(keybinding);
-//             keybindings_map.insert(keystroke, action);
-//         }
-//     }
-// }
-
-// impl<T> From<T> for HashMap<Keystroke, UserAction> where T: ConfigFileKeybinding {}
-
-// pub fn
-
-pub fn keybindings_vec_to_map(
-    keybindings: Vec<ConfigFileKeybinding>,
-) -> HashMap<Keystroke, UserAction> {
+fn keybindings_vec_to_map(keybindings: Vec<KeybindingToml>) -> HashMap<Keystroke, UserAction> {
     let mut keybindings_map = HashMap::default();
     for keybinding in keybindings {
-        let action = keybinding.action.clone();
-        let keystroke = Keystroke::from(keybinding);
-        keybindings_map.insert(keystroke, action);
+        keybindings_map.insert(
+            Keystroke {
+                code: keybinding.key.to_config_value(),
+                modifiers: keybinding.modifiers.unwrap_or(KeyModifiers::empty()),
+            },
+            keybinding.action,
+        );
     }
 
     keybindings_map
+}
+
+impl TomlValue for Vec<KeybindingToml> {
+    type ConfigValue = HashMap<Keystroke, UserAction>;
+
+    fn to_config_value(self) -> Self::ConfigValue {
+        keybindings_vec_to_map(self)
+    }
 }

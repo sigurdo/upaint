@@ -1,5 +1,5 @@
 direction_keys = "HjklAndArrows"
-color_theme_preset = "Monokai"
+color_theme_preset = "Basic"
 
 [brush_keys]
 fg = "f"

@@ -14,47 +14,150 @@ use toml::de::ValueDeserializer;
 
 use crate::{
     actions::{cursor::MoveCursor, Action, UserAction},
-    brush::Brush,
+    brush::{Brush, BrushComponent},
     Direction, ErrorCustom, Ground, ProgramState,
 };
 
-pub mod brush_keys;
 pub mod color_theme;
-pub mod config_file_value;
 pub mod direction_keys;
 pub mod keybindings;
 pub mod keys;
 
 use self::{
-    brush_keys::{BrushKeys, ConfigFileBrushKeys},
-    color_theme::{load_color_theme_preset, ColorTheme, ColorThemePreset, ConfigFileColorTheme},
+    color_theme::{ColorThemePreset, ColorToml, StyleToml},
     direction_keys::DirectionKeys,
-    keybindings::{keybindings_vec_to_map, ConfigFileKeybinding, Keystroke},
-    keys::ConfigFileKey,
+    keybindings::{KeybindingToml, Keystroke},
+    keys::KeyCodeToml,
+    // structure::{Config, ConfigToml},
 };
 
 #[cfg(test)]
 mod test;
 
-/// Struct containing a set of finally loaded config options
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Config {
-    normal_mode_keybindings: HashMap<Keystroke, UserAction>,
-    pub direction_keys: DirectionKeys,
-    pub brush_keys: BrushKeys,
-    pub color_theme: ColorTheme,
+pub trait TomlValue {
+    type ConfigValue;
+
+    fn to_config_value(self) -> Self::ConfigValue;
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Config {
-            normal_mode_keybindings: HashMap::default(),
-            direction_keys: DirectionKeys::default(),
-            brush_keys: BrushKeys::default(),
-            color_theme: ColorTheme::default(),
+/// Macro for generating a nested config struct with it's corresponding TOML struct.
+/// Input pattern starts with an opening curly bracket `{`, followed by the names
+/// to use for the two generated structs on the format `(NameToml => NameConfig),`.
+/// Now, a listing of all the fields follow on the format `field_name: type`.
+/// Type can be either a set of pre-defined types `(TypeToml => TypeConfig)`,
+/// a single pre-defined type to use in both structs `(Type)`, or it can start with
+/// another opening curly bracket `{` and introduce a recursive invocation of the
+/// primary pattern.
+/// Each field must be separated by a comma, and a trailing comma must be left after
+/// the last field. The pattern is concluded by a closing curly bracket `}`.
+macro_rules! config_struct_definition {
+    ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
+        #[derive(Clone, Debug, Deserialize, Serialize)]
+        pub struct $struct_name_toml {
+            $(
+                pub $field: toml_struct_type!($type),
+            )*
         }
-    }
+
+        #[derive(Clone, Debug, Deserialize, Serialize)]
+        pub struct $struct_name {
+            $(
+                pub $field: config_struct_type!($type),
+            )*
+        }
+
+        impl TomlValue for $struct_name_toml {
+            type ConfigValue = $struct_name;
+
+            fn to_config_value(self) -> Self::ConfigValue {
+                Self::ConfigValue {
+                    $(
+                        $field: self.$field.to_config_value(),
+                    )*
+                }
+            }
+        }
+
+        $(
+            config_struct_definition!($type);
+        )*
+    };
+    (($other_type_toml:ty => $other_type:ty)) => {
+
+    };
+    (($same_type:ty)) => {
+
+    };
 }
+
+macro_rules! config_struct_type {
+    ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
+        $struct_name
+    };
+    (($other_type_toml:ty => $other_type:ty)) => {
+        $other_type
+    };
+    (($same_type:ty)) => {
+        $same_type
+    };
+}
+
+macro_rules! toml_struct_type {
+    ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
+        $struct_name_toml
+    };
+    (($other_type_toml:ty => $other_type:ty)) => {
+        $other_type_toml
+    };
+    (($same_type:ty)) => {
+        $same_type
+    };
+}
+
+config_struct_definition!({
+    (ConfigToml => Config),
+    normal_mode_keybindings: (Vec<KeybindingToml> => HashMap<Keystroke, UserAction>),
+    direction_keys: (DirectionKeys),
+    brush_keys: {
+        (BrushKeysToml => BrushKeys),
+        fg: (KeyCodeToml => KeyCode),
+        bg: (KeyCodeToml => KeyCode),
+        character: (KeyCodeToml => KeyCode),
+        modifiers: (KeyCodeToml => KeyCode),
+        all: (KeyCodeToml => KeyCode),
+    },
+    color_theme_preset: (ColorThemePreset),
+    color_theme: {
+        (ColorThemeToml => ColorTheme),
+        canvas: {
+            (ColorThemeCanvasToml => ColorThemeCanvas),
+            default_style: (StyleToml => Style),
+            standard_colors: {
+                (ColorThemeCanvasStandardColorsToml => ColorThemeCanvasStandardColors),
+                black: (ColorToml => Color),
+                red: (ColorToml => Color),
+                green: (ColorToml => Color),
+                yellow: (ColorToml => Color),
+                blue: (ColorToml => Color),
+                magenta: (ColorToml => Color),
+                cyan: (ColorToml => Color),
+                white: (ColorToml => Color),
+                bright_black: (ColorToml => Color),
+                bright_red: (ColorToml => Color),
+                bright_green: (ColorToml => Color),
+                bright_yellow: (ColorToml => Color),
+                bright_blue: (ColorToml => Color),
+                bright_magenta: (ColorToml => Color),
+                bright_cyan: (ColorToml => Color),
+                bright_white: (ColorToml => Color),
+            },
+        },
+        status_bar: (StyleToml => Style),
+        command_line: (StyleToml => Style),
+        input_mode: (StyleToml => Style),
+        user_feedback: (StyleToml => Style),
+    },
+});
 
 impl Config {
     pub fn normal_mode_action(&self, keystroke: &Keystroke) -> Option<&UserAction> {
@@ -62,25 +165,28 @@ impl Config {
     }
 }
 
-impl From<ConfigFile> for Config {
-    fn from(value: ConfigFile) -> Self {
-        Self {
-            normal_mode_keybindings: keybindings_vec_to_map(value.normal_mode_keybindings),
-            direction_keys: value.direction_keys,
-            brush_keys: BrushKeys::from(value.brush_keys),
-            color_theme: ColorTheme::from(value.color_theme),
-        }
+impl Default for Config {
+    fn default() -> Self {
+        load_default_config()
     }
 }
 
-/// Struct containing a complete set of config options structured as in the config file
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ConfigFile {
-    normal_mode_keybindings: Vec<ConfigFileKeybinding>,
-    direction_keys: DirectionKeys,
-    brush_keys: ConfigFileBrushKeys,
-    color_theme_preset: ColorThemePreset,
-    color_theme: ConfigFileColorTheme,
+impl BrushKeys {
+    pub fn component(&self, key: &KeyCode) -> Option<BrushComponent> {
+        if *key == self.fg {
+            Some(BrushComponent::Fg)
+        } else if *key == self.bg {
+            Some(BrushComponent::Bg)
+        } else if *key == self.character {
+            Some(BrushComponent::Character)
+        } else if *key == self.modifiers {
+            Some(BrushComponent::Modifiers)
+        } else if *key == self.all {
+            Some(BrushComponent::All)
+        } else {
+            None
+        }
+    }
 }
 
 pub fn default_config_source() -> ::config::File<FileSourceString, FileFormat> {
@@ -112,7 +218,18 @@ fn load_color_preset(config: &mut ::config::Config) -> Result<(), ErrorCustom> {
             ))
             .unwrap();
 
-            let mut theme_config = load_color_theme_preset(preset).build().unwrap();
+            let mut theme_config = config::Config::builder()
+                .add_source(config::File::from_str(
+                    include_str!("config/color_theme/base.toml"),
+                    config::FileFormat::Toml,
+                ))
+                .add_source(config::File::from_str(
+                    preset.toml_str(),
+                    config::FileFormat::Toml,
+                ))
+                .build()
+                .unwrap();
+
             let theme_custom = if let Some(theme) = config_table.get("color_theme") {
                 theme.clone()
             } else {
@@ -142,11 +259,16 @@ pub fn load_config_from_builder(
 
     load_color_preset(&mut config)?;
 
-    let config_file: ConfigFile = config.try_deserialize()?;
+    let config_toml: ConfigToml = config.try_deserialize()?;
 
-    let config = Config::from(config_file);
+    let config = config_toml.to_config_value();
 
     Ok(config)
+}
+
+pub fn load_default_config() -> Config {
+    load_config_from_builder(::config::Config::builder().add_source(default_config_source()))
+        .unwrap()
 }
 
 pub fn load_config() -> Result<Config, ErrorCustom> {

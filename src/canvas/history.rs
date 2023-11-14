@@ -2,10 +2,7 @@ use std::collections::LinkedList;
 
 use ratatui::style::Style;
 
-use crate::{
-    config::color_theme::canvas::ColorThemeCanvas, file_formats::FileFormat, ErrorCustom,
-    ResultCustom,
-};
+use crate::{config::ColorThemeCanvas, file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::raw::{
     ansi_import::AnsiImportError, operations::CanvasOperation, rendering::CanvasWidget, RawCanvas,

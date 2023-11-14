@@ -38,9 +38,9 @@ pub struct CommandLineWidget<'a> {
     pub active: bool,
 }
 
-pub fn create_command_line_textarea<'a>() -> TextArea<'a> {
+pub fn create_command_line_textarea<'a>(style: Style) -> TextArea<'a> {
     let mut textarea = TextArea::default();
-    textarea.set_cursor_line_style(Style::default());
+    textarea.set_style(style);
     // textarea.move_cursor(CursorMove::End);
     // textarea.set_cursor_style(Style::default());
     textarea
@@ -56,11 +56,14 @@ impl<'a> Widget for CommandLineWidget<'a> {
 
             let colon_cell = buf.get_mut(chunks[0].x, chunks[0].y);
             colon_cell.symbol = ":".to_string();
+            colon_cell.set_style(self.textarea.style());
 
             self.textarea.widget().render(chunks[1], buf);
         } else {
             for i in area.left()..area.right() {
-                buf.get_mut(i, area.y).symbol = " ".to_string();
+                let cell = buf.get_mut(i, area.y);
+                cell.symbol = " ".to_string();
+                cell.set_style(self.textarea.style());
             }
         }
     }

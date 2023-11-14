@@ -9,7 +9,11 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use log::Log;
-use ratatui::{backend::CrosstermBackend, style::Color, Terminal};
+use ratatui::{
+    backend::CrosstermBackend,
+    style::{Color, Style},
+    Terminal,
+};
 use std::{
     fs::File,
     io::{self, Write},
@@ -123,7 +127,8 @@ fn application(
     let canvas_area = program_state.canvas.raw().area();
     program_state.cursor_position = canvas_area.center();
     program_state.focus_position = program_state.cursor_position;
-    program_state.command_line = create_command_line_textarea();
+    program_state.command_line =
+        create_command_line_textarea(program_state.config.color_theme.command_line);
     let program_state = Arc::new(Mutex::new(program_state));
     let (exit_tx, exit_rx) = mpsc::sync_channel::<()>(1);
     let exit_tx = Arc::new(Mutex::new(exit_tx));

@@ -5,7 +5,7 @@ use config::{Config, ConfigError, Environment, File};
 // use serde::Serialize;
 use crossterm::event::{KeyCode, KeyModifiers};
 use serde::{Deserialize, Serialize};
-use upaint::config::ConfigFile;
+use upaint::config::ConfigToml as ConfigFile;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SpecialAction {

@@ -22,6 +22,21 @@ bright_cyan = "LightCyan"
 bright_white = "White"
 
 [status_bar]
+fg = "White"
+bg = "DarkGray"
+modifiers = ""
+
+[command_line]
+fg = "Reset"
+bg = "Reset"
+modifiers = ""
+
+[input_mode]
+fg = "Reset"
+bg = "Reset"
+modifiers = "BOLD"
+
+[user_feedback]
 fg = "Reset"
 bg = "Reset"
 modifiers = ""

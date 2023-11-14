@@ -124,7 +124,8 @@ pub fn draw_frame(
             None => "",
         };
         let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(user_feedback)])])
-            .wrap(Wrap { trim: false });
+            .wrap(Wrap { trim: false })
+            .style(program_state.config.color_theme.user_feedback);
         f.render_widget(user_feedback_widget, user_feedback_chunk);
 
         let status_bar = StatusBar::from(&(*program_state));
@@ -150,7 +151,7 @@ pub fn draw_frame(
                 _ => "",
             };
             let input_mode = Paragraph::new(vec![Line::from(vec![Span::raw(input_mode)])])
-                .style(Style::new().add_modifier(Modifier::BOLD));
+                .style(program_state.config.color_theme.input_mode);
             f.render_widget(input_mode, command_line_chunk);
         }
 

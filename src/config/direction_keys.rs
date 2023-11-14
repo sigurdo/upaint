@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::Direction;
 
+use super::TomlValue;
+
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
 pub enum DirectionKeys {
     #[default]
@@ -92,5 +94,13 @@ impl DirectionKeys {
             }
             DirectionKeys::Arrows => arrows(key),
         }
+    }
+}
+
+impl TomlValue for DirectionKeys {
+    type ConfigValue = Self;
+
+    fn to_config_value(self) -> Self::ConfigValue {
+        self
     }
 }

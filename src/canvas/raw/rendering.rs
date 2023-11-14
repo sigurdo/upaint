@@ -6,7 +6,7 @@ use ratatui::{
 
 use crate::{
     canvas::{raw::CanvasIndex, rect::CanvasRect},
-    config::color_theme::canvas::ColorThemeCanvas,
+    config::ColorThemeCanvas,
     Ground,
 };
 
