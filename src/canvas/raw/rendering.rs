@@ -1,6 +1,6 @@
 use ratatui::{
     prelude::{Buffer, Rect},
-    style::{Color, Modifier, Style, Styled},
+    style::{Color, Modifier, Style},
     widgets::Widget,
 };
 
@@ -46,15 +46,6 @@ impl<'a> CanvasWidget<'a> {
             columns: area.width,
         }
     }
-}
-
-fn apply_base_style(base_style: Option<Color>, color: Color) -> Color {
-    if let Some(base_color) = base_style {
-        if color == Color::Reset {
-            return base_color;
-        }
-    }
-    color
 }
 
 fn apply_color_theme_to_color(

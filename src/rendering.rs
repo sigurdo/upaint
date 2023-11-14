@@ -1,23 +1,14 @@
-use crossterm::{
-    cursor::SetCursorStyle,
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode},
-};
 use ratatui::{
     backend::CrosstermBackend,
-    prelude::{Backend, Constraint, Layout, Rect},
-    style::{Modifier, Style},
+    prelude::{Constraint, Layout},
     text::{Line, Span},
-    widgets::{Block, Borders, Padding, Paragraph, Wrap},
-    Frame, Terminal,
+    widgets::{Block, Paragraph, Wrap},
+    Terminal,
 };
 use std::io::{self};
 
 use crate::{
-    canvas::{rect::CanvasRect, CanvasIndex},
-    command_line::CommandLineWidget,
-    status_bar::StatusBar,
-    InputMode, ProgramState, ResultCustom,
+    command_line::CommandLineWidget, status_bar::StatusBar, InputMode, ProgramState, ResultCustom,
 };
 
 pub fn draw_frame(

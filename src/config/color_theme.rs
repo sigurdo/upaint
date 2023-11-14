@@ -1,4 +1,3 @@
-use config::{builder::DefaultState, ConfigBuilder};
 use ratatui::style::{Color, Modifier, Style};
 use serde::{de::Visitor, Deserialize, Serialize};
 use toml::de::ValueDeserializer;
@@ -23,7 +22,6 @@ macro_rules! color_theme_presets {
                             include_str!(concat!("color_theme/presets/", $filename))
                         },
                     )*
-                    _ => unreachable!(),
                 }
             }
         }

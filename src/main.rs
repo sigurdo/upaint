@@ -1,4 +1,4 @@
-use clap::{arg, Parser};
+use clap::{Parser};
 use crossterm::{
     cursor::{self, SetCursorStyle},
     event::{
@@ -11,13 +11,11 @@ use crossterm::{
 use log::Log;
 use ratatui::{
     backend::CrosstermBackend,
-    style::{Color, Style},
     Terminal,
 };
 use std::{
-    fs::File,
     io::{self, Write},
-    path::{Path, PathBuf},
+    path::{PathBuf},
     sync::{
         mpsc::{self},
         Arc, Mutex,
@@ -28,7 +26,7 @@ use std::{
 
 use upaint::{
     actions::UserAction,
-    canvas::{Canvas, CanvasOperation},
+    canvas::{Canvas},
     command_line::create_command_line_textarea,
     rendering::draw_frame,
     user_input::handle_user_input,
@@ -116,11 +114,11 @@ fn application(
         program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     } else {
-        let mut canvas = Canvas::default();
+        let canvas = Canvas::default();
         program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     };
-    let a = UserAction::CursorLeft;
+    let _a = UserAction::CursorLeft;
 
     program_state.config = upaint::config::load_config()?;
     // let canvas_dimensions = program_state.canvas.get_dimensions();

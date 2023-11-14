@@ -1,8 +1,8 @@
-use std::time::Duration;
+
 
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEvent},
-    terminal::{disable_raw_mode, enable_raw_mode},
+    event::{self, Event, KeyCode},
+    terminal::{disable_raw_mode},
 };
 
 fn application() {

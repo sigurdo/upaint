@@ -1,11 +1,11 @@
-use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use hsv::hsv_to_rgb;
 use prisma::FromColor;
 use ratatui::{
     prelude::Rect,
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{block::title, Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, Widget},
 };
 
 #[derive(Debug, Clone)]

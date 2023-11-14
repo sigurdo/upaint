@@ -1,21 +1,19 @@
-use std::{char::ToLowercase, collections::HashMap, default};
+use std::{collections::HashMap};
 
 use config::{
     builder::{ConfigBuilder, DefaultState},
     FileFormat, FileSourceFile, FileSourceString, Source, Value, ValueKind,
 };
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::style::{Color, Modifier, Style};
+use crossterm::event::{KeyCode};
+use ratatui::style::{Color, Style};
 use serde::{
-    de::{Expected, Visitor},
     Deserialize, Serialize,
 };
 use toml::de::ValueDeserializer;
 
 use crate::{
-    actions::{cursor::MoveCursor, Action, UserAction},
-    brush::{Brush, BrushComponent},
-    Direction, ErrorCustom, Ground, ProgramState,
+    actions::{UserAction},
+    brush::{BrushComponent}, ErrorCustom,
 };
 
 pub mod color_theme;

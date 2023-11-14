@@ -1,6 +1,4 @@
-use std::path::PathBuf;
-
-use config::{Config, ConfigError, Environment, File};
+use config::Config;
 // use ;
 // use serde::Serialize;
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -65,7 +63,7 @@ impl Default for UpaintConfig {
     }
 }
 
-const input: &str = r##"
+const _INPUT: &str = r##"
 [[keybindings]]
 action = "GoOnToilet"
 modifiers = "SHIFT | CONTROL"

@@ -1,13 +1,12 @@
 use crossterm::{
     style::{
-        Attribute as CAttribute, Attributes as CAttributes, Color as CColor, Colored as CColored,
+        Attribute as CAttribute, Color as CColor,
         ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor,
     },
     Command,
 };
 use ratatui::{
     style::{Color, Modifier},
-    widgets::canvas::Canvas,
 };
 
 use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
@@ -78,7 +77,7 @@ impl RawCanvas {
         let mut previous_cell = &default_cell;
         let mut previous_row = self.area.first_row();
         let mut previous_column = self.area.first_column() - 1;
-        let mut cells = self.cells.iter();
+        let cells = self.cells.iter();
 
         for (index, cell) in cells {
             let (row, column) = index.to_owned();
@@ -173,7 +172,7 @@ impl RawCanvas {
 
     pub fn export_txt_decolorize(&self) -> ResultCustom<String> {
         let mut canvas = self.clone();
-        for (index, cell) in canvas.cells.iter_mut() {
+        for (_index, cell) in canvas.cells.iter_mut() {
             cell.fg = Color::Reset;
             cell.bg = Color::Reset;
             cell.modifiers = Modifier::empty();

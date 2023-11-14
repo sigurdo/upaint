@@ -1,6 +1,6 @@
 use upaint::{canvas::Canvas, file_formats::FileFormat};
 
-fn test() -> Option<u64> {
+fn _test() -> Option<u64> {
     Some(65)
 }
 

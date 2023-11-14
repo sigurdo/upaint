@@ -24,6 +24,8 @@ struct CanvasCell {
 }
 
 impl CanvasCell {
+    // `from_char()` is currently only used in tests
+    #[allow(dead_code)]
     fn from_char(character: char) -> Self {
         let mut cell = CanvasCell::default();
         cell.character = character;
@@ -68,11 +70,11 @@ impl RawCanvas {
         self.cells.get_mut(index).unwrap()
     }
 
-    fn get(&mut self, index: &CanvasIndex) -> &CanvasCell {
+    fn _get(&mut self, index: &CanvasIndex) -> &CanvasCell {
         self.get_mut(index)
     }
 
-    fn set(&mut self, index: CanvasIndex, cell: CanvasCell) {
+    fn _set(&mut self, index: CanvasIndex, cell: CanvasCell) {
         self.cells.insert(index, cell);
         self.area.include_index(index);
     }

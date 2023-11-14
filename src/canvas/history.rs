@@ -1,6 +1,6 @@
 use std::collections::LinkedList;
 
-use ratatui::style::Style;
+
 
 use crate::{config::ColorThemeCanvas, file_formats::FileFormat, ErrorCustom, ResultCustom};
 

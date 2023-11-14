@@ -1,17 +1,14 @@
 use brush::BrushApply;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseEventKind};
-use ratatui::style::{Color, Modifier, Style};
-use ratatui_textarea::{CursorMove, TextArea};
-use std::sync::mpsc::{self};
+use crossterm::event::{Event, KeyCode, KeyModifiers, MouseEventKind};
+use ratatui::style::{Color};
+
+
 
 use crate::{
     actions::{brush, cursor::MoveCursor, pan::Pan, Action, PipetteTake, UserAction},
     brush::{Brush, BrushComponent},
-    canvas::CanvasOperation,
-    color_picker::ColorPicker,
-    command_line::{create_command_line_textarea, execute_command},
-    config::keybindings::Keystroke,
-    Direction, Ground, InputMode, ProgramState, ResultCustom,
+    command_line::{execute_command},
+    config::keybindings::Keystroke, Ground, InputMode, ProgramState, ResultCustom,
 };
 
 mod insert_mode;

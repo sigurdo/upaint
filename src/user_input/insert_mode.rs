@@ -1,11 +1,10 @@
 use crate::{
-    actions::{cursor::MoveCursor, Action, UserAction},
+    actions::{cursor::MoveCursor, Action},
     brush::Brush,
-    canvas::CanvasOperation,
     Direction, InputMode, ProgramState, ResultCustom,
 };
-use crossterm::event::{Event, KeyCode, KeyEvent};
-use ratatui::style::{Color, Modifier};
+use crossterm::event::{Event, KeyCode};
+
 
 pub fn handle_user_input_choose_insert_direction_mode(
     event: Event,

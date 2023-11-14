@@ -1,10 +1,10 @@
-use crate::{command_line::create_command_line_textarea, InputMode, ProgramState};
+use crate::{ProgramState};
 
 use super::Action;
 
 pub struct DoNothing;
 impl Action for DoNothing {
-    fn execute(&self, program_state: &mut ProgramState) {}
+    fn execute(&self, _program_state: &mut ProgramState) {}
 }
 
 pub struct Undo;

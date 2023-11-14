@@ -1,6 +1,6 @@
-use ratatui::style::{Color, Modifier};
 
-use crate::canvas::raw::CanvasCell;
+
+
 
 use super::RawCanvas;
 

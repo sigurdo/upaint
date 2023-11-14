@@ -1,17 +1,10 @@
 use std::fmt::Display;
 
-use crossterm::{
-    style::{
-        Attribute as CAttribute, Attributes as CAttributes, Color as CColor, Colored as CColored,
-        ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor,
-    },
-    Command,
-};
 use ratatui::style::{Color, Modifier};
 
-use crate::{canvas::raw::CanvasIndex, ErrorCustom, ResultCustom};
+use crate::canvas::raw::CanvasIndex;
 
-use super::{CanvasCell, RawCanvas};
+use super::RawCanvas;
 
 #[cfg(test)]
 mod test;
@@ -26,7 +19,7 @@ pub enum AnsiImportError {
 }
 
 impl Display for AnsiImportError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
 }
@@ -40,7 +33,7 @@ impl RawCanvas {
         Self: Sized,
     {
         fn escape_sequence(
-            character: char,
+            _character: char,
             index: CanvasIndex,
             characters: &mut std::iter::Enumerate<std::str::Chars>,
             fg_color: &mut Color,
@@ -83,7 +76,9 @@ impl RawCanvas {
             match result {
                 // Only allow CSI sequences
                 Some((_i, '[')) => (),
-                Some((_i, character)) => return Err(AnsiImportError::IllegalEscapeSequence(index)),
+                Some((_i, _character)) => {
+                    return Err(AnsiImportError::IllegalEscapeSequence(index))
+                }
                 None => return Err(AnsiImportError::UnfinishedEscapeSequence(index)),
             }
             let mut sgr_sequence = String::new();
@@ -186,7 +181,7 @@ impl RawCanvas {
         let mut modifiers = Modifier::default();
         let mut canvas_index: CanvasIndex = (0, 0);
         let mut characters = ansi.chars().enumerate();
-        'outer: while let Some((i, character)) = characters.next() {
+        '_outer: while let Some((_i, character)) = characters.next() {
             if character.is_control() {
                 match character {
                     '\u{0d}' => {

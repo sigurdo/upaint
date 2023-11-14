@@ -1,5 +1,5 @@
-use ratatui::style::Modifier;
-use ratatui::{prelude::Rect, style::Color};
+
+use ratatui::{style::Color};
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -20,7 +20,7 @@ use crate::config::Config;
 use brush::Brush;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
-use command_line::CommandLine;
+
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Direction {
@@ -74,7 +74,6 @@ pub struct ProgramState<'a> {
 }
 
 use std::{
-    default,
     io::{self},
     sync::{
         mpsc::{RecvError, SendError, TrySendError},

@@ -10,11 +10,11 @@ fn main() {
         };
     }
 
-    fn a(b: i64) {
+    fn _a(b: i64) {
         println!("a: {b}");
     }
 
-    let c = 64;
+    let _c = 64;
 
     // let result = match c {
     //     action_arm!(63, 3),

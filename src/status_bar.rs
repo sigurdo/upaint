@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
-use crate::{InputMode, ProgramState};
+use crate::{ProgramState};
 
 pub struct StatusBar<'a> {
     pub program_state: &'a ProgramState<'a>,

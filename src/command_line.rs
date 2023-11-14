@@ -1,12 +1,12 @@
 use ratatui::prelude::{Buffer, Constraint, Direction, Layout, Rect};
-use ratatui::style::{Modifier, Style};
-use ratatui::text::{self, Line, Span, Text};
-use ratatui::widgets::{Paragraph, Widget};
-use ratatui_textarea::{CursorMove, Input, TextArea};
+use ratatui::style::Style;
+
+use ratatui::widgets::Widget;
+use ratatui_textarea::{CursorMove, TextArea};
 
 use crate::actions::session::{ForceQuit, LossySave, LossySaveAs, Quit, Save, SaveAs, SaveQuit};
 use crate::actions::{Action, FallibleAction};
-use crate::{ErrorCustom, InputMode, ProgramState, ResultCustom};
+use crate::{InputMode, ProgramState, ResultCustom};
 
 #[derive(Clone)]
 pub struct CommandLine<'a> {
@@ -82,7 +82,7 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
     let result = match command_name {
         "q" => Quit {}.try_execute(program_state),
         "q!" => {
-            ForceQuit {}.try_execute(program_state);
+            ForceQuit {}.execute(program_state);
             Ok(())
         }
         "w" => {
