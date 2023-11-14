@@ -145,7 +145,7 @@ impl From<TxtExportError> for String {
     fn from(value: TxtExportError) -> Self {
         match value {
             TxtExportError::CellHasSgrEffects((row, column)) => format!(
-                "Canvas contains SGR effects on line {row}, column {column}, which will be lost when saving as .txt. Use :w! to save anyways."
+                "Canvas contains SGR effects on line {row}, column {column}, which will be lost when saving as .txt. Consider saving as .ansi or use :w! to save anyways."
             ),
             TxtExportError::Other(error) => error.to_string(),
         }
