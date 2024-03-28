@@ -1,12 +1,13 @@
 use ratatui::{
-    prelude::{Buffer, Rect},
+    prelude::{Buffer, Rect, Constraint, Line},
     style::{Color, Modifier, Style},
     widgets::Widget,
+    layout::Layout,
 };
 
 use crate::{
     canvas::{raw::CanvasIndex, rect::CanvasRect},
-    config::ColorThemeCanvas,
+    config::{ColorThemeCanvas, Config},
     Ground,
 };
 
@@ -16,16 +17,16 @@ pub struct CanvasWidget<'a> {
     pub canvas: &'a RawCanvas,
     pub focus: CanvasIndex,
     pub cursor: Option<CanvasIndex>,
-    pub color_theme: ColorThemeCanvas,
+    pub config: &'a Config,
 }
 
 impl<'a> CanvasWidget<'a> {
-    pub fn from_canvas(canvas: &'a RawCanvas, color_theme: ColorThemeCanvas) -> Self {
+    pub fn from_canvas(canvas: &'a RawCanvas, config: &'a Config) -> Self {
         CanvasWidget {
             canvas: canvas,
             focus: canvas.area().center(),
             cursor: None,
-            color_theme: color_theme,
+            config,
         }
     }
 
@@ -36,14 +37,47 @@ impl<'a> CanvasWidget<'a> {
         (row_to_y_translation, column_to_x_translation)
     }
 
+    // Calculate layout chunks for (canvas, row numbers, column numbers)
+    fn layout_chunks(&self, area: Rect) -> (Rect, Rect, Rect) {
+        // In a perfect world, this is calculated dynamically based on the numbers of digits in the
+        // highest row index
+        let row_number_chunk_width = 4;
+        let chunks = Layout::default()
+            .direction(ratatui::prelude::Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Max(row_number_chunk_width), // Row numbers
+                    Constraint::Min(1), // Rest
+                ]
+                .as_ref(),
+            )
+            .split(area);
+        let row_number_chunk = chunks[0];
+        let chunks = Layout::default()
+            .direction(ratatui::prelude::Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Max(1), // Column numbers
+                    Constraint::Min(1), // Rest
+                ]
+                .as_ref(),
+            )
+            .split(chunks[1]);
+        let column_number_chunk = chunks[0];
+        let canvas_chunk = chunks[1];
+        (canvas_chunk, row_number_chunk, column_number_chunk)
+    }
+
+
     /// Visible canvas area when rendered to `area`
     pub fn visible(&self, area: Rect) -> CanvasRect {
-        let (row_to_y_translation, column_to_x_translation) = self.render_translation(area);
+        let (canvas_chunk, _, _) = self.layout_chunks(area);
+        let (row_to_y_translation, column_to_x_translation) = self.render_translation(canvas_chunk);
         CanvasRect {
-            row: area.y as i16 - row_to_y_translation,
-            column: area.x as i16 - column_to_x_translation,
-            rows: area.height,
-            columns: area.width,
+            row: canvas_chunk.y as i16 - row_to_y_translation,
+            column: canvas_chunk.x as i16 - column_to_x_translation,
+            rows: canvas_chunk.height,
+            columns: canvas_chunk.width,
         }
     }
 }
@@ -98,14 +132,118 @@ fn apply_color_theme(style: Style, color_theme: &ColorThemeCanvas) -> Style {
         ))
 }
 
+struct RowNumbersWidget<'a> {
+    row_number_cursor: Option<i16>,
+    row_to_y_translation: i16,
+    config: &'a Config,
+}
+
+impl Widget for RowNumbersWidget<'_> {
+    fn render(self, area: Rect, buffer: &mut Buffer) {
+        for y in area.top()..area.bottom() {
+            let area = Rect {
+                x: area.x,
+                y: y,
+                width: area.width,
+                height: 1,
+            };
+            let use_relative = self.config.numbers.row.relative && self.row_number_cursor.is_some();
+            let row = y as i16 - self.row_to_y_translation;
+            let number = if use_relative {
+                let row_cursor = self.row_number_cursor.unwrap();
+                if row == row_cursor {
+                    row
+                } else {
+                    (row - row_cursor).abs()
+                }
+            } else {
+                row
+            };
+            let width = usize::from(area.width);
+            let text = if let Some(row_cursor) = self.row_number_cursor {
+                if row == row_cursor {
+                    format!("{:<width$}", number, width=width)
+                } else {
+                    format!("{:>width$}", number, width=width)
+                }
+            } else {
+                format!("{:>width$}", number, width=width)
+            };
+            ratatui::widgets::Paragraph::new(vec![Line::from(text)]).render(area, buffer);
+        }
+    }
+}
+
+struct ColumnNumbersWidget<'a> {
+    column_number_cursor: Option<i16>,
+    column_to_x_translation: i16,
+    config: &'a Config,
+}
+
+impl Widget for ColumnNumbersWidget<'_> {
+    fn render(self, area: Rect, buffer: &mut Buffer) {
+        let cell_width = 5;
+        if self.config.numbers.column.relative && self.column_number_cursor.is_some() {
+            let column_cursor = self.column_number_cursor.unwrap();
+            let x_cursor = column_cursor + self.column_to_x_translation;
+            let i_cursor = (x_cursor - (cell_width - 1) - area.x as i16) / cell_width;
+            let x_margin_left = (x_cursor - (cell_width - 1) - area.x as i16) % cell_width;
+            let i_rightmost = (area.width as i16 - x_margin_left) / cell_width;
+            let x_margin_right = (area.width as i16 - x_margin_left) % cell_width;
+            for i in 0..i_rightmost {
+                let x = area.x as i16 + x_margin_left + cell_width * i;
+                let column = x - self.column_to_x_translation + 4;
+                let number = if column == column_cursor {
+                    column
+                } else {
+                    (column - column_cursor).abs()
+                };
+                let text = if (i - i_cursor).abs() == 1 {
+                    format!("{:>width$}", "", width=cell_width as usize)
+                } else {
+                    format!("{:>width$}", number, width=cell_width as usize)
+                };
+                let area = Rect {
+                    x: x as u16,
+                    y: area.y,
+                    width: cell_width as u16,
+                    height: 1,
+                };
+                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).render(area, buffer);
+            }
+        }
+    }
+}
+
 impl Widget for CanvasWidget<'_> {
     fn render(self, area: Rect, buffer: &mut Buffer) {
-        let (row_to_y_translation, column_to_x_translation) = self.render_translation(area);
+        let (canvas_chunk, row_number_chunk, column_number_chunk) = self.layout_chunks(area);
+        let (row_to_y_translation, column_to_x_translation) = self.render_translation(canvas_chunk);
+        let row_number_cursor = if let Some((row, _column)) = self.cursor {
+            Some(row)
+        } else {
+            None
+        };
+        RowNumbersWidget {
+            row_number_cursor: row_number_cursor,
+            row_to_y_translation,
+            config: self.config,
+        }.render(row_number_chunk, buffer);
+        let column_number_cursor = if let Some((_row, column)) = self.cursor {
+            Some(column)
+        } else {
+            None
+        };
+        ColumnNumbersWidget {
+            column_number_cursor,
+            column_to_x_translation,
+            config: self.config,
+        }.render(column_number_chunk, buffer);
 
-        let x_left = area.left();
-        let x_right = area.right();
-        let y_top = area.top();
-        let y_bottom = area.bottom();
+        let x_left = canvas_chunk.left();
+        let x_right = canvas_chunk.right();
+        let y_top = canvas_chunk.top();
+        let y_bottom = canvas_chunk.bottom();
 
         for y in y_top..y_bottom {
             for x in x_left..x_right {
@@ -113,10 +251,7 @@ impl Widget for CanvasWidget<'_> {
                 let column = x as i16 - column_to_x_translation;
 
                 let target = buffer.get_mut(x, y);
-                target.set_style(apply_color_theme(
-                    self.color_theme.default_style.clone(),
-                    &self.color_theme,
-                ));
+                let color_theme = &self.config.color_theme.canvas;
 
                 if let Some(cell) = self.canvas.cells.get(&(row, column)) {
                     target.symbol = String::from(cell.character);
@@ -125,7 +260,13 @@ impl Widget for CanvasWidget<'_> {
                             .fg(cell.fg)
                             .bg(cell.bg)
                             .add_modifier(cell.modifiers),
-                        &self.color_theme,
+                        color_theme,
+                    ));
+                }
+                else {
+                    target.set_style(apply_color_theme(
+                        color_theme.default_style.clone(),
+                        color_theme,
                     ));
                 }
             }

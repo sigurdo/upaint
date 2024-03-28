@@ -4,6 +4,16 @@ direction_keys = "HjklAndArrows"
 # All alternatives are listed in `color_theme_presets!(...)` in `src/config/color_theme.rs`
 color_theme_preset = "Basic"
 
+# Row numbers
+[numbers.row]
+enable = true
+relative = true
+
+# Column numbers
+[numbers.column]
+enable = true
+relative = true
+
 # Each property of [brush_keys] is a `KeyCodeToml`, which allows either one of the special keys
 # ("Backspace", "Enter", "Left", "Right", "Up", "Down", "Home", "End", "PageUp", "PageDown", "Tab", "BackTab", "Delete", "Insert", "Null", "Esc")
 # , an F-key ("F1"-"F255"), or a single character for all other keys (e.g. "d" or "#").

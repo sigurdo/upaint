@@ -2,7 +2,7 @@ use std::collections::LinkedList;
 
 
 
-use crate::{config::ColorThemeCanvas, file_formats::FileFormat, ErrorCustom, ResultCustom};
+use crate::{config::Config, file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::raw::{
     ansi_import::AnsiImportError, operations::CanvasOperation, rendering::CanvasWidget, RawCanvas,
@@ -129,8 +129,8 @@ impl UndoRedoCanvas {
         }
     }
 
-    pub fn widget(&self, color_theme: ColorThemeCanvas) -> CanvasWidget {
-        CanvasWidget::from_canvas(&self.current, color_theme)
+    pub fn widget<'a>(&'a self, config: &'a Config) -> CanvasWidget {
+        CanvasWidget::from_canvas(&self.current, config)
     }
 
     pub fn raw(&self) -> &RawCanvas {

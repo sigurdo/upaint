@@ -38,6 +38,14 @@ pub trait TomlValue {
     fn to_config_value(self) -> Self::ConfigValue;
 }
 
+impl TomlValue for bool {
+    type ConfigValue = bool;
+
+    fn to_config_value(self) -> Self::ConfigValue {
+        self
+    }
+}
+
 /// Macro for generating a nested config struct with it's corresponding TOML struct.
 /// Input pattern starts with an opening curly bracket `{`, followed by the names
 /// to use for the two generated structs on the format `(NameToml => NameConfig),`.
@@ -123,6 +131,19 @@ config_struct_definition!({
         character: (KeyCodeToml => KeyCode),
         modifiers: (KeyCodeToml => KeyCode),
         all: (KeyCodeToml => KeyCode),
+    },
+    numbers: {
+        (ConfigNumbersToml => ConfigNumbers),
+        row: {
+            (ConfigNumbersRowToml => ConfigNumbersRow),
+            enable: (bool),
+            relative: (bool),
+        },
+        column: {
+            (ConfigNumbersColumnToml => ConfigNumbersColumn),
+            enable: (bool),
+            relative: (bool),
+        },
     },
     color_theme_preset: (ColorThemePreset),
     color_theme: {

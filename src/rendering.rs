@@ -75,12 +75,12 @@ pub fn draw_frame(
         let canvas_chunk = chunks[0];
         let user_feedback_chunk = chunks[1];
         let block = Block::default();
-        let inner_area = block.inner(chunks[0]);
+        let inner_area = block.inner(canvas_chunk);
         f.render_widget(block, canvas_chunk);
 
         let mut canvas = program_state
             .canvas
-            .widget(program_state.config.color_theme.canvas.clone());
+            .widget(&program_state.config);
         canvas.focus = program_state.focus_position;
         let canvas_visible = canvas.visible(inner_area);
 
