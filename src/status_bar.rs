@@ -50,8 +50,9 @@ impl<'a> Widget for StatusBar<'a> {
                 " [+]"
             }
         );
+        let base_style = self.program_state.config.color_theme.status_bar;
         let open_file = Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])])
-            .style(self.program_state.config.color_theme.status_bar);
+            .style(base_style.into());
 
         let brush_character = Paragraph::new(vec![Line::from(vec![Span::raw(
             if let Some(character) = self.program_state.brush.character {
@@ -60,39 +61,27 @@ impl<'a> Widget for StatusBar<'a> {
                 format!("")
             },
         )])])
-        .style(self.program_state.config.color_theme.status_bar);
+        .style(base_style.into());
 
         let brush_colors = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "  ",
-                Style::new().bg(if let Some(fg) = self.program_state.brush.fg {
-                    fg
-                } else if let Some(bg) = self.program_state.config.color_theme.status_bar.bg {
-                    bg
-                } else {
-                    Color::Reset
-                }),
+                Style::new().bg(self.program_state.brush.fg.unwrap_or(base_style.fg)),
             ),
             Span::raw(" "),
             Span::styled(
                 "  ",
-                Style::new().bg(if let Some(bg) = self.program_state.brush.bg {
-                    bg
-                } else if let Some(bg) = self.program_state.config.color_theme.status_bar.bg {
-                    bg
-                } else {
-                    Color::Reset
-                }),
+                Style::new().bg(self.program_state.brush.bg.unwrap_or(base_style.bg)),
             ),
         ])])
-        .style(self.program_state.config.color_theme.status_bar);
+        .style(base_style.into());
 
         let cursor_index = format!(
             " │ {},{}",
             self.program_state.cursor_position.0, self.program_state.cursor_position.1
         );
         let cursor_index = Paragraph::new(vec![Line::from(vec![Span::raw(cursor_index)])])
-            .style(self.program_state.config.color_theme.status_bar);
+            .style(base_style.into());
 
         open_file.render(chunks[0], buf);
         brush_character.render(chunks[1], buf);

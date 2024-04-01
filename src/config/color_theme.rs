@@ -136,12 +136,36 @@ pub struct StyleToml {
 }
 
 impl TomlValue for StyleToml {
-    type ConfigValue = Style;
+    type ConfigValue = StyleConfig;
 
     fn to_config_value(self) -> Self::ConfigValue {
+        StyleConfig {
+            fg: self.fg.to_config_value(),
+            bg: self.bg.to_config_value(),
+            modifiers: self.modifiers,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct StyleConfig {
+    pub fg: Color,
+    pub bg: Color,
+    pub modifiers: Modifier,
+}
+
+impl StyleConfig {
+    fn to_ratatui_style(self) -> Style {
         Style::new()
-            .fg(self.fg.to_config_value())
-            .bg(self.bg.to_config_value())
+            .fg(self.fg)
+            .bg(self.bg)
             .add_modifier(self.modifiers)
     }
 }
+
+impl From<StyleConfig> for Style {
+    fn from(value: StyleConfig) -> Self {
+        value.to_ratatui_style()
+    }
+}
+

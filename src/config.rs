@@ -22,7 +22,7 @@ pub mod keybindings;
 pub mod keys;
 
 use self::{
-    color_theme::{ColorThemePreset, ColorToml, StyleToml},
+    color_theme::{ColorThemePreset, ColorToml, StyleToml, StyleConfig},
     direction_keys::DirectionKeys,
     keybindings::{KeybindingToml, Keystroke},
     keys::KeyCodeToml,
@@ -65,7 +65,7 @@ macro_rules! config_struct_definition {
             )*
         }
 
-        #[derive(Clone, Debug, Deserialize, Serialize)]
+        #[derive(Clone, Debug)]
         pub struct $struct_name {
             $(
                 pub $field: config_struct_type!($type),
@@ -150,7 +150,7 @@ config_struct_definition!({
         (ColorThemeToml => ColorTheme),
         canvas: {
             (ColorThemeCanvasToml => ColorThemeCanvas),
-            default_style: (StyleToml => Style),
+            default_style: (StyleToml => StyleConfig),
             standard_colors: {
                 (ColorThemeCanvasStandardColorsToml => ColorThemeCanvasStandardColors),
                 black: (ColorToml => Color),
@@ -171,10 +171,12 @@ config_struct_definition!({
                 bright_white: (ColorToml => Color),
             },
         },
-        status_bar: (StyleToml => Style),
-        command_line: (StyleToml => Style),
-        input_mode: (StyleToml => Style),
-        user_feedback: (StyleToml => Style),
+        row_numbers: (StyleToml => StyleConfig),
+        column_numbers: (StyleToml => StyleConfig),
+        status_bar: (StyleToml => StyleConfig),
+        command_line: (StyleToml => StyleConfig),
+        input_mode: (StyleToml => StyleConfig),
+        user_feedback: (StyleToml => StyleConfig),
     },
 });
 

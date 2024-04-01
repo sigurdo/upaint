@@ -102,7 +102,7 @@ pub struct ModeCommand {}
 impl Action for ModeCommand {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.command_line =
-            create_command_line_textarea(program_state.config.color_theme.command_line.clone());
+            create_command_line_textarea(program_state.config.color_theme.command_line.into());
         program_state.input_mode = InputMode::Command;
     }
 }

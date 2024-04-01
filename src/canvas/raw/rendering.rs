@@ -90,12 +90,12 @@ fn apply_color_theme_to_color(
     match color {
         Color::Reset => match ground {
             Ground::Foreground => match color_theme.default_style.fg {
-                None | Some(Color::Reset) => Color::Reset,
-                Some(color) => apply_color_theme_to_color(color, color_theme, Ground::Foreground),
+                Color::Reset => Color::Reset,
+                color => apply_color_theme_to_color(color, color_theme, Ground::Foreground),
             },
             Ground::Background => match color_theme.default_style.bg {
-                None | Some(Color::Reset) => Color::Reset,
-                Some(color) => apply_color_theme_to_color(color, color_theme, Ground::Background),
+                Color::Reset => Color::Reset,
+                color => apply_color_theme_to_color(color, color_theme, Ground::Background),
             },
         },
         Color::Black | Color::Indexed(0) => color_theme.standard_colors.black,
@@ -169,7 +169,8 @@ impl Widget for RowNumbersWidget<'_> {
             } else {
                 format!("{:>width$}", number, width=width)
             };
-            ratatui::widgets::Paragraph::new(vec![Line::from(text)]).render(area, buffer);
+            let style = self.config.color_theme.row_numbers;
+            ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
         }
     }
 }
@@ -209,7 +210,8 @@ impl Widget for ColumnNumbersWidget<'_> {
                     width: cell_width as u16,
                     height: 1,
                 };
-                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).render(area, buffer);
+                let style = self.config.color_theme.row_numbers;
+                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
             }
         }
     }
@@ -265,7 +267,7 @@ impl Widget for CanvasWidget<'_> {
                 }
                 else {
                     target.set_style(apply_color_theme(
-                        color_theme.default_style.clone(),
+                        color_theme.default_style.clone().into(),
                         color_theme,
                     ));
                 }
