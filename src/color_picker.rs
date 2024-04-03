@@ -9,6 +9,7 @@ use ratatui::{
 };
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 enum ColorPickerColor {
     Actual(Color),
     Hsv(f64, f64, f64),

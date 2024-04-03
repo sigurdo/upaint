@@ -1,6 +1,6 @@
 use ratatui::{
     prelude::{Constraint, Layout},
-    style::{Color, Style},
+    style::{Style},
     text::{Line, Span},
     widgets::{Paragraph, Widget},
 };

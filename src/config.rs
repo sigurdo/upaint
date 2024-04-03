@@ -5,7 +5,7 @@ use config::{
     FileFormat, FileSourceFile, FileSourceString, Source, Value, ValueKind,
 };
 use crossterm::event::{KeyCode};
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color};
 use serde::{
     Deserialize, Serialize,
 };

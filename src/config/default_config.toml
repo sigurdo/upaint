@@ -12,7 +12,7 @@ relative = true
 # Column numbers
 [numbers.column]
 enable = true
-relative = true
+relative = false
 
 # Each property of [brush_keys] is a `KeyCodeToml`, which allows either one of the special keys
 # ("Backspace", "Enter", "Left", "Right", "Up", "Down", "Home", "End", "PageUp", "PageDown", "Tab", "BackTab", "Delete", "Insert", "Null", "Esc")
