@@ -7,7 +7,7 @@ color_theme_preset = "Basic"
 # Row numbers
 [numbers.row]
 enable = true
-relative = true
+relative = false
 
 # Column numbers
 [numbers.column]

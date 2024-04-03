@@ -221,30 +221,15 @@ impl Widget for ColumnNumbersWidget<'_> {
             for i in 0..i_rightmost {
                 let x = area.x as i16 + x_margin_left + cell_width * i;
                 let column = x - self.column_to_x_translation + 4;
-                let is_in_cell = |number| {
-                    (number >= column - 4 && number <= column)
-                };
-                let number = if let Some(column_cursor) = self.column_number_cursor {
-                    if is_in_cell(column_cursor) {
-                        column_cursor
-                    } else {
-                        column
-                    }
-                } else {
-                    column
-                };
-                let text = format!("{:>width$}", number, width=cell_width as usize);
-                let text = if let Some(column_cursor) = self.column_number_cursor {
+                if let Some(column_cursor) = self.column_number_cursor {
                     let x_cursor = column_cursor + self.column_to_x_translation;
-                    let i_cursor = (x_cursor - x_margin_left - area.x as i16) / cell_width;
-                    if (i - i_cursor).abs() == 1 {
-                        format!("{:>width$}", "", width=cell_width as usize)
-                    } else {
-                        text
+                    let x_cell_right = x + (cell_width - 1);
+                    if x_cell_right > x_cursor - 2 * cell_width && x <= x_cursor + cell_width {
+                        continue
                     }
-                } else {
-                    text
-                };
+                }
+                let number = column;
+                let text = format!("{:>width$}", number, width=cell_width as usize);
                 let area = Rect {
                     x: x as u16,
                     y: area.y,
@@ -253,9 +238,21 @@ impl Widget for ColumnNumbersWidget<'_> {
                 };
                 let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
-
             }
-
+            if let Some(column_cursor) = self.column_number_cursor {
+                let x_cursor = column_cursor + self.column_to_x_translation;
+                let x_text = std::cmp::max((x_cursor - (cell_width - 1)) as u16, area.x);
+                let number = column_cursor;
+                let text = format!("{:>width$}", number, width=cell_width as usize);
+                let area = Rect {
+                    x: x_text,
+                    y: area.y,
+                    width: cell_width as u16,
+                    height: 1,
+                };
+                let style = self.config.color_theme.row_numbers;
+                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
+            }
         }
     }
 }
