@@ -1,5 +1,5 @@
 use brush::BrushApply;
-use crossterm::event::{Event, KeyCode, KeyModifiers, MouseEventKind};
+use crossterm::event::{Event, KeyCode, KeyModifiers, MouseEventKind, KeyEventKind};
 use ratatui::style::{Color};
 
 
@@ -268,6 +268,13 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
         if e.code == KeyCode::Esc {
             program_state.input_mode = InputMode::Normal;
             program_state.user_feedback = None;
+            return Ok(());
+        }
+    }
+
+    // Ignore all release events
+    if let Event::Key(e) = event {
+        if e.kind == KeyEventKind::Release {
             return Ok(());
         }
     }
