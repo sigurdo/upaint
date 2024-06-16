@@ -5,10 +5,12 @@ use ratatui::style::{Color};
 
 
 use crate::{
-    actions::{brush, cursor::MoveCursor, pan::Pan, Action, PipetteTake, UserAction},
+    actions::{brush, cursor::{MoveCursor, MoveCursor2}, pan::Pan, Action, PipetteTake, UserAction},
     brush::{Brush, BrushComponent},
     command_line::{execute_command},
     config::keybindings::Keystroke, Ground, InputMode, ProgramState, ResultCustom,
+    DirectionFree,
+    canvas::raw::iter::{StopCondition, WordBoundaryType},
 };
 
 mod insert_mode;
@@ -260,6 +262,21 @@ fn handle_user_input_pipette(event: Event, program_state: &mut ProgramState) -> 
     Ok(())
 }
 
+pub fn handle_user_input_choose_move_word_direction(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    if let Event::Key(e) = event {
+        if let Some(direction) = program_state.config.direction_keys.direction(&e.code) {
+            let direction_free = DirectionFree::from(direction);
+            let move_cursor = MoveCursor2 {
+                direction: direction_free,
+                stop: StopCondition::WordBoundary(WordBoundaryType::ANY),
+            };
+            move_cursor.execute(program_state);
+            program_state.input_mode = InputMode::Normal;
+        }
+    }
+    Ok(())
+}
+
 /// Handles user input
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
@@ -297,5 +314,6 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
             handle_user_input_choose_brush_character(event, program_state)
         }
         InputMode::Pipette => handle_user_input_pipette(event, program_state),
+        InputMode::ChooseMoveWordDirection => handle_user_input_choose_move_word_direction(event, program_state),
     }
 }

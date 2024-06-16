@@ -76,7 +76,7 @@ fn indents() {
     canvas.apply_operation(&CanvasOperation::SetCharacter((1, 2), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
-    assert_eq!(ansi, format!("{RESET_ALL} a\n  b\n"));
+    assert_eq!(ansi, format!("{RESET_ALL}a\n b\n"));
 }
 
 #[test]

@@ -32,17 +32,41 @@ impl CanvasRect {
         )
     }
 
+    pub fn includes_index(&self, index: CanvasIndex) -> bool {
+        let (row, column) = index;
+        row >= self.row && row <= self.last_row() && column >= self.column && column <= self.last_column()
+    }
+
+    /// Returns a tuple (rows, columns) describing how far and in which direction an index is away
+    /// from self.
+    pub fn away_index(&self, index: CanvasIndex) -> (i16, i16) {
+        if self.includes_index(index) {
+            (0, 0)
+        } else {
+            let (row, column) = index;
+            let rows = std::cmp::min_by_key(row - self.row, row - self.last_row(), |x| x.abs());
+            let columns = std::cmp::min_by_key(column - self.column, column - self.last_column(), |x| x.abs());
+            (rows, columns)
+        }
+    }
+
     pub fn include_index(&mut self, index: CanvasIndex) {
         let (row, column) = index;
-        if row < self.row {
+        if self.rows == 0 || self.columns == 0 {
+            self.rows = 1;
+            self.columns = 1;
             self.row = row;
-        } else if row > self.last_row() {
-            self.rows = (row - self.row) as u16;
-        }
-        if column < self.first_column() {
             self.column = column;
-        } else if column > self.last_column() {
-            self.columns = (column - self.column) as u16;
+        } else {
+            let (rows_away, columns_away) = self.away_index(index);
+            self.rows += rows_away.abs() as u16;
+            if rows_away < 0 {
+                self.row = row;
+            }
+            self.columns += columns_away.abs() as u16;
+            if columns_away < 0 {
+                self.column = column;
+            }
         }
     }
 }

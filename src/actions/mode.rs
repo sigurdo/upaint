@@ -106,3 +106,10 @@ impl Action for ModeCommand {
         program_state.input_mode = InputMode::Command;
     }
 }
+
+pub struct ModeChooseMoveWordDirection {}
+impl Action for ModeChooseMoveWordDirection {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.input_mode = InputMode::ChooseMoveWordDirection;
+    }
+}

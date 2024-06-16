@@ -52,12 +52,12 @@ mod import_export {
 
     #[test]
     fn spacing() {
-        assert_preserved(format!("{RESET_ALL}  a     bc\n").as_str());
+        assert_preserved(format!("{RESET_ALL}a     bc\n").as_str());
     }
 
     #[test]
     fn indents() {
-        assert_preserved(format!("{RESET_ALL}  a\n     bc\n").as_str());
+        assert_preserved(format!("{RESET_ALL}a\n   bc\n").as_str());
     }
 
     #[test]
@@ -120,20 +120,19 @@ mod import_export {
         assert_eq!(output, expected);
     }
 
-    // Not how the following cases should be properly handled yet
-    // #[test]
-    // fn discards_empty_spaces() {
-    //     let input = "       \n\n    \n".to_string();
-    //     let expected = "\n";
-    //     let output = RawCanvas::from_ansi(input).unwrap().to_ansi().unwrap();
-    //     assert_eq!(output, expected);
-    // }
+    #[test]
+    fn discards_empty_spaces() {
+        let input = "       \n\n    \n".to_string();
+        let expected = "\n";
+        let output = RawCanvas::from_ansi(input).unwrap().export_txt_preserve().unwrap();
+        assert_eq!(output, expected);
+    }
 
-    // #[test]
-    // fn discards_empty_spaces_with_characters_between() {
-    //     let input = "       \n\n  a  \n".to_string();
-    //     let expected = "a\n";
-    //     let output = RawCanvas::from_ansi(input).unwrap().to_ansi().unwrap();
-    //     assert_eq!(output, expected);
-    // }
+    #[test]
+    fn discards_empty_spaces_with_characters_between() {
+        let input = "       \n\n  a  \n".to_string();
+        let expected = "a\n";
+        let output = RawCanvas::from_ansi(input).unwrap().export_txt_preserve().unwrap();
+        assert_eq!(output, expected);
+    }
 }

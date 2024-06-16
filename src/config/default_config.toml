@@ -70,3 +70,7 @@ action = "ModePipette"
 [[normal_mode_keybindings]]
 key = ":"
 action = "ModeCommand"
+
+[[normal_mode_keybindings]]
+key = "w"
+action = "ModeChooseMoveWordDirection"

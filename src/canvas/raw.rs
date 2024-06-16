@@ -1,4 +1,5 @@
-use std::collections::BTreeMap;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, LinkedList};
 
 use ratatui::style::{Color, Modifier};
 
@@ -8,6 +9,7 @@ pub mod ansi_export;
 pub mod ansi_import;
 pub mod operations;
 pub mod rendering;
+pub mod iter;
 
 #[cfg(test)]
 mod test;
@@ -16,11 +18,11 @@ mod test;
 pub type CanvasIndex = (i16, i16);
 
 #[derive(Debug, Clone, PartialEq)]
-struct CanvasCell {
-    character: char,
-    fg: Color,
-    bg: Color,
-    modifiers: Modifier,
+pub struct CanvasCell {
+    pub character: char,
+    pub fg: Color,
+    pub bg: Color,
+    pub modifiers: Modifier,
 }
 
 impl CanvasCell {
@@ -59,10 +61,10 @@ pub struct RawCanvas {
     cells: BTreeMap<CanvasIndex, CanvasCell>,
 }
 
-impl RawCanvas {
+impl<'a> RawCanvas {
     // Internal interface
 
-    fn get_mut(&mut self, index: &CanvasIndex) -> &mut CanvasCell {
+    fn get_mut(&'a mut self, index: &CanvasIndex) -> &'a mut CanvasCell {
         if !self.cells.contains_key(&index) {
             self.cells.insert(*index, CanvasCell::default());
             self.area.include_index(*index);
@@ -70,7 +72,7 @@ impl RawCanvas {
         self.cells.get_mut(index).unwrap()
     }
 
-    fn _get(&mut self, index: &CanvasIndex) -> &CanvasCell {
+    fn _get(&'a mut self, index: &CanvasIndex) -> &'a CanvasCell {
         self.get_mut(index)
     }
 
@@ -103,6 +105,12 @@ impl RawCanvas {
         match self.cells.get(&index) {
             Some(cell) => cell.modifiers,
             None => DEFAULT_MODIFIERS,
+        }
+    }
+    pub fn cell(&self, index: CanvasIndex) -> CanvasCell {
+        match self.cells.get(&index) {
+            Some(cell) => cell.clone(),
+            None => CanvasCell::default(),
         }
     }
 
@@ -138,3 +146,4 @@ impl RawCanvas {
         self
     }
 }
+

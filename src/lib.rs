@@ -31,6 +31,46 @@ pub enum Direction {
     Down,
 }
 
+/// A free direction defined by a number of rows and columns.
+#[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
+pub struct DirectionFree {
+    rows: i16,
+    columns: i16,
+}
+
+impl DirectionFree {
+    fn new(rows: i16, columns: i16) -> Result<DirectionFree, ()> {
+        if rows == 0 && columns == 0 {
+            Err(())
+        } else {
+            Ok(DirectionFree { rows, columns })
+        }
+    }
+    fn x(&self) -> f64 { self.columns as f64 }
+    fn y(&self) -> f64 { self.rows as f64 }
+    fn cardinal(&self) -> Option<Direction> {
+        match (self.rows, self.columns) {
+            (0, 0) => panic!(),
+            (0, ..=0) => Some(Direction::Left),
+            (0, 0..) => Some(Direction::Right),
+            (..=0, 0) => Some(Direction::Up),
+            (0.., 0) => Some(Direction::Down),
+            _ => None,
+        }
+    }
+}
+
+impl From<Direction> for DirectionFree {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Up => DirectionFree::new(-1, 0).unwrap(),
+            Direction::Right => DirectionFree::new(0, 1).unwrap(),
+            Direction::Down => DirectionFree::new(1, 0).unwrap(),
+            Direction::Left => DirectionFree::new(0, -1).unwrap(),
+        }
+    }
+}
+
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Ground {
     #[default]
@@ -44,6 +84,7 @@ pub enum InputMode {
     Normal,
     ChooseInsertDirection,
     Insert(Direction),
+    ChooseMoveWordDirection,
     Replace,
     Command,
     ChangeBrush,
