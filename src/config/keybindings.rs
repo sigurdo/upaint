@@ -7,6 +7,8 @@ use crate::actions::UserAction;
 
 use super::{keys::KeyCodeToml, TomlValue};
 
+pub mod parse;
+
 #[derive(Hash, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Keystroke {
     pub code: KeyCode,
