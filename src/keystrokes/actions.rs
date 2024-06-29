@@ -1,0 +1,192 @@
+use std::collections::LinkedList;
+use std::collections::HashMap;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyModifiers;
+use serde::{Serialize, Deserialize, de};
+use enum_dispatch::enum_dispatch;
+use ratatui::style::Color;
+use crossterm::event::KeyEvent;
+
+use crate::Ground;
+use crate::ProgramState;
+use crate::actions::UserAction;
+use crate::actions::Action;
+use crate::actions::cursor::MoveCursor2;
+use crate::config::Config;
+use crate::canvas::raw::iter::StopCondition;
+use crate::canvas::raw::iter::WordBoundaryType;
+use crate::canvas::raw::CanvasIndex;
+use crate::canvas::raw::RawCanvas;
+use crate::DirectionFree;
+use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::config::keymaps::Keymaps;
+use crate::keystrokes::{FromKeystrokes, FromPreset, FromKeystrokesByMap};
+use crate::keystrokes::Motion;
+use crate::keystrokes::MotionIncompleteEnum;
+use crate::keystrokes::OperatorIncompleteEnum;
+use crate::keystrokes::Operator;
+use crate::command_line::create_command_line_textarea;
+use crate::InputMode;
+use crate::canvas::rect::CanvasRect;
+use crate::color_picker::ColorPicker;
+
+use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, ColorSpecification, ColorSlot};
+
+macro_rules! actions_macro {
+    ($($name_preset:ident -> $name:ident {$($field:ident : $type_preset:ty => $type:ty),*$(,)?}),*,) => {
+        $(
+            #[derive(Default, Debug, Clone, Serialize, Deserialize)]
+            pub struct $name_preset {
+                $(
+                    pub $field: $type_preset,
+                )*
+            }
+
+            pub struct $name {
+                $(
+                    pub $field: $type,
+                )*
+            }
+
+            impl FromPreset<$name_preset> for $name {
+                fn from_preset(preset: $name_preset, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+                    Ok($name {
+                        $(
+                            $field: <$type>::from_preset(preset.$field, keystrokes, config)?,
+                        )*
+                    })
+                }
+            }
+        )*
+        
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        pub enum ActionIncompleteEnum {
+            $(
+                $name($name_preset),
+            )*
+        }
+
+        impl FromPreset<ActionIncompleteEnum> for Box<dyn Action> {
+            fn from_preset(preset: ActionIncompleteEnum, sequence: &mut KeystrokeIterator, config: &Config) -> Result<Box<dyn Action>, KeybindCompletionError> {
+                log::debug!("FromPreset<ActionIncompleteEnum> for Box<dyn Action>, {:#?}", preset);
+                match preset {
+                    $(
+                        ActionIncompleteEnum::$name(value) => Ok(Box::new(<$name>::from_preset(value, sequence, config)?)),
+                    )*
+                }
+            }
+        }
+    }
+}
+
+impl FromKeystrokesByMap for ActionIncompleteEnum {
+    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+        &config.keymaps.actions
+    }
+}
+
+impl FromKeystrokes for Box<dyn Action> {
+    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+        Self::from_preset(ActionIncompleteEnum::from_keystrokes(keystrokes, config)?, keystrokes, config)
+    }
+}
+
+actions_macro!(
+    UndoPreset -> Undo {},
+    RedoPreset -> Redo {},
+    PipettePreset -> Pipette {
+        ground: Option<Ground> => Ground,
+        slot: Option<ColorSlot> => ColorSlot,
+    },
+    MoveCursorPreset -> MoveCursor {
+        motion: Option<MotionIncompleteEnum> => Box<dyn Motion>,
+    },
+    OperationPreset -> Operation {
+        motion: Option<MotionIncompleteEnum> => Box<dyn Motion>,
+        operator: Option<OperatorIncompleteEnum> => Box<dyn Operator>,
+    },
+    ModeCommandPreset -> ModeCommand {},
+    ModeInsertPreset -> ModeInsert {
+        direction: Option<DirectionFree> => DirectionFree,
+    },
+    ModeReplacePreset -> ModeReplace {},
+    ModeColorPickerPreset -> ModeColorPicker {
+        slot: Option<ColorSlot> => ColorSlot,
+        // color: Option<ColorSpecification> => ColorSpecification,
+    },
+);
+
+
+impl Action for Undo {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.canvas.undo();
+    }
+}
+
+impl Action for Redo {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.canvas.redo();
+    }
+}
+
+impl Action for MoveCursor {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let canvas = program_state.canvas.raw();
+        let cells = self.motion.cells(program_state.cursor_position, canvas);
+        let Some(cursor_to) = cells.last() else {
+            return;
+        };
+        program_state.cursor_position = *cursor_to;
+        // log::debug!("hei {cursor_to:#?}");
+        let (rows_away, columns_away) = program_state.canvas_visible.away_index(program_state.cursor_position);
+        log::debug!("hei {cursor_to:#?}, {rows_away:#?}, {columns_away:#?}, {:#?}", program_state.canvas_visible);
+        program_state.focus_position.0 += rows_away;
+        program_state.canvas_visible.row += rows_away;
+        program_state.focus_position.1 += columns_away;
+        program_state.canvas_visible.column += columns_away;
+    }
+}
+
+impl Action for Operation {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let canvas = program_state.canvas.raw();
+        let cells = self.motion.cells(program_state.cursor_position, canvas);
+        self.operator.operate(&cells, program_state);
+    }
+}
+
+impl Action for ModeCommand {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.command_line =
+            create_command_line_textarea(program_state.config.color_theme.command_line.into());
+        program_state.input_mode = InputMode::Command;
+    }
+}
+
+impl Action for ModeInsert {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.input_mode = InputMode::Insert(self.direction.cardinal().unwrap_or_default());
+    }
+}
+
+impl Action for ModeReplace {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.input_mode = InputMode::Replace;
+    }
+}
+
+impl Action for ModeColorPicker {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let title = self.slot.to_string();
+        let initial_color = program_state.color_slots.get(&self.slot);
+        program_state.color_picker = ColorPicker::new(title, initial_color.copied());
+        program_state.input_mode = InputMode::ColorPicker(self.slot);
+    }
+}
+
+impl Action for Pipette {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.color_slots.insert(self.slot, program_state.canvas.raw().color(program_state.cursor_position, self.ground));
+    }
+}
+

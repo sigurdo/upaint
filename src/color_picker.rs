@@ -29,7 +29,7 @@ pub struct ColorPicker {
 }
 
 impl ColorPicker {
-    pub fn new(title: &str, color: Option<Color>) -> Self {
+    pub fn new(title: String, color: Option<Color>) -> Self {
         let (r, g, b) = match color {
             Some(Color::Rgb(r, g, b)) => (r, g, b),
             _ => (255, 255, 255),
@@ -45,7 +45,7 @@ impl ColorPicker {
         let h = h as f64;
         let v = v / 255.0;
         Self {
-            title: title.to_string(),
+            title: title,
             color: ColorPickerColor::Hsv(h, s, v),
             active_slider: 1,
         }

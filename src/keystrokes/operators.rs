@@ -1,0 +1,116 @@
+use std::collections::LinkedList;
+use std::fmt::Debug;
+use std::collections::HashMap;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyModifiers;
+use serde::{Serialize, Deserialize, de};
+use enum_dispatch::enum_dispatch;
+use ratatui::style::Color;
+use crossterm::event::KeyEvent;
+
+use crate::Ground;
+use crate::ProgramState;
+use crate::actions::UserAction;
+use crate::actions::Action;
+use crate::actions::cursor::MoveCursor2;
+use crate::config::Config;
+use crate::canvas::raw::iter::StopCondition;
+use crate::canvas::raw::iter::WordBoundaryType;
+use crate::canvas::raw::CanvasIndex;
+use crate::canvas::raw::RawCanvas;
+use crate::DirectionFree;
+use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::config::keymaps::Keymaps;
+use crate::canvas::raw::operations::CanvasOperation;
+
+use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, FromPreset, FromKeystrokes, FromKeystrokesByMap, ColorSpecification};
+
+#[enum_dispatch]
+pub trait Operator: Debug {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState);
+}
+
+macro_rules! operators_macro {
+    ($($name_preset:ident -> $name:ident { $($field:ident: $type_preset:ty => $type:ty),*,}),*,) => {
+        $(
+            #[derive(Default, Debug, Clone, Serialize, Deserialize)]
+            pub struct $name_preset {
+                $(
+                    $field: $type_preset,
+                )*
+            }
+
+            #[derive(Debug, Clone)]
+            pub struct $name {
+                $(
+                    $field: $type,
+                )*
+            }
+
+            impl FromPreset<$name_preset> for $name {
+                fn from_preset(preset: $name_preset, sequence: &mut KeystrokeIterator, config: &Config) -> Result<$name, KeybindCompletionError> {
+                    Ok($name {
+                        $(
+                            $field: <$type>::from_preset(preset.$field, sequence, config)?,
+                        )*
+                    })
+                }
+            }
+        )*
+
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        pub enum OperatorIncompleteEnum {
+            $(
+                $name($name_preset),
+            )*
+        }
+
+        impl FromPreset<OperatorIncompleteEnum> for Box<dyn Operator> {
+            fn from_preset(preset: OperatorIncompleteEnum, sequence: &mut KeystrokeIterator, config: &Config) -> Result<Box<dyn Operator>, KeybindCompletionError> {
+                match preset {
+                    $(
+                        OperatorIncompleteEnum::$name(value) => Ok(Box::new(<$name>::from_preset(value, sequence, config)?)),
+                    )*
+                }
+            }
+        }
+    }
+}
+
+impl FromKeystrokesByMap for OperatorIncompleteEnum {
+    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+        &config.keymaps.operators
+    }
+}
+
+impl FromKeystrokes for Box<dyn Operator> {
+    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+        Self::from_preset(OperatorIncompleteEnum::from_keystrokes(keystrokes, config)?, keystrokes, config)
+    }
+}
+
+operators_macro!(
+    ColorizePreset -> Colorize {
+        color: Option<ColorSpecification> => ColorSpecification,
+        // ground: Option<Ground> => Ground,
+    },
+);
+
+impl Operator for Colorize {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        let mut canvas_operations = Vec::new();
+        let color = match self.color {
+            ColorSpecification::Slot(ch) => match program_state.color_slots.get(&ch).copied() {
+                Some(color) => color,
+                _ => {
+                    return;
+                },
+            },
+            ColorSpecification::Direct(color) => color,
+        };
+        for index in cell_indices {
+            canvas_operations.push(CanvasOperation::SetFgColor(*index, color));
+        }
+        program_state.canvas.create_commit(canvas_operations);
+    }
+}

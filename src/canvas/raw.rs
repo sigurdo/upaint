@@ -3,6 +3,8 @@ use std::collections::{BTreeMap, LinkedList};
 
 use ratatui::style::{Color, Modifier};
 
+use crate::Ground;
+
 use super::rect::CanvasRect;
 
 pub mod ansi_export;
@@ -101,6 +103,12 @@ impl<'a> RawCanvas {
             None => DEFAULT_BG,
         }
     }
+    pub fn color(&self, index: CanvasIndex, ground: Ground) -> Color {
+        match ground {
+            Ground::Foreground => self.fg(index),
+            Ground::Background => self.bg(index),
+        }
+    }
     pub fn modifiers(&self, index: CanvasIndex) -> Modifier {
         match self.cells.get(&index) {
             Some(cell) => cell.modifiers,
@@ -132,6 +140,12 @@ impl<'a> RawCanvas {
     pub fn set_bg(&mut self, index: CanvasIndex, color: Color) -> &mut Self {
         self.get_mut(&index).bg = color;
         self
+    }
+    pub fn set_color(&mut self, index: CanvasIndex, color: Color, ground: Ground) -> &mut Self {
+        match ground {
+            Ground::Foreground => self.set_fg(index, color),
+            Ground::Background => self.set_bg(index, color),
+        }
     }
     pub fn add_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
         self.get_mut(&index).modifiers.insert(modifier);

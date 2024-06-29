@@ -98,6 +98,7 @@ impl Action for MoveCursor {
     }
 }
 
+#[derive(Clone)]
 pub struct MoveCursor2 {
     pub direction: DirectionFree,
     pub stop: StopCondition,

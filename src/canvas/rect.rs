@@ -32,22 +32,32 @@ impl CanvasRect {
         )
     }
 
+    pub fn includes_row(&self, row: i16) -> bool {
+        row >= self.row && row <= self.last_row()
+    }
+    pub fn includes_column(&self, column: i16) -> bool {
+        column >= self.column && column <= self.last_column()
+    }
     pub fn includes_index(&self, index: CanvasIndex) -> bool {
         let (row, column) = index;
-        row >= self.row && row <= self.last_row() && column >= self.column && column <= self.last_column()
+        self.includes_row(row) && self.includes_column(column)
     }
 
     /// Returns a tuple (rows, columns) describing how far and in which direction an index is away
     /// from self.
     pub fn away_index(&self, index: CanvasIndex) -> (i16, i16) {
-        if self.includes_index(index) {
-            (0, 0)
+        let (row, column) = index;
+        let rows = if self.includes_row(row) {
+            0
         } else {
-            let (row, column) = index;
-            let rows = std::cmp::min_by_key(row - self.row, row - self.last_row(), |x| x.abs());
-            let columns = std::cmp::min_by_key(column - self.column, column - self.last_column(), |x| x.abs());
-            (rows, columns)
-        }
+            std::cmp::min_by_key(row - self.row, row - self.last_row(), |x| x.abs())
+        };
+        let columns = if self.includes_column(column) {
+            0
+        } else {
+            std::cmp::min_by_key(column - self.column, column - self.last_column(), |x| x.abs())
+        };
+        (rows, columns)
     }
 
     pub fn include_index(&mut self, index: CanvasIndex) {

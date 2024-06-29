@@ -24,6 +24,52 @@ character = "c"
 modifiers = "m"
 all = "a"
 
+[keymaps.actions]
+"u" = { "Undo" = {} }
+"<C-r>" = { "Redo" = {} }
+":" = { "ModeCommand" = {} }
+"a" = { "ModeInsert" = {} }
+"gc" = { "ModeColorPicker" = {} }
+"r" = { "ModeReplace" = {} }
+"gp" = { "Pipette" = { "ground" = "Foreground"} }
+
+[keymaps.operators]
+"c" = { "Colorize" = {} }
+
+[keymaps.motions]
+"w" = { WordBoundary = { boundary_type = "START" } }
+"e" = { WordBoundary = { boundary_type = "END" } }
+
+[keymaps.directions]
+"h" = { rows = 0, columns = -1 }
+"j" = { rows = 1, columns = 0 }
+"k" = { rows = -1, columns = 0 }
+"l" = { rows = 0, columns = 1 }
+"y" = { rows = -1, columns = -2 }
+"u" = { rows = -1, columns = -1 }
+"i" = { rows = -1, columns = 1 }
+"o" = { rows = -1, columns = 2 }
+"n" = { rows = 1, columns = -2 }
+"m" = { rows = 1, columns = -1 }
+"," = { rows = 1, columns = 1 }
+"." = { rows = 1, columns = 2 }
+# Special no-movement motion needs to be implemented. This currently crashes.
+# " " = { rows = 0, columns = 0 }
+
+[keymaps.grounds]
+"f" = "Foreground"
+"b" = "Background"
+
+[keymaps.characters]
+"<C-u>-" = "—"
+
+[keymaps.word_boundary_types]
+"a" = "ANY"
+"s" = "START"
+"e" = "END"
+
+[keymaps.colors]
+
 # A [[normal_mode_keybindings]] describes a single keybinding. Entries defined in local config sources
 # will be appended to the defaults. Each key can only have one action, meaning that you override default
 # keybindings by configuring another action to the same key. You can remove a keybinding by configuring

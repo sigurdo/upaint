@@ -1,4 +1,7 @@
 use std::{collections::HashMap};
+use std::iter::Rev;
+use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::DirectionFree;
 
 use config::{
     builder::{ConfigBuilder, DefaultState},
@@ -14,18 +17,25 @@ use toml::de::ValueDeserializer;
 use crate::{
     actions::{UserAction},
     brush::{BrushComponent}, ErrorCustom,
+    keystrokes::{ActionIncompleteEnum, OperatorIncompleteEnum, MotionIncompleteEnum, KeystrokeIterator, actions::MoveCursorPreset, motions::OncePreset, actions::{OperationPreset}},
+    Ground,
+    canvas::raw::iter::WordBoundaryType,
+
 };
 
 pub mod color_theme;
 pub mod direction_keys;
 pub mod keybindings;
 pub mod keys;
+pub mod keymaps;
 
 use self::{
     color_theme::{ColorThemePreset, ColorToml, StyleToml, StyleConfig},
     direction_keys::DirectionKeys,
     keybindings::{KeybindingToml, Keystroke},
     keys::KeyCodeToml,
+    keymaps::{Keymaps, KeymapsEntry, keymaps_extend_preserve, keymaps_extend_overwrite, keymaps_insert_preserve, keymaps_iter},
+    
     // structure::{Config, ConfigToml},
 };
 
@@ -178,7 +188,48 @@ config_struct_definition!({
         input_mode: (StyleToml => StyleConfig),
         user_feedback: (StyleToml => StyleConfig),
     },
+    keymaps: {
+        (KeymapsToml => KeymapsConfig),
+        actions: (HashMap<String, ActionIncompleteEnum> => Keymaps<ActionIncompleteEnum>),
+        operators: (HashMap<String, OperatorIncompleteEnum> => Keymaps<OperatorIncompleteEnum>),
+        motions: (HashMap<String, MotionIncompleteEnum> => Keymaps<MotionIncompleteEnum>),
+        directions: (HashMap<String, DirectionFree> => Keymaps<DirectionFree>),
+        characters: (HashMap<String, char> => Keymaps<char>),
+        grounds: (HashMap<String, Ground> => Keymaps<Ground>),
+        word_boundary_types: (HashMap<String, WordBoundaryType> => Keymaps<WordBoundaryType>),
+        colors: (HashMap<String, Color> => Keymaps<Color>),
+    },
 });
+
+macro_rules! generic_impl_toml_value_for_incomplete_enums(
+    ($($type:ty),*,) => {
+        $(
+            impl TomlValue for HashMap<String, $type> {
+                type ConfigValue = Keymaps<$type>;
+                fn to_config_value(self) -> Self::ConfigValue {
+                    let mut result = HashMap::new();
+                    for (sequence_unparsed, value) in self {
+                        let keystroke_sequence = parse_keystroke_sequence(sequence_unparsed.as_str()).unwrap();
+                        let mut it = keystroke_sequence.iter();
+                        keymaps_insert_preserve(&mut result, &mut it, value);
+                    }
+                    result
+                }
+            }
+        )*
+    }
+);
+
+generic_impl_toml_value_for_incomplete_enums!(
+    ActionIncompleteEnum,
+    OperatorIncompleteEnum,
+    MotionIncompleteEnum,
+    DirectionFree,
+    char,
+    Ground,
+    WordBoundaryType,
+    Color,
+);
 
 impl Config {
     pub fn normal_mode_action(&self, keystroke: &Keystroke) -> Option<&UserAction> {
@@ -229,78 +280,81 @@ pub fn local_config_source() -> Result<::config::File<FileSourceFile, FileFormat
     Ok(::config::File::with_name(config_file_path))
 }
 
+pub fn local_config_toml() -> Result<String, ErrorCustom> {
+    let Some(mut config_file_path) = dirs::config_dir() else {
+        return Err(ErrorCustom::String("Couldn't detect the system's config directory.".to_string()))
+    };
+    config_file_path.push("upaint");
+    config_file_path.push("upaint.toml");
+    // let Some(config_file_path) = config_file_path.to_str() else {
+    //     return Err(ErrorCustom::String("Couldn't derive the local upaint config file path.".to_string()))
+    // };
+    Ok(std::fs::read_to_string(config_file_path).unwrap())
+}
+
 /// Read and load color theme preset, apply customizations.
-fn load_color_preset(config: &mut ::config::Config) -> Result<(), ErrorCustom> {
-    let mut config_table = config.cache.clone().into_table()?;
+fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> {
+    // let mut config_table = config.cache.clone().into_table()?;
     if let Some(preset) = config_table.get("color_theme_preset") {
-        if let ValueKind::String(preset) = preset.kind.clone() {
+        if let toml::Value::String(preset) = preset.clone() {
             let preset: ColorThemePreset = serde::Deserialize::deserialize(ValueDeserializer::new(
                 format!("\"{preset}\"").as_str(),
             ))
             .unwrap();
 
-            let theme_config = config::Config::builder()
-                .add_source(config::File::from_str(
-                    include_str!("config/color_theme/base.toml"),
-                    config::FileFormat::Toml,
-                ))
-                .add_source(config::File::from_str(
-                    preset.toml_str(),
-                    config::FileFormat::Toml,
-                ))
-                .build()
-                .unwrap();
+            let mut theme_table = include_str!("config/color_theme/base.toml").parse::<toml::Table>().unwrap();
+            theme_table.extend_recurse_tables(preset.toml_str().parse::<toml::Table>().unwrap());
 
-            let mut theme_table = theme_config
-                .cache
-                .into_table()
-                .unwrap()
-                .remove("color_theme")
-                .unwrap();
-
-            let theme_custom = if let Some(theme) = config_table.get("color_theme") {
-                theme.clone()
-            } else {
-                Value::from(ValueKind::Table(Default::default()))
+            if let Some(toml::Value::Table(theme_custom)) = config_table.get("color_theme") {
+                theme_table.extend_recurse_tables(theme_custom.clone());
             };
 
-            let mut theme_custom_config = config::Config::default();
-            theme_custom_config.cache = theme_custom;
-            theme_custom_config.collect_to(&mut theme_table).unwrap();
-
-            config_table.insert("color_theme".to_string(), theme_table);
+            config_table.insert("color_theme".to_string(), toml::Value::Table(theme_table));
         }
     }
-
-    // Put modified `config_table` back into `config` variable
-    config.cache = Value::from(config_table);
 
     Ok(())
 }
 
-pub fn load_config_from_builder(
-    builder: ConfigBuilder<DefaultState>,
-) -> Result<Config, ErrorCustom> {
-    let mut config = builder.build()?;
+fn create_motions_from_directions(config: &mut Config) {
+    keymaps_extend_preserve(&mut config.keymaps.motions, keymaps_iter(&config.keymaps.directions).map(|(keystrokes, direction_preset)| {
+        (keystrokes, MotionIncompleteEnum::Once(OncePreset { direction: Some(*direction_preset) }))
+    }).into_iter());
+}
 
-    load_color_preset(&mut config)?;
+fn create_move_actions_from_motions(config: &mut Config) {
+    keymaps_extend_preserve(&mut config.keymaps.actions, keymaps_iter(&config.keymaps.motions).map(|(keystrokes, motion_preset)| {
+        (keystrokes, ActionIncompleteEnum::MoveCursor(MoveCursorPreset { motion: Some(motion_preset.clone()) }))
+    }).into_iter());
+}
 
-    let config_toml: ConfigToml = config.try_deserialize()?;
+fn create_operator_actions_from_operators(config: &mut Config) {
+    keymaps_extend_preserve(&mut config.keymaps.actions, keymaps_iter(&config.keymaps.operators).map(|(keystrokes, operator_preset)| {
+        (keystrokes, ActionIncompleteEnum::Operation(OperationPreset { operator: Some(operator_preset.clone()), motion: None }))
+    }).into_iter());
+}
 
-    let config = config_toml.to_config_value();
-
+pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
+    load_color_preset(&mut toml_table)?;
+    log::debug!("{toml_table:#?}");
+    let config_toml: ConfigToml = toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
+    let mut config = config_toml.to_config_value();
+    log::debug!("før: {config:#?}");
+    create_operator_actions_from_operators(&mut config);
+    create_motions_from_directions(&mut config);
+    create_move_actions_from_motions(&mut config);
+    log::debug!("etter: {config:#?}");
     Ok(config)
 }
 
 pub fn load_default_config() -> Config {
-    load_config_from_builder(::config::Config::builder().add_source(default_config_source()))
-        .unwrap()
+    let toml_table = include_str!("config/default_config.toml").parse::<toml::Table>().unwrap();
+    load_config_from_table(toml_table).unwrap()
 }
 
 pub fn load_config() -> Result<Config, ErrorCustom> {
-    let builder = ::config::Config::builder()
-        .add_source(default_config_source())
-        .add_source(local_config_source()?);
-
-    load_config_from_builder(builder)
+    let mut toml_table = include_str!("config/default_config.toml").parse::<toml::Table>().unwrap();
+    toml_table.extend_recurse_tables(local_config_toml()?.parse::<toml::Table>().unwrap());
+    load_config_from_table(toml_table)
 }
+

@@ -9,8 +9,10 @@ use crate::{
     brush::{Brush, BrushComponent},
     command_line::{execute_command},
     config::keybindings::Keystroke, Ground, InputMode, ProgramState, ResultCustom,
+    config::keymaps::{keymaps_complete},
     DirectionFree,
     canvas::raw::iter::{StopCondition, WordBoundaryType},
+    keystrokes::{Motion, MotionIncompleteEnum, FromKeystrokes, KeybindCompletionError, KeystrokeSequence, ColorSlot},
 };
 
 mod insert_mode;
@@ -57,49 +59,69 @@ pub fn handle_user_input_normal_mode(
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => {
-            if let Some(action) = program_state.config.normal_mode_action(&Keystroke::from(e)) {
-                action.clone().execute(program_state);
-            } else if let Some(direction) = program_state.config.direction_keys.direction(&e.code) {
-                let mut cells = 1;
-                if e.modifiers.contains(KeyModifiers::SHIFT) {
-                    cells = 5;
-                } else if let KeyCode::Char(character) = e.code {
-                    if character.is_uppercase() {
-                        cells = 5;
-                    }
-                };
-                if e.modifiers.contains(KeyModifiers::CONTROL) {
-                    // For some reason, crossterm provides no way to distinguish a ctrl keystroke from a ctrl+shift
-                    // keystroke, meaning that `ctrl+shift+direction key` results in panning only 1 cell.
-                    Pan {
-                        direction: direction,
-                        cells: cells,
-                    }
-                    .execute(program_state);
-                } else {
-                    MoveCursor {
-                        direction: direction,
-                        cells: cells,
-                    }
-                    .execute(program_state);
-                }
-            } else if let Some(component) = program_state.config.brush_keys.component(&e.code) {
-                match component {
-                    BrushComponent::Fg => BrushApply::Fg.execute(program_state),
-                    BrushComponent::Bg => BrushApply::Bg.execute(program_state),
-                    BrushComponent::Colors => BrushApply::Colors.execute(program_state),
-                    BrushComponent::Character => BrushApply::Character.execute(program_state),
-                    BrushComponent::All => BrushApply::All.execute(program_state),
-                    BrushComponent::Modifiers => BrushApply::Modifiers.execute(program_state),
-                }
+            program_state.keystroke_sequence_incomplete.push(Keystroke::from(e));
+            let mut it = program_state.keystroke_sequence_incomplete.iter();
+            match <Box<dyn Action>>::from_keystrokes(&mut it, &program_state.config) {
+                Ok(action) => {
+                    log::debug!("Fant action");
+                    action.execute(program_state);
+                    program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+                },
+                Err(KeybindCompletionError::MissingKeystrokes) => {
+                    log::debug!("MissingKeystrokes");
+                },
+                Err(_) => {
+                    // Abort keystroke sequence completion
+                    log::debug!("Err(_)");
+                    program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+                },
             }
-            program_state.a += 1;
-            if e.modifiers.contains(KeyModifiers::CONTROL) {
-                program_state.a += 100;
-            }
-            if e.modifiers.contains(KeyModifiers::SHIFT) {
-                program_state.a += 1000;
-            }
+            // let motion_incomplete: &MotionIncompleteEnum = keymaps_complete(&program_state.config.keymaps.motions, &mut it).unwrap();
+            // let motion = <Box<dyn Motion>>::from_keystrokes(&mut it, &program_state.config).unwrap();
+            // let cells = motion.cells(program_state.cursor_position, program_state.canvas.raw());
+            // if let Some(action) = program_state.config.normal_mode_action(&Keystroke::from(e)) {
+            //     // action.clone().execute(program_state);
+            // } else if let Some(direction) = program_state.config.direction_keys.direction(&e.code) {
+                // let mut cells = 1;
+                // if e.modifiers.contains(KeyModifiers::SHIFT) {
+                //     cells = 5;
+                // } else if let KeyCode::Char(character) = e.code {
+                //     if character.is_uppercase() {
+                //         cells = 5;
+                //     }
+                // };
+                // if e.modifiers.contains(KeyModifiers::CONTROL) {
+                //     // For some reason, crossterm provides no way to distinguish a ctrl keystroke from a ctrl+shift
+                //     // keystroke, meaning that `ctrl+shift+direction key` results in panning only 1 cell.
+                //     Pan {
+                //         direction: direction,
+                //         cells: cells,
+                //     }
+                //     .execute(program_state);
+                // } else {
+                //     MoveCursor {
+                //         direction: direction,
+                //         cells: cells,
+                //     }
+                //     .execute(program_state);
+                // }
+            // } else if let Some(component) = program_state.config.brush_keys.component(&e.code) {
+            //     match component {
+            //         BrushComponent::Fg => BrushApply::Fg.execute(program_state),
+            //         BrushComponent::Bg => BrushApply::Bg.execute(program_state),
+            //         BrushComponent::Colors => BrushApply::Colors.execute(program_state),
+            //         BrushComponent::Character => BrushApply::Character.execute(program_state),
+            //         BrushComponent::All => BrushApply::All.execute(program_state),
+            //         BrushComponent::Modifiers => BrushApply::Modifiers.execute(program_state),
+            //     }
+            // }
+            // program_state.a += 1;
+            // if e.modifiers.contains(KeyModifiers::CONTROL) {
+            //     program_state.a += 100;
+            // }
+            // if e.modifiers.contains(KeyModifiers::SHIFT) {
+            //     program_state.a += 1000;
+            // }
         }
         Event::Mouse(e) => {
             program_state.a += 10;
@@ -135,41 +157,20 @@ fn handle_user_input_replace(event: Event, program_state: &mut ProgramState) -> 
 fn handle_user_input_color_picker(
     event: Event,
     program_state: &mut ProgramState,
-    ground: Ground,
+    slot: ColorSlot,
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Enter => {
-                match ground {
-                    Ground::Foreground => {
-                        program_state.brush.fg = Some(program_state.color_picker.get_color());
-                    }
-                    Ground::Background => {
-                        program_state.brush.bg = Some(program_state.color_picker.get_color());
-                    }
-                }
+                program_state.color_slots.insert(slot, program_state.color_picker.get_color());
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Delete | KeyCode::Backspace => {
-                match ground {
-                    Ground::Foreground => {
-                        program_state.brush.fg = None;
-                    }
-                    Ground::Background => {
-                        program_state.brush.bg = None;
-                    }
-                }
+                program_state.color_slots.remove(&slot);
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Char('r') => {
-                match ground {
-                    Ground::Foreground => {
-                        program_state.brush.fg = Some(Color::Reset);
-                    }
-                    Ground::Background => {
-                        program_state.brush.bg = Some(Color::Reset);
-                    }
-                }
+                program_state.color_slots.insert(slot, Color::Reset);
                 program_state.input_mode = InputMode::Normal;
             }
             _ => program_state.color_picker.input(event),
@@ -307,8 +308,8 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
         }
         InputMode::Replace => handle_user_input_replace(event, program_state),
         InputMode::ChangeBrush => handle_user_input_change_brush(event, program_state),
-        InputMode::ColorPicker(ground) => {
-            handle_user_input_color_picker(event, program_state, ground)
+        InputMode::ColorPicker(slot) => {
+            handle_user_input_color_picker(event, program_state, slot)
         }
         InputMode::ChooseBrushCharacter => {
             handle_user_input_choose_brush_character(event, program_state)

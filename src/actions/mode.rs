@@ -79,8 +79,8 @@ impl Action for ModeColorPicker {
         } else {
             ("BG Color", program_state.brush.bg)
         };
-        program_state.color_picker = ColorPicker::new(title, initial_color);
-        program_state.input_mode = InputMode::ColorPicker(self.ground);
+        // program_state.color_picker = ColorPicker::new(title, initial_color);
+        // program_state.input_mode = InputMode::ColorPicker(self.ground);
     }
 }
 

@@ -3,6 +3,7 @@ use ratatui::{style::Color};
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use std::collections::HashMap;
 
 pub mod canvas;
 // pub mod program_state;
@@ -15,11 +16,13 @@ pub mod file_formats;
 pub mod rendering;
 pub mod status_bar;
 pub mod user_input;
+pub mod keystrokes;
 
 use crate::config::Config;
 use brush::Brush;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
+use keystrokes::{KeystrokeSequence, ColorSlot};
 
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
@@ -88,7 +91,7 @@ pub enum InputMode {
     Replace,
     Command,
     ChangeBrush,
-    ColorPicker(Ground),
+    ColorPicker(ColorSlot),
     ChooseBrushCharacter,
     Pipette,
 }
@@ -103,6 +106,7 @@ pub struct ProgramState<'a> {
     pub canvas_visible: CanvasRect,
     pub canvas: Canvas,
     pub chosen_color: Option<Color>,
+    pub color_slots: HashMap<ColorSlot, Color>,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
     pub color_picker: ColorPicker,
@@ -112,6 +116,7 @@ pub struct ProgramState<'a> {
     pub user_feedback: Option<String>,
     pub exit: bool,
     pub config: Config,
+    pub keystroke_sequence_incomplete: KeystrokeSequence,
 }
 
 use std::{

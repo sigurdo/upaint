@@ -3,6 +3,7 @@ use std::iter::Peekable;
 
 use nalgebra as na;
 use bitflags::bitflags;
+use serde::{Serialize, Deserialize};
 
 use crate::DirectionFree;
 use super::{CanvasIndex, RawCanvas};
@@ -71,7 +72,7 @@ impl Iterator for CanvasIndexIteratorInfinite {
 }
 
 bitflags! {
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
     pub struct WordBoundaryType: u8 {
         const START = 0b01;
         const END   = 0b10;

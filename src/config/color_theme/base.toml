@@ -6,48 +6,48 @@
 # The `modifiers` property is a `Modifier`, which is a combination of modifiers the possible modifiers are:
 # ("BOLD", "DIM", "ITALIC", "UNDERLINED", "SLOW_BLINK", "RAPID_BLINK", "REVERSED", "HIDDEN", "CROSSED_OUT")
 # , and combinations are created with `|`, e.g. "BOLD | ITALIC".
-[color_theme.row_numbers]
+[row_numbers]
 fg = "Gray"
 bg = "Reset"
 modifiers = ""
 
-[color_theme.column_numbers]
+[column_numbers]
 fg = "Gray"
 bg = "Reset"
 modifiers = ""
 
-[color_theme.status_bar]
+[status_bar]
 fg = "White"
 bg = "DarkGray"
 modifiers = ""
 
 # [color_theme.command_line] is a `StyleToml`, just like [color_theme.status_bar]
-[color_theme.command_line]
+[command_line]
 fg = "Reset"
 bg = "Reset"
 modifiers = ""
 
 # [color_theme.input_mode] is a `StyleToml`, just like [color_theme.status_bar]
-[color_theme.input_mode]
+[input_mode]
 fg = "Reset"
 bg = "Reset"
 modifiers = "BOLD"
 
 # [color_theme.user_feedback] is a `StyleToml`, just like [color_theme.status_bar]
-[color_theme.user_feedback]
+[user_feedback]
 fg = "Reset"
 bg = "Reset"
 modifiers = ""
 
 # [color_theme.canvas.default_style] is a `StyleToml`, just like [color_theme.status_bar]
-[color_theme.canvas.default_style]
+[canvas.default_style]
 fg = "Reset"
 bg = "Reset"
 modifiers = ""
 
 # Each property of [color_theme.canvas.standard_colors] is a `ColorToml`, just like the
 # `fg` and `bg` properties of [color_theme.status_bar]
-[color_theme.canvas.standard_colors]
+[canvas.standard_colors]
 black = "Black"
 red = "Red"
 green = "Green"
