@@ -1,9 +1,9 @@
-[color_theme.canvas.default_style]
+[canvas.default_style]
 fg = "White"
 bg = "#300a24"
 
 # Ubuntu colors as described at https://en.wikipedia.org/wiki/ANSI_escape_code
-[color_theme.canvas.standard_colors]
+[canvas.standard_colors]
 black = "#010101"
 red = "#de382b"
 green = "#39b54a"

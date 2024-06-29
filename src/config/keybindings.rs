@@ -9,20 +9,9 @@ use super::{keys::KeyCodeToml, TomlValue};
 
 pub mod parse;
 
-#[derive(Hash, PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct Keystroke {
-    pub code: KeyCode,
-    pub modifiers: KeyModifiers,
-}
-
-impl From<KeyEvent> for Keystroke {
-    fn from(event: KeyEvent) -> Self {
-        Keystroke {
-            code: event.code,
-            modifiers: event.modifiers,
-        }
-    }
-}
+// Temporarily re-export Keystroke struct from here for compatibility
+// TODO: Remove re-export and fix issues.
+pub use crate::keystrokes::Keystroke;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KeybindingToml {

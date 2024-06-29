@@ -1,9 +1,9 @@
-[color_theme.canvas.default_style]
+[canvas.default_style]
 fg = "Gray"
 bg = "Black"
 
 # Windows 10 Console colors as described at https://en.wikipedia.org/wiki/ANSI_escape_code
-[color_theme.canvas.standard_colors]
+[canvas.standard_colors]
 black = "#0c0c0c"
 red = "#c50f1f"
 green = "#13a10e"

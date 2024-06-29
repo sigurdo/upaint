@@ -1,19 +1,19 @@
-[color_theme.status_bar]
+[status_bar]
 fg = "Black"
 bg = "Gray"
 
-[color_theme.command_line]
+[command_line]
 fg = "Black"
 bg = "White"
 
-[color_theme.input_mode]
+[input_mode]
 fg = "Black"
 bg = "White"
 
-[color_theme.user_feedback]
+[user_feedback]
 fg = "Black"
 bg = "White"
 
-[color_theme.canvas.default_style]
+[canvas.default_style]
 fg = "Black"
 bg = "White"

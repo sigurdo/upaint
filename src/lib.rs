@@ -15,6 +15,7 @@ pub mod file_formats;
 pub mod rendering;
 pub mod status_bar;
 pub mod user_input;
+pub mod keystrokes;
 
 use crate::config::Config;
 use brush::Brush;
