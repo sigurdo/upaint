@@ -18,7 +18,7 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
 use crate::DirectionFree;
-use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::config::keymaps::KeymapsEntry;
 use crate::config::keymaps::keymaps_complete;
@@ -32,7 +32,7 @@ pub use actions::ActionIncompleteEnum;
 pub use motions::{Motion, MotionIncompleteEnum};
 pub use operators::{Operator, OperatorIncompleteEnum};
 
-#[derive(Hash, PartialEq, Eq, Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Hash, PartialEq, Eq, Clone, Copy, Deserialize, Serialize)]
 pub struct Keystroke {
     pub code: KeyCode,
     pub modifiers: KeyModifiers,
@@ -47,7 +47,29 @@ impl From<KeyEvent> for Keystroke {
     }
 }
 
-pub type KeystrokeSequence = Vec<Keystroke>;
+#[derive(Default, Clone, PartialEq, Eq, Hash, serde::Serialize, Deserialize)]
+pub struct KeystrokeSequence(pub Vec<Keystroke>);
+impl KeystrokeSequence {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+    pub fn push(&mut self, keystroke: Keystroke) {
+        self.0.push(keystroke)
+    }
+    pub fn insert(&mut self, index: usize, keystroke: Keystroke) {
+        self.0.insert(index, keystroke)
+    }
+    pub fn iter<'a>(&'a self) -> <&'a [Keystroke] as IntoIterator>::IntoIter {
+        self.0.iter()
+    }
+}
+impl IntoIterator for KeystrokeSequence {
+    type Item = Keystroke;
+    type IntoIter = <Vec<Keystroke> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
 pub type KeystrokeIterator<'a> = <&'a [Keystroke] as IntoIterator>::IntoIter;
 
 pub struct ConfigFileKeystrokeSequenceVisitor;

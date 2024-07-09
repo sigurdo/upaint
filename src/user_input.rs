@@ -60,6 +60,7 @@ pub fn handle_user_input_normal_mode(
     match event {
         Event::Key(e) => {
             program_state.keystroke_sequence_incomplete.push(Keystroke::from(e));
+            log::debug!("{:#?}", &program_state.keystroke_sequence_incomplete);
             let mut it = program_state.keystroke_sequence_incomplete.iter();
             match <Box<dyn Action>>::from_keystrokes(&mut it, &program_state.config) {
                 Ok(action) => {

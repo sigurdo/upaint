@@ -19,7 +19,7 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
 use crate::DirectionFree;
-use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::canvas::raw::operations::CanvasOperation;
 

@@ -66,7 +66,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
                         self.next()
                     },
                     Some((key, KeymapsEntry::Complete(value))) => {
-                        Some((vec![*key], value))
+                        Some((KeystrokeSequence(vec![*key]), value))
                     },
                     None => {
                         None

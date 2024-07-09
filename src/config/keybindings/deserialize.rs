@@ -26,7 +26,11 @@
 
 use super::Keystroke;
 use std::collections::LinkedList;
+use std::fmt::Display;
 use crossterm::event::{KeyCode, KeyModifiers};
+use serde::{Deserialize, de};
+
+use crate::keystrokes::KeystrokeSequence;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseKeystrokeSequenceErr {
@@ -35,6 +39,12 @@ pub enum ParseKeystrokeSequenceErr {
     KeystrokeEmpty,
     SequenceEmpty,
 }
+impl Display for ParseKeystrokeSequenceErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#?}", self)
+    }
+}
+impl std::error::Error for ParseKeystrokeSequenceErr {}
 
 /// Parses a part of a keystroke sequence between a `<` and a `>`.
 fn parse_key_notation(to_parse: &str) -> Result<Keystroke, ParseKeystrokeSequenceErr> {
@@ -114,11 +124,11 @@ fn parse_key_notation(to_parse: &str) -> Result<Keystroke, ParseKeystrokeSequenc
     }
 }
 
-pub fn parse_keystroke_sequence(to_parse: &str) -> Result<Vec<Keystroke>, ParseKeystrokeSequenceErr> {
+pub fn parse_keystroke_sequence(to_parse: &str) -> Result<KeystrokeSequence, ParseKeystrokeSequenceErr> {
     if to_parse.len() == 0 {
         return Err(ParseKeystrokeSequenceErr::SequenceEmpty);
     }
-    let mut keystrokes = Vec::new();
+    let mut keystrokes = KeystrokeSequence::new();
     let mut it = to_parse.chars();
     while let Some(ch) = it.next() {
         let keystroke = if ch == '<' {
@@ -141,6 +151,16 @@ pub fn parse_keystroke_sequence(to_parse: &str) -> Result<Vec<Keystroke>, ParseK
     Ok(keystrokes)
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, serde::Serialize, Deserialize)]
+#[serde(try_from = "String")]
+pub struct KeystrokeSequenceToml(pub KeystrokeSequence);
+impl TryFrom<String> for KeystrokeSequenceToml {
+    type Error = ParseKeystrokeSequenceErr;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(KeystrokeSequenceToml(parse_keystroke_sequence(&value)?))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -149,37 +169,37 @@ mod test {
     fn test_parse_keystroke_sequence() {
         // Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::NONE }
         let tests = vec![
-            ("abc", Ok(vec![
+            ("abc", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::NONE },
                 Keystroke { code: KeyCode::Char('b'), modifiers: KeyModifiers::NONE },
                 Keystroke { code: KeyCode::Char('c'), modifiers: KeyModifiers::NONE },
-            ])),
-            ("<C-d>", Ok(vec![
+            ]))),
+            ("<C-d>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('d'), modifiers: KeyModifiers::CONTROL },
-            ])),
+            ]))),
             // Shift + an ASCII character is just sent as an uppercase ASCII character by terminal
             // emulators, which results in no way to distinguish. In practice there is no
             // reasonable way to distinguish them anyways. Crossterm both makes
             // the character uppercase and adds shift as modifier. <S-d>, <D> and <S-D> are
             // therefore equivalent representations. <D> is the preferred notation.
-            ("<S-d>", Ok(vec![
+            ("<S-d>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('D'), modifiers: KeyModifiers::SHIFT },
-            ])),
-            ("<D>", Ok(vec![
+            ]))),
+            ("<D>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('D'), modifiers: KeyModifiers::SHIFT },
-            ])),
-            ("<A-d>", Ok(vec![
+            ]))),
+            ("<A-d>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('d'), modifiers: KeyModifiers::ALT },
-            ])),
-            ("<C-A-d>", Ok(vec![
+            ]))),
+            ("<C-A-d>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('d'), modifiers: KeyModifiers::ALT | KeyModifiers::CONTROL },
-            ])),
-            ("<Enter>", Ok(vec![
+            ]))),
+            ("<Enter>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Enter, modifiers: KeyModifiers::NONE },
-            ])),
-            ("<A-Right>", Ok(vec![
+            ]))),
+            ("<A-Right>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Right, modifiers: KeyModifiers::ALT },
-            ])),
+            ]))),
         ];
         // test_parse_keystroke_sequence(
         for (to_parse, expected) in tests {

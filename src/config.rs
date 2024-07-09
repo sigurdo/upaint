@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use std::iter::Rev;
-use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::DirectionFree;
 
 use config::{
@@ -17,7 +17,7 @@ use toml::de::ValueDeserializer;
 use crate::{
     actions::{UserAction},
     brush::{BrushComponent}, ErrorCustom,
-    keystrokes::{ActionIncompleteEnum, OperatorIncompleteEnum, MotionIncompleteEnum, KeystrokeIterator, actions::MoveCursorPreset, motions::OncePreset, actions::{OperationPreset}},
+    keystrokes::{ActionIncompleteEnum, OperatorIncompleteEnum, MotionIncompleteEnum, KeystrokeSequence, KeystrokeIterator, actions::MoveCursorPreset, motions::OncePreset, actions::{OperationPreset}},
     Ground,
     canvas::raw::iter::WordBoundaryType,
 
@@ -35,6 +35,7 @@ use self::{
     keybindings::{KeybindingToml, Keystroke},
     keys::KeyCodeToml,
     keymaps::{Keymaps, KeymapsEntry, keymaps_extend_preserve, keymaps_extend_overwrite, keymaps_insert_preserve, keymaps_iter},
+    keybindings::deserialize::KeystrokeSequenceToml,
     
     // structure::{Config, ConfigToml},
 };
@@ -190,27 +191,26 @@ config_struct_definition!({
     },
     keymaps: {
         (KeymapsToml => KeymapsConfig),
-        actions: (HashMap<String, ActionIncompleteEnum> => Keymaps<ActionIncompleteEnum>),
-        operators: (HashMap<String, OperatorIncompleteEnum> => Keymaps<OperatorIncompleteEnum>),
-        motions: (HashMap<String, MotionIncompleteEnum> => Keymaps<MotionIncompleteEnum>),
-        directions: (HashMap<String, DirectionFree> => Keymaps<DirectionFree>),
-        characters: (HashMap<String, char> => Keymaps<char>),
-        grounds: (HashMap<String, Ground> => Keymaps<Ground>),
-        word_boundary_types: (HashMap<String, WordBoundaryType> => Keymaps<WordBoundaryType>),
-        colors: (HashMap<String, Color> => Keymaps<Color>),
+        actions: (HashMap<KeystrokeSequenceToml, ActionIncompleteEnum> => Keymaps<ActionIncompleteEnum>),
+        operators: (HashMap<KeystrokeSequenceToml, OperatorIncompleteEnum> => Keymaps<OperatorIncompleteEnum>),
+        motions: (HashMap<KeystrokeSequenceToml, MotionIncompleteEnum> => Keymaps<MotionIncompleteEnum>),
+        directions: (HashMap<KeystrokeSequenceToml, DirectionFree> => Keymaps<DirectionFree>),
+        characters: (HashMap<KeystrokeSequenceToml, char> => Keymaps<char>),
+        grounds: (HashMap<KeystrokeSequenceToml, Ground> => Keymaps<Ground>),
+        word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => Keymaps<WordBoundaryType>),
+        colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
     },
 });
 
 macro_rules! generic_impl_toml_value_for_incomplete_enums(
     ($($type:ty),*,) => {
         $(
-            impl TomlValue for HashMap<String, $type> {
+            impl TomlValue for HashMap<KeystrokeSequenceToml, $type> {
                 type ConfigValue = Keymaps<$type>;
                 fn to_config_value(self) -> Self::ConfigValue {
                     let mut result = HashMap::new();
-                    for (sequence_unparsed, value) in self {
-                        let keystroke_sequence = parse_keystroke_sequence(sequence_unparsed.as_str()).unwrap();
-                        let mut it = keystroke_sequence.iter();
+                    for (KeystrokeSequenceToml(keystrokes), value) in self {
+                        let mut it = keystrokes.iter();
                         keymaps_insert_preserve(&mut result, &mut it, value);
                     }
                     result
@@ -259,25 +259,6 @@ impl BrushKeys {
             None
         }
     }
-}
-
-pub fn default_config_source() -> ::config::File<FileSourceString, FileFormat> {
-    ::config::File::from_str(
-        include_str!("config/default_config.toml"),
-        config::FileFormat::Toml,
-    )
-}
-
-pub fn local_config_source() -> Result<::config::File<FileSourceFile, FileFormat>, ErrorCustom> {
-    let Some(mut config_file_path) = dirs::config_dir() else {
-        return Err(ErrorCustom::String("Couldn't detect the system's config directory.".to_string()))
-    };
-    config_file_path.push("upaint");
-    config_file_path.push("upaint.toml");
-    let Some(config_file_path) = config_file_path.to_str() else {
-        return Err(ErrorCustom::String("Couldn't derive the local upaint config file path.".to_string()))
-    };
-    Ok(::config::File::with_name(config_file_path))
 }
 
 pub fn local_config_toml() -> Result<String, ErrorCustom> {

@@ -20,7 +20,7 @@ use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
 use crate::DirectionFree;
 use crate::keystrokes::{FromPreset, FromKeystrokes, FromKeystrokesByMap};
-use crate::config::keybindings::parse::parse_keystroke_sequence;
+use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator};
