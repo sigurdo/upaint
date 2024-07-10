@@ -35,25 +35,31 @@ fn find_cell_exit(start: na::Vector2<f64>, direction: DirectionFree) -> na::Vect
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CanvasIterationJump {
+    Diagonals,
+    DirectionAsStride,
+}
+
+#[derive(Clone, Debug)]
 pub struct CanvasIndexIteratorInfinite {
     direction: DirectionFree,
+    jump: Option<CanvasIterationJump>,
     index_next: CanvasIndex,
     entry_next: na::Vector2<f64>,
 }
 
 impl CanvasIndexIteratorInfinite {
-    fn new(start: CanvasIndex, direction: DirectionFree) -> Self {
+    fn new(start: CanvasIndex, direction: DirectionFree, jump: Option<CanvasIterationJump>) -> Self {
         Self {
             direction,
+            jump,
             index_next: start,
             entry_next: na::Vector2::new(0.0, 0.0),
         }
     }
-}
 
-impl Iterator for CanvasIndexIteratorInfinite {
-    type Item = CanvasIndex;
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next_no_jump_no_stride(&mut self) -> <Self as Iterator>::Item {
         let index_current = self.index_next;
         let exit = find_cell_exit(self.entry_next, self.direction);
         if exit.x.signum() as i16 == self.direction.columns.signum() && exit.x.abs() == 0.5 {
@@ -66,6 +72,41 @@ impl Iterator for CanvasIndexIteratorInfinite {
             self.entry_next.y -= self.direction.rows.signum() as f64;
         } else {
             panic!();
+        }
+        index_current
+    }
+}
+
+impl Iterator for CanvasIndexIteratorInfinite {
+    type Item = CanvasIndex;
+    fn next(&mut self) -> Option<Self::Item> {
+        let index_current = self.index_next;
+        let entry_current = self.entry_next;
+        if self.jump == Some(CanvasIterationJump::DirectionAsStride) {
+            self.index_next.0 += self.direction.rows;
+            self.index_next.1 += self.direction.columns;
+            return Some(index_current);
+        }
+        self.next_no_jump_no_stride();
+        let index_next = self.index_next;
+        let entry_next = self.entry_next;
+        if self.jump == Some(CanvasIterationJump::Diagonals) {
+            // En hare som løper i forveien.
+            let mut rabbit = self.clone();
+            rabbit.next_no_jump_no_stride();
+            let index_overnext = rabbit.index_next;
+            let entry_overnext = rabbit.entry_next;
+            if index_overnext.0 != index_current.0 && index_overnext.1 != index_current.1 {
+                // We are facing a diagonal transition
+                let decision_value = if entry_overnext.x.abs() == 0.5 {
+                    entry_overnext.y * (self.direction.rows.signum() as f64)
+                } else {
+                    entry_overnext.x * (self.direction.columns.signum() as f64)
+                };
+                if decision_value < 0.0 {
+                    self.next_no_jump_no_stride();
+                }
+            }
         }
         Some(index_current)
     }
@@ -85,6 +126,7 @@ pub enum StopCondition {
     SecondCell,
     CharacterChange,
     WordBoundary(WordBoundaryType),
+    CharacterMatch(char),
     // CellContent(fn(&CanvasCell) -> bool),
 }
 
@@ -97,16 +139,18 @@ pub enum StopCondition {
 pub struct CanvasIndexIterator<'a> {
     index_it: Peekable<CanvasIndexIteratorInfinite>,
     direction: DirectionFree,
+    jump: Option<CanvasIterationJump>,
     to_yield: Option<LinkedList<CanvasIndex>>,
     canvas: &'a RawCanvas,
     stop: StopCondition,
 }
 
 impl<'a> CanvasIndexIterator<'a> {
-    pub fn new(canvas: &'a RawCanvas, start: CanvasIndex, direction: DirectionFree, stop: StopCondition) -> Self {
+    pub fn new(canvas: &'a RawCanvas, start: CanvasIndex, direction: DirectionFree, jump: Option<CanvasIterationJump>, stop: StopCondition) -> Self {
         Self {
-            index_it: CanvasIndexIteratorInfinite::new(start, direction).peekable(),
+            index_it: CanvasIndexIteratorInfinite::new(start, direction, jump).peekable(),
             direction,
+            jump,
             to_yield: None,
             canvas,
             stop,
@@ -153,6 +197,13 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                 false
                             }
                         },
+                        StopCondition::CharacterMatch(ch) => {
+                            if *ch == self.canvas.character((row, column)) {
+                                true
+                            } else {
+                                false
+                            }
+                        }
                         // StopCondition::CellContent(target) => {
                         //     let cell = self.canvas.cell((row, column));
                         //     target(&cell)

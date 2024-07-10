@@ -1,3 +1,9 @@
+use derive_more::Deref;
+use derive_more::DerefMut;
+use derive_more::Constructor;
+use derive_more::From;
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::collections::LinkedList;
 use std::collections::HashMap;
 use crossterm::event::KeyCode;
@@ -23,6 +29,7 @@ use crate::config::keymaps::Keymaps;
 use crate::config::keymaps::KeymapsEntry;
 use crate::config::keymaps::keymaps_complete;
 use crate::config::load_default_config;
+use crate::canvas::raw::iter::CanvasIterationJump;
 
 pub mod actions;
 pub mod motions;
@@ -47,47 +54,14 @@ impl From<KeyEvent> for Keystroke {
     }
 }
 
-#[derive(Default, Clone, PartialEq, Eq, Hash, serde::Serialize, Deserialize)]
+#[derive(Deref, DerefMut, From, Default, Clone, PartialEq, Eq, Hash, serde::Serialize, Deserialize)]
 pub struct KeystrokeSequence(pub Vec<Keystroke>);
 impl KeystrokeSequence {
     pub fn new() -> Self {
         Self(Vec::new())
     }
-    pub fn push(&mut self, keystroke: Keystroke) {
-        self.0.push(keystroke)
-    }
-    pub fn insert(&mut self, index: usize, keystroke: Keystroke) {
-        self.0.insert(index, keystroke)
-    }
-    pub fn iter<'a>(&'a self) -> <&'a [Keystroke] as IntoIterator>::IntoIter {
-        self.0.iter()
-    }
-}
-impl IntoIterator for KeystrokeSequence {
-    type Item = Keystroke;
-    type IntoIter = <Vec<Keystroke> as IntoIterator>::IntoIter;
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
 }
 pub type KeystrokeIterator<'a> = <&'a [Keystroke] as IntoIterator>::IntoIter;
-
-pub struct ConfigFileKeystrokeSequenceVisitor;
-impl<'de> de::Visitor<'de> for ConfigFileKeystrokeSequenceVisitor {
-    type Value = KeystrokeSequence;
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error, {
-        let keystroke_vec = parse_keystroke_sequence(v).unwrap();
-        Ok(keystroke_vec)
-    }
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            formatter,
-            "hei",
-        )
-    }
-}
 
 #[derive(Debug)]
 pub enum KeybindCompletionError {
@@ -153,6 +127,7 @@ impl FromKeystrokes for char {
         match keymaps_complete(&config.keymaps.characters, &mut keystrokes.clone()) {
             Ok(item) => Ok(item.clone()),
             Err(_) => {
+                log::debug!("hei keystrokes");
                 match keystrokes.next() {
                     Some(Keystroke { code: KeyCode::Char(ch), .. }) => Ok(*ch),
                     Some(keystroke) => Err(KeybindCompletionError::InvalidKeystroke(*keystroke)),
@@ -175,21 +150,6 @@ impl FromKeystrokesByMap for Color {
         &config.keymaps.colors
     }
 }
-// impl FromKeystrokes for ColorSlot {
-//     fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
-//         match keystrokes.next() {
-//             Some(Keystroke { code: KeyCode::Char(ch), modifiers: KeyModifiers::NONE }) => {
-//                 Ok(Self(*ch))
-//             },
-//             Some(keystroke) => {
-//                 Err(KeybindCompletionError::InvalidKeystroke(*keystroke))
-//             },
-//             None => {
-//                 Err(KeybindCompletionError::MissingKeystrokes)
-//             },
-//         }
-//     }
-// }
 impl FromKeystrokes for ColorSpecification {
     fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
         match Color::from_keystrokes(&mut keystrokes.clone(), config) {
@@ -214,6 +174,12 @@ impl FromKeystrokesByMap for DirectionFree {
 impl FromKeystrokesByMap for WordBoundaryType {
     fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
         &config.keymaps.word_boundary_types
+    }
+}
+
+impl FromKeystrokesByMap for CanvasIterationJump {
+    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+        &config.keymaps.canvas_iteration_jump
     }
 }
 

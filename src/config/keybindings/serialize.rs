@@ -1,3 +1,4 @@
+use derive_more::Deref;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 use crate::keystrokes::{KeystrokeSequence, Keystroke};

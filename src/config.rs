@@ -15,6 +15,7 @@ use serde::{
 use toml::de::ValueDeserializer;
 
 use crate::{
+    canvas::raw::iter::CanvasIterationJump,
     actions::{UserAction},
     brush::{BrushComponent}, ErrorCustom,
     keystrokes::{ActionIncompleteEnum, OperatorIncompleteEnum, MotionIncompleteEnum, KeystrokeSequence, KeystrokeIterator, actions::MoveCursorPreset, motions::OncePreset, actions::{OperationPreset}},
@@ -188,6 +189,7 @@ config_struct_definition!({
         command_line: (StyleToml => StyleConfig),
         input_mode: (StyleToml => StyleConfig),
         user_feedback: (StyleToml => StyleConfig),
+        selection_highlighted_bg: (ColorToml => Color),
     },
     keymaps: {
         (KeymapsToml => KeymapsConfig),
@@ -199,6 +201,7 @@ config_struct_definition!({
         grounds: (HashMap<KeystrokeSequenceToml, Ground> => Keymaps<Ground>),
         word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => Keymaps<WordBoundaryType>),
         colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
+        canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => Keymaps<CanvasIterationJump>),
     },
 });
 
@@ -229,6 +232,7 @@ generic_impl_toml_value_for_incomplete_enums!(
     Ground,
     WordBoundaryType,
     Color,
+    CanvasIterationJump,
 );
 
 impl Config {
@@ -299,7 +303,7 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
 
 fn create_motions_from_directions(config: &mut Config) {
     keymaps_extend_preserve(&mut config.keymaps.motions, keymaps_iter(&config.keymaps.directions).map(|(keystrokes, direction_preset)| {
-        (keystrokes, MotionIncompleteEnum::Once(OncePreset { direction: Some(*direction_preset) }))
+        (keystrokes, MotionIncompleteEnum::Once(OncePreset { direction: Some(*direction_preset), jump: Some(CanvasIterationJump::DirectionAsStride) }))
     }).into_iter());
 }
 

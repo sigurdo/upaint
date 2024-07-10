@@ -39,6 +39,7 @@ all = "a"
 [keymaps.motions]
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
+"f" = { FindChar = {} }
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }
@@ -69,6 +70,10 @@ all = "a"
 "e" = "END"
 
 [keymaps.colors]
+
+[keymaps.canvas_iteration_jump]
+"d" = "Diagonals"
+"s" = "DirectionAsStride"
 
 # A [[normal_mode_keybindings]] describes a single keybinding. Entries defined in local config sources
 # will be appended to the defaults. Each key can only have one action, meaning that you override default

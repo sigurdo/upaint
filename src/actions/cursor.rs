@@ -106,10 +106,10 @@ pub struct MoveCursor2 {
 
 impl Action for MoveCursor2 {
     fn execute(&self, program_state: &mut ProgramState) {
-        let start = program_state.cursor_position;
-        let it = CanvasIndexIterator::new(program_state.canvas.raw(), start, self.direction, self.stop.clone());
-        let end = it.last().unwrap();
-        cursor_to(program_state, end);
+        // let start = program_state.cursor_position;
+        // let it = CanvasIndexIterator::new(program_state.canvas.raw(), start, self.direction, self.stop.clone());
+        // let end = it.last().unwrap();
+        // cursor_to(program_state, end);
     }
 }
 

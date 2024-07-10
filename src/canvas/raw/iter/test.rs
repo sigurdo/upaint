@@ -28,18 +28,25 @@ fn test_find_cell_exit() {
 fn test_canvas_index_iterator_infinite() {
     use crate::DirectionFree;
     use super::CanvasIndexIteratorInfinite;
+    use super::CanvasIterationJump;
     let tests = vec![
-        ((0, 0), (0, 1), vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
-        ((0, 0), (1, 1), vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)]),
-        ((0, 0), (1, 2), vec![(0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3), (2, 4), (2, 5), (3, 5), (3, 6)]),
-        ((0, 0), (-1, 2), vec![(0, 0), (0, 1), (-1, 1), (-1, 2), (-1, 3), (-2, 3), (-2, 4), (-2, 5), (-3, 5), (-3, 6)]),
-        ((0, 0), (-1, -2), vec![(0, 0), (0, -1), (-1, -1), (-1, -2), (-1, -3), (-2, -3), (-2, -4), (-2, -5), (-3, -5), (-3, -6)]),
-        ((0, 0), (1, -2), vec![(0, 0), (0, -1), (1, -1), (1, -2), (1, -3), (2, -3), (2, -4), (2, -5), (3, -5), (3, -6)]),
-        ((0, 0), (2, -1), vec![(0, 0), (1, 0), (1, -1), (2, -1), (3, -1), (3, -2), (4, -2), (5, -2), (5, -3), (6, -3)]),
-        ((10, 100), (1, 1), vec![(10, 100), (10, 101), (11, 101), (11, 102), (12, 102)]),
+        ((0, 0), (0, 1), None, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
+        ((0, 0), (1, 1), None, vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)]),
+        ((0, 0), (1, 2), None, vec![(0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3), (2, 4), (2, 5), (3, 5), (3, 6)]),
+        ((0, 0), (-1, 2), None, vec![(0, 0), (0, 1), (-1, 1), (-1, 2), (-1, 3), (-2, 3), (-2, 4), (-2, 5), (-3, 5), (-3, 6)]),
+        ((0, 0), (-1, -2), None, vec![(0, 0), (0, -1), (-1, -1), (-1, -2), (-1, -3), (-2, -3), (-2, -4), (-2, -5), (-3, -5), (-3, -6)]),
+        ((0, 0), (1, -2), None, vec![(0, 0), (0, -1), (1, -1), (1, -2), (1, -3), (2, -3), (2, -4), (2, -5), (3, -5), (3, -6)]),
+        ((0, 0), (2, -1), None, vec![(0, 0), (1, 0), (1, -1), (2, -1), (3, -1), (3, -2), (4, -2), (5, -2), (5, -3), (6, -3)]),
+        ((10, 100), (1, 1), None, vec![(10, 100), (10, 101), (11, 101), (11, 102), (12, 102)]),
+        ((0, 0), (0, 1), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
+        ((0, 0), (1, 1), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]),
+        ((0, 0), (-1, 1), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (-1, 1), (-2, 2), (-3, 3), (-4, 4)]),
+        ((0, 0), (1, -2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (0, -1), (1, -2), (1, -3), (2, -4)]),
+        ((0, 0), (-1, -2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (0, -1), (-1, -2), (-1, -3), (-2, -4)]),
+        ((0, 0), (3, 2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (1, 1), (2, 1), (3, 2), (4, 3), (5, 3)]),
     ];
-    for (start, (direction_rows, direction_columns), indices) in tests {
-        let mut it = CanvasIndexIteratorInfinite::new(start, DirectionFree::new(direction_rows, direction_columns).unwrap());
+    for (start, (direction_rows, direction_columns), jump, indices) in tests {
+        let mut it = CanvasIndexIteratorInfinite::new(start, DirectionFree::new(direction_rows, direction_columns).unwrap(), jump);
         for expected in indices {
             let actual = it.next().unwrap();
             assert_eq!(actual, expected);
@@ -76,10 +83,11 @@ fn test_canvas_index_iterator() {
         ("    4567    abcd", (-3, 6), DirectionFree::from(Direction::Up), StopCondition::CharacterChange, (-3, 6)),
         ("    4567    abcd", (-3, 6), DirectionFree::from(Direction::Down), StopCondition::CharacterChange, (0, 6)),
         ("    4567    abcd", (-3, 3), DirectionFree::from(Direction::Down), StopCondition::CharacterChange, (-3, 3)),
+        ("    4567    abcd", (0, 1), DirectionFree::from(Direction::Right), StopCondition::CharacterMatch('6'), (0, 6)),
     ];
     for (txt, start, direction, stop, end) in tests {
         let mut canvas = RawCanvas::from_txt(txt.to_string()).unwrap();
-        let it = CanvasIndexIterator::new(&mut canvas, start, direction, stop);
+        let it = CanvasIndexIterator::new(&mut canvas, start, direction, None, stop);
         assert_eq!(it.last(), Some(end));
     }
 }

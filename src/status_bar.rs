@@ -32,6 +32,7 @@ impl<'a> Widget for StatusBar<'a> {
             .constraints(
                 [
                     Constraint::Min(16),
+                    Constraint::Max(8),
                     Constraint::Max(3),
                     Constraint::Max(2 + 1 + 2),
                     Constraint::Max(3 + 5 + 1 + 5 + 1),
@@ -52,6 +53,9 @@ impl<'a> Widget for StatusBar<'a> {
         );
         let base_style = self.program_state.config.color_theme.status_bar;
         let open_file = Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])])
+            .style(base_style.into());
+
+        let input_sequence = Paragraph::new(vec![Line::from(vec![Span::raw(self.program_state.keystroke_sequence_incomplete.to_string())])])
             .style(base_style.into());
 
         let brush_character = Paragraph::new(vec![Line::from(vec![Span::raw(
@@ -84,8 +88,9 @@ impl<'a> Widget for StatusBar<'a> {
             .style(base_style.into());
 
         open_file.render(chunks[0], buf);
-        brush_character.render(chunks[1], buf);
-        brush_colors.render(chunks[2], buf);
-        cursor_index.render(chunks[3], buf);
+        input_sequence.render(chunks[1], buf);
+        brush_character.render(chunks[2], buf);
+        brush_colors.render(chunks[3], buf);
+        cursor_index.render(chunks[4], buf);
     }
 }

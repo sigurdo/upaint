@@ -22,6 +22,7 @@ use crate::DirectionFree;
 use crate::keystrokes::{FromPreset, FromKeystrokes, FromKeystrokesByMap};
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
+use crate::canvas::raw::iter::CanvasIterationJump;
 
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator};
 
@@ -90,10 +91,15 @@ impl FromKeystrokes for Box<dyn Motion> {
 motions_macro!(
     OncePreset -> Once {
         direction: Option<DirectionFree> => DirectionFree,
+        jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
     },
     WordBoundaryIncomplete -> WordBoundary {
-        boundary_type: Option<WordBoundaryType> => WordBoundaryType,
         direction: Option<DirectionFree> => DirectionFree,
+        boundary_type: Option<WordBoundaryType> => WordBoundaryType,
+    },
+    FindCharIncomplete -> FindChar {
+        direction: Option<DirectionFree> => DirectionFree,
+        ch: Option<char> => char,
     },
 );
 
@@ -103,9 +109,23 @@ impl Motion for WordBoundary {
             canvas,
             start,
             self.direction,
+            Some(CanvasIterationJump::Diagonals),
             StopCondition::WordBoundary(self.boundary_type),
         );
         log::debug!("jajajajaj");
+        it.collect()
+    }
+}
+
+impl Motion for FindChar {
+    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
+        let it = CanvasIndexIterator::new(
+            canvas,
+            start,
+            self.direction,
+            Some(CanvasIterationJump::Diagonals),
+            StopCondition::CharacterMatch(self.ch),
+        );
         it.collect()
     }
 }
@@ -117,6 +137,7 @@ impl Motion for Once {
             canvas,
             start,
             self.direction,
+            self.jump,
             StopCondition::SecondCell,
         );
         it.collect()
