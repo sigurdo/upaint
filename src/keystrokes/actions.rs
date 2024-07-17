@@ -15,6 +15,8 @@ use crate::actions::cursor::MoveCursor2;
 use crate::config::Config;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
+use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
+use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
 use crate::DirectionFree;
@@ -68,7 +70,6 @@ macro_rules! actions_macro {
 
         impl FromPreset<ActionIncompleteEnum> for Box<dyn Action> {
             fn from_preset(preset: ActionIncompleteEnum, sequence: &mut KeystrokeIterator, config: &Config) -> Result<Box<dyn Action>, KeybindCompletionError> {
-                log::debug!("FromPreset<ActionIncompleteEnum> for Box<dyn Action>, {:#?}", preset);
                 match preset {
                     $(
                         ActionIncompleteEnum::$name(value) => Ok(Box::new(<$name>::from_preset(value, sequence, config)?)),
@@ -107,6 +108,7 @@ actions_macro!(
     },
     ModeCommandPreset -> ModeCommand {},
     ModeInsertPreset -> ModeInsert {
+        jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
         direction: Option<DirectionFree> => DirectionFree,
     },
     ModeReplacePreset -> ModeReplace {},
@@ -137,9 +139,7 @@ impl Action for MoveCursor {
             return;
         };
         program_state.cursor_position = *cursor_to;
-        // log::debug!("hei {cursor_to:#?}");
         let (rows_away, columns_away) = program_state.canvas_visible.away_index(program_state.cursor_position);
-        log::debug!("hei {cursor_to:#?}, {rows_away:#?}, {columns_away:#?}, {:#?}", program_state.canvas_visible);
         program_state.focus_position.0 += rows_away;
         program_state.canvas_visible.row += rows_away;
         program_state.focus_position.1 += columns_away;
@@ -165,7 +165,11 @@ impl Action for ModeCommand {
 
 impl Action for ModeInsert {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.input_mode = InputMode::Insert(self.direction.cardinal().unwrap_or_default());
+        let mut canvas_it = CanvasIndexIteratorInfinite::new(program_state.cursor_position, self.direction, self.jump);
+        canvas_it.go_forward();
+        program_state.input_mode = InputMode::Insert(canvas_it);
+        // Create empty commit for amending to
+        program_state.canvas.create_commit(vec![]);
     }
 }
 

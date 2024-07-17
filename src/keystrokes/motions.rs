@@ -112,7 +112,6 @@ impl Motion for WordBoundary {
             Some(CanvasIterationJump::Diagonals),
             StopCondition::WordBoundary(self.boundary_type),
         );
-        log::debug!("jajajajaj");
         it.collect()
     }
 }
@@ -132,7 +131,6 @@ impl Motion for FindChar {
 
 impl Motion for Once {
     fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
-        log::debug!("hmmmmmmmmmmmm");
         let it = CanvasIndexIterator::new(
             canvas,
             start,

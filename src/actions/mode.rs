@@ -39,7 +39,7 @@ impl ModeInsert {
 }
 impl Action for ModeInsert {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.input_mode = InputMode::Insert(self.direction);
+        // program_state.input_mode = InputMode::Insert(self.direction);
     }
 }
 

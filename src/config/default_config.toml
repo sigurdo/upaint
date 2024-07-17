@@ -28,7 +28,7 @@ all = "a"
 "u" = { "Undo" = {} }
 "<C-r>" = { "Redo" = {} }
 ":" = { "ModeCommand" = {} }
-"a" = { "ModeInsert" = {} }
+"a" = { "ModeInsert" = { jump = "Diagonals" } }
 "gc" = { "ModeColorPicker" = {} }
 "r" = { "ModeReplace" = {} }
 "gp" = { "Pipette" = { "ground" = "Foreground"} }

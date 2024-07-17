@@ -41,74 +41,120 @@ pub enum CanvasIterationJump {
     DirectionAsStride,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CanvasIndexIteratorInfinite {
     direction: DirectionFree,
     jump: Option<CanvasIterationJump>,
     index_next: CanvasIndex,
     entry_next: na::Vector2<f64>,
+    // Not intended for configuration from outside. Used internally for backward movements.
+    row_first: bool,
 }
 
 impl CanvasIndexIteratorInfinite {
-    fn new(start: CanvasIndex, direction: DirectionFree, jump: Option<CanvasIterationJump>) -> Self {
+    pub fn new(start: CanvasIndex, direction: DirectionFree, jump: Option<CanvasIterationJump>) -> Self {
         Self {
             direction,
             jump,
             index_next: start,
             entry_next: na::Vector2::new(0.0, 0.0),
+            row_first: false,
         }
     }
 
-    fn next_no_jump_no_stride(&mut self) -> <Self as Iterator>::Item {
+    fn go_forward_no_jump_no_stride(&mut self) -> <Self as Iterator>::Item {
         let index_current = self.index_next;
         let exit = find_cell_exit(self.entry_next, self.direction);
-        if exit.x.signum() as i16 == self.direction.columns.signum() && exit.x.abs() == 0.5 {
-            self.index_next.1 += self.direction.columns.signum();
-            self.entry_next = exit;
-            self.entry_next.x -= self.direction.columns.signum() as f64;
-        } else if exit.y.signum() as i16 == self.direction.rows.signum() && exit.y.abs() == 0.5 {
-            self.index_next.0 += self.direction.rows.signum();
-            self.entry_next = exit;
-            self.entry_next.y -= self.direction.rows.signum() as f64;
-        } else {
-            panic!();
+        let exit_column = exit.x.signum() as i16 == self.direction.columns.signum() && exit.x.abs() == 0.5;
+        let exit_row = exit.y.signum() as i16 == self.direction.rows.signum() && exit.y.abs() == 0.5;
+        match (exit_column, exit_row, self.row_first) {
+            (true, false, _) | (true, true, false) => {
+                // Exit column
+                self.index_next.1 += self.direction.columns.signum();
+                self.entry_next = exit;
+                self.entry_next.x -= self.direction.columns.signum() as f64;
+            },
+            (false, true, _) | (true, true, true) => {
+                // Exit row
+                self.index_next.0 += self.direction.rows.signum();
+                self.entry_next = exit;
+                self.entry_next.y -= self.direction.rows.signum() as f64;
+            },
+            (false, false, _) => {
+                panic!();
+            },
         }
         index_current
+    }
+
+    pub fn go_forward(&mut self) -> <Self as Iterator>::Item {
+        let index_current = self.index_next;
+        let entry_current = self.entry_next;
+        if self.jump == Some(CanvasIterationJump::DirectionAsStride) {
+            self.index_next.0 += self.direction.rows;
+            self.index_next.1 += self.direction.columns;
+            return index_current;
+        }
+        self.go_forward_no_jump_no_stride();
+        let index_next = self.index_next;
+        let entry_next = self.entry_next;
+        if self.jump == Some(CanvasIterationJump::Diagonals) {
+            // En hare som løper i forveien.
+            let mut rabbit = self.clone();
+            rabbit.go_forward_no_jump_no_stride();
+            let index_overnext = rabbit.index_next;
+            let entry_overnext = rabbit.entry_next;
+            if index_overnext.0 != index_current.0 && index_overnext.1 != index_current.1 {
+                // We are facing a diagonal transition
+                let decision_value = if !self.row_first && entry_overnext.y.abs() == 0.5 {
+                    entry_overnext.x * (self.direction.columns.signum() as f64)
+                } else {
+                    entry_overnext.y * (self.direction.rows.signum() as f64)
+                };
+                // // TODO: I would like to use the following logic, since it makes more sense, but it
+                // doesn't work :(
+                // let decision_value = match (entry_overnext.x.abs() == 0.5, entry_overnext.y.abs() == 0.5, self.row_first) {
+                //     (true, false, _) | (true, true, true) => {
+                //         entry_overnext.y * (self.direction.rows.signum() as f64)
+                //     },
+                //     (false, true, _) | (true, true, false) => {
+                //         entry_overnext.x * (self.direction.columns.signum() as f64)
+                //     },
+                //     (false, false, _) => {
+                //         panic!();
+                //     },
+                // };
+                if decision_value < 0.0 {
+                    self.go_forward_no_jump_no_stride();
+                }
+            }
+        }
+        index_current
+    }
+
+    pub fn go_back(&mut self) -> <Self as Iterator>::Item {
+        // This is quite an ugly, but also very functional solution.
+        // One issue however, which requires more rewriting, is that the route iterated back is not
+        // necesarrily the same as was iterated forwards, when cell changes occur in corners.
+        self.direction.rows = -self.direction.rows;
+        self.direction.columns = -self.direction.columns;
+        self.row_first = !self.row_first;
+        self.go_forward();
+        self.go_forward();
+        let result = self.go_forward();
+        self.direction.rows = -self.direction.rows;
+        self.direction.columns = -self.direction.columns;
+        self.row_first = !self.row_first;
+        self.go_forward();
+        self.go_forward();
+        result
     }
 }
 
 impl Iterator for CanvasIndexIteratorInfinite {
     type Item = CanvasIndex;
     fn next(&mut self) -> Option<Self::Item> {
-        let index_current = self.index_next;
-        let entry_current = self.entry_next;
-        if self.jump == Some(CanvasIterationJump::DirectionAsStride) {
-            self.index_next.0 += self.direction.rows;
-            self.index_next.1 += self.direction.columns;
-            return Some(index_current);
-        }
-        self.next_no_jump_no_stride();
-        let index_next = self.index_next;
-        let entry_next = self.entry_next;
-        if self.jump == Some(CanvasIterationJump::Diagonals) {
-            // En hare som løper i forveien.
-            let mut rabbit = self.clone();
-            rabbit.next_no_jump_no_stride();
-            let index_overnext = rabbit.index_next;
-            let entry_overnext = rabbit.entry_next;
-            if index_overnext.0 != index_current.0 && index_overnext.1 != index_current.1 {
-                // We are facing a diagonal transition
-                let decision_value = if entry_overnext.x.abs() == 0.5 {
-                    entry_overnext.y * (self.direction.rows.signum() as f64)
-                } else {
-                    entry_overnext.x * (self.direction.columns.signum() as f64)
-                };
-                if decision_value < 0.0 {
-                    self.next_no_jump_no_stride();
-                }
-            }
-        }
-        Some(index_current)
+        Some(self.go_forward())
     }
 }
 

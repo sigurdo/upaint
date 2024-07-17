@@ -1,5 +1,5 @@
 use brush::BrushApply;
-use crossterm::event::{Event, KeyCode, KeyModifiers, MouseEventKind, KeyEventKind};
+use crossterm::event::{Event, KeyEvent, KeyCode, KeyModifiers, MouseEventKind, KeyEventKind};
 use ratatui::style::{Color};
 
 
@@ -19,7 +19,7 @@ mod insert_mode;
 
 use insert_mode::handle_user_input_insert_mode;
 
-use self::insert_mode::handle_user_input_choose_insert_direction_mode;
+// use self::insert_mode::handle_user_input_choose_insert_direction_mode;
 
 pub fn handle_user_input_command_mode(
     event: Event,
@@ -60,7 +60,6 @@ pub fn handle_user_input_normal_mode(
     match event {
         Event::Key(e) => {
             program_state.keystroke_sequence_incomplete.push(Keystroke::from(e));
-            log::debug!("{:#?}", &program_state.keystroke_sequence_incomplete);
             let mut it = program_state.keystroke_sequence_incomplete.iter();
             match <Box<dyn Action>>::from_keystrokes(&mut it, &program_state.config) {
                 Ok(action) => {
@@ -284,10 +283,15 @@ pub fn handle_user_input_choose_move_word_direction(event: Event, program_state:
 /// Returns a tuple of booleans `(redraw, exit)`.
 pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
     if let Event::Key(e) = event {
-        if e.code == KeyCode::Esc {
-            program_state.input_mode = InputMode::Normal;
-            program_state.user_feedback = None;
-            return Ok(());
+        match e {
+            KeyEvent { code: KeyCode::Esc, modifiers: KeyModifiers::NONE, .. }
+            | KeyEvent { code: KeyCode::Char('c'), modifiers: KeyModifiers::CONTROL, .. } => {
+                program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+                program_state.input_mode = InputMode::Normal;
+                program_state.user_feedback = None;
+                return Ok(());
+            },
+            _ => (),
         }
     }
 
@@ -302,10 +306,11 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
         InputMode::Normal => handle_user_input_normal_mode(event, program_state),
         InputMode::Command => handle_user_input_command_mode(event, program_state),
         InputMode::ChooseInsertDirection => {
-            handle_user_input_choose_insert_direction_mode(event, program_state)
+            panic!();
+            // handle_user_input_choose_insert_direction_mode(event, program_state)
         }
-        InputMode::Insert(direction) => {
-            handle_user_input_insert_mode(event, program_state, direction)
+        InputMode::Insert(_) => {
+            handle_user_input_insert_mode(event, program_state)
         }
         InputMode::Replace => handle_user_input_replace(event, program_state),
         InputMode::ChangeBrush => handle_user_input_change_brush(event, program_state),

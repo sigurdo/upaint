@@ -23,6 +23,7 @@ use brush::Brush;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
 use keystrokes::{KeystrokeSequence, ColorSlot};
+use canvas::raw::iter::CanvasIndexIteratorInfinite;
 
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
@@ -86,7 +87,8 @@ pub enum InputMode {
     #[default]
     Normal,
     ChooseInsertDirection,
-    Insert(Direction),
+    Insert(CanvasIndexIteratorInfinite),
+    // VisualRect(CanvasRect),
     ChooseMoveWordDirection,
     Replace,
     Command,

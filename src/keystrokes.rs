@@ -127,7 +127,6 @@ impl FromKeystrokes for char {
         match keymaps_complete(&config.keymaps.characters, &mut keystrokes.clone()) {
             Ok(item) => Ok(item.clone()),
             Err(_) => {
-                log::debug!("hei keystrokes");
                 match keystrokes.next() {
                     Some(Keystroke { code: KeyCode::Char(ch), .. }) => Ok(*ch),
                     Some(keystroke) => Err(KeybindCompletionError::InvalidKeystroke(*keystroke)),

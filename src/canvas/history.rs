@@ -58,6 +58,16 @@ impl UndoRedoCanvas {
         self
     }
 
+    /// Panics if no latest commit exists in canvas
+    pub fn amend(&mut self, operations: Vec<CanvasOperation>) -> &mut Self {
+        let Some(commit_latest) = self.commits.iter_mut().next_back() else { panic!("No commits exist in UndoRedoCanvas.amend()") };
+        for operation in operations {
+            self.current.apply_operation(&operation);
+            commit_latest.operations.push(operation);
+        }
+        self
+    }
+
     pub fn undo(&mut self) {
         if let Some(last_commit) = self.commits.pop_back() {
             self.commits_unapplied.push_front(last_commit);
