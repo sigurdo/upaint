@@ -108,7 +108,12 @@ pub fn draw_frame(
             }
         }
 
+        if let InputMode::VisualRect(corners) = program_state.input_mode {
+            canvas.highlight = Some(corners);
+        }
+
         f.render_widget(canvas, inner_area);
+
 
         let user_feedback = match &program_state.user_feedback {
             Some(feedback) => feedback,

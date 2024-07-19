@@ -182,6 +182,7 @@ config_struct_definition!({
                 bright_cyan: (ColorToml => Color),
                 bright_white: (ColorToml => Color),
             },
+            selection_highlight_bg: (ColorToml => Color),
         },
         row_numbers: (StyleToml => StyleConfig),
         column_numbers: (StyleToml => StyleConfig),
@@ -189,7 +190,6 @@ config_struct_definition!({
         command_line: (StyleToml => StyleConfig),
         input_mode: (StyleToml => StyleConfig),
         user_feedback: (StyleToml => StyleConfig),
-        selection_highlighted_bg: (ColorToml => Color),
     },
     keymaps: {
         (KeymapsToml => KeymapsConfig),

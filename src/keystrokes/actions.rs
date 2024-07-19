@@ -116,6 +116,7 @@ actions_macro!(
         slot: Option<ColorSlot> => ColorSlot,
         // color: Option<ColorSpecification> => ColorSpecification,
     },
+    ModeVisualRectPreset -> ModeVisualRect {},
 );
 
 
@@ -191,6 +192,13 @@ impl Action for ModeColorPicker {
 impl Action for Pipette {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.color_slots.insert(self.slot, program_state.canvas.raw().color(program_state.cursor_position, self.ground));
+    }
+}
+
+impl Action for ModeVisualRect {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let (row, column) = program_state.cursor_position;
+        program_state.input_mode = InputMode::VisualRect((program_state.cursor_position, program_state.cursor_position));
     }
 }
 

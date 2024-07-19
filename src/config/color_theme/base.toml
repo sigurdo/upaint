@@ -6,7 +6,6 @@
 # The `modifiers` property is a `Modifier`, which is a combination of modifiers the possible modifiers are:
 # ("BOLD", "DIM", "ITALIC", "UNDERLINED", "SLOW_BLINK", "RAPID_BLINK", "REVERSED", "HIDDEN", "CROSSED_OUT")
 # , and combinations are created with `|`, e.g. "BOLD | ITALIC".
-selection_highlighted_bg = "Gray"
 
 [row_numbers]
 fg = "Gray"
@@ -40,6 +39,9 @@ modifiers = "BOLD"
 fg = "Reset"
 bg = "Reset"
 modifiers = ""
+
+[canvas]
+selection_highlight_bg = "DarkGray"
 
 # [color_theme.canvas.default_style] is a `StyleToml`, just like [color_theme.status_bar]
 [canvas.default_style]

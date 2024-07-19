@@ -94,6 +94,9 @@ operators_macro!(
         color: Option<ColorSpecification> => ColorSpecification,
         // ground: Option<Ground> => Ground,
     },
+    ReplacePreset -> Replace {
+        ch: Option<char> => char,
+    },
 );
 
 impl Operator for Colorize {
@@ -110,6 +113,16 @@ impl Operator for Colorize {
         };
         for index in cell_indices {
             canvas_operations.push(CanvasOperation::SetFgColor(*index, color));
+        }
+        program_state.canvas.create_commit(canvas_operations);
+    }
+}
+
+impl Operator for Replace {
+    fn operate(&self, cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+        let mut canvas_operations = Vec::new();
+        for index in cell_indices {
+            canvas_operations.push(CanvasOperation::SetCharacter(*index, self.ch));
         }
         program_state.canvas.create_commit(canvas_operations);
     }

@@ -17,6 +17,7 @@ pub struct CanvasWidget<'a> {
     pub canvas: &'a RawCanvas,
     pub focus: CanvasIndex,
     pub cursor: Option<CanvasIndex>,
+    pub highlight: Option<(CanvasIndex, CanvasIndex)>,
     pub config: &'a Config,
 }
 
@@ -26,6 +27,7 @@ impl<'a> CanvasWidget<'a> {
             canvas: canvas,
             focus: canvas.area().center(),
             cursor: None,
+            highlight: None,
             config,
         }
     }
@@ -310,6 +312,12 @@ impl Widget for CanvasWidget<'_> {
                         color_theme.default_style.clone().into(),
                         color_theme,
                     ));
+                }
+                if let Some(corners) = self.highlight {
+                    let rect = CanvasRect::from_corners(corners);
+                    if rect.includes_index((row, column)) {
+                        target.set_style(Style::default().bg(self.config.color_theme.canvas.selection_highlight_bg));
+                    }
                 }
             }
         }

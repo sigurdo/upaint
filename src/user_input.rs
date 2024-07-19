@@ -16,10 +16,10 @@ use crate::{
 };
 
 mod insert_mode;
+mod visual_rect;
 
 use insert_mode::handle_user_input_insert_mode;
-
-// use self::insert_mode::handle_user_input_choose_insert_direction_mode;
+use visual_rect::handle_user_input_visual_rect;
 
 pub fn handle_user_input_command_mode(
     event: Event,
@@ -308,18 +308,21 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
         InputMode::ChooseInsertDirection => {
             panic!();
             // handle_user_input_choose_insert_direction_mode(event, program_state)
-        }
+        },
         InputMode::Insert(_) => {
             handle_user_input_insert_mode(event, program_state)
-        }
+        },
+        InputMode::VisualRect(_) => {
+            handle_user_input_visual_rect(event, program_state)
+        },
         InputMode::Replace => handle_user_input_replace(event, program_state),
         InputMode::ChangeBrush => handle_user_input_change_brush(event, program_state),
         InputMode::ColorPicker(slot) => {
             handle_user_input_color_picker(event, program_state, slot)
-        }
+        },
         InputMode::ChooseBrushCharacter => {
             handle_user_input_choose_brush_character(event, program_state)
-        }
+        },
         InputMode::Pipette => handle_user_input_pipette(event, program_state),
         InputMode::ChooseMoveWordDirection => handle_user_input_choose_move_word_direction(event, program_state),
     }

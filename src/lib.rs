@@ -24,6 +24,7 @@ use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
 use keystrokes::{KeystrokeSequence, ColorSlot};
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
+use canvas::raw::CanvasIndex;
 
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
@@ -88,7 +89,7 @@ pub enum InputMode {
     Normal,
     ChooseInsertDirection,
     Insert(CanvasIndexIteratorInfinite),
-    // VisualRect(CanvasRect),
+    VisualRect((CanvasIndex, CanvasIndex)),
     ChooseMoveWordDirection,
     Replace,
     Command,

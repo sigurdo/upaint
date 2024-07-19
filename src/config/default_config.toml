@@ -30,13 +30,16 @@ all = "a"
 ":" = { "ModeCommand" = {} }
 "a" = { "ModeInsert" = { jump = "Diagonals" } }
 "gc" = { "ModeColorPicker" = {} }
-"r" = { "ModeReplace" = {} }
+# "r" = { Operate = { operation = { Replace = {} } }
 "gp" = { "Pipette" = { "ground" = "Foreground"} }
+"v" = { ModeVisualRect = {} }
 
 [keymaps.operators]
 "c" = { "Colorize" = {} }
+"r" = { Replace = {} }
 
 [keymaps.motions]
+" " = { Stay = {} }
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }

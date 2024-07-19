@@ -89,6 +89,7 @@ impl FromKeystrokes for Box<dyn Motion> {
 }
 
 motions_macro!(
+    StayPreset -> Stay {,},
     OncePreset -> Once {
         direction: Option<DirectionFree> => DirectionFree,
         jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
@@ -139,6 +140,12 @@ impl Motion for Once {
             StopCondition::SecondCell,
         );
         it.collect()
+    }
+}
+
+impl Motion for Stay {
+    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
+        vec![start]
     }
 }
 

@@ -1,6 +1,6 @@
 use super::raw::CanvasIndex;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct CanvasRect {
     pub row: i16,
     pub column: i16,
@@ -9,6 +9,17 @@ pub struct CanvasRect {
 }
 
 impl CanvasRect {
+    pub fn from_corners(corners: (CanvasIndex, CanvasIndex)) -> Self {
+        let ((a_row, a_column), b) = corners;
+        let mut result = Self {
+            row: a_row,
+            column: a_column,
+            rows: 1,
+            columns: 1,
+        };
+        result.include_index(b);
+        result
+    }
     pub fn first_row(&self) -> i16 {
         self.row
     }
@@ -78,5 +89,15 @@ impl CanvasRect {
                 self.column = column;
             }
         }
+    }
+
+    pub fn indices_contained(&self) -> Vec<CanvasIndex> {
+        let mut result = Vec::new();
+        for row in self.row..(self.row + self.rows as i16) {
+            for column in self.column..(self.column + self.columns as i16) {
+                result.push((row, column));
+            }
+        }
+        result
     }
 }
