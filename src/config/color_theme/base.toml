@@ -41,6 +41,7 @@ bg = "Reset"
 modifiers = ""
 
 [canvas]
+visual_mode_highlight_bg = "Gray"
 selection_highlight_bg = "DarkGray"
 
 # [color_theme.canvas.default_style] is a `StyleToml`, just like [color_theme.status_bar]

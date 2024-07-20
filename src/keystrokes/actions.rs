@@ -117,6 +117,10 @@ actions_macro!(
         // color: Option<ColorSpecification> => ColorSpecification,
     },
     ModeVisualRectPreset -> ModeVisualRect {},
+    HighlightSelectionPreset -> HighlightSelection {
+        slot: Option<char> => char,
+    },
+    HighlightSelectionClearPreset -> HighlightSelectionClear {},
 );
 
 
@@ -135,7 +139,7 @@ impl Action for Redo {
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
         let canvas = program_state.canvas.raw();
-        let cells = self.motion.cells(program_state.cursor_position, canvas);
+        let cells = self.motion.cells(program_state);
         let Some(cursor_to) = cells.last() else {
             return;
         };
@@ -151,7 +155,7 @@ impl Action for MoveCursor {
 impl Action for Operation {
     fn execute(&self, program_state: &mut ProgramState) {
         let canvas = program_state.canvas.raw();
-        let cells = self.motion.cells(program_state.cursor_position, canvas);
+        let cells = self.motion.cells(program_state);
         self.operator.operate(&cells, program_state);
     }
 }
@@ -202,3 +206,14 @@ impl Action for ModeVisualRect {
     }
 }
 
+impl Action for HighlightSelection {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_highlight = Some(self.slot);
+    }
+}
+
+impl Action for HighlightSelectionClear {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_highlight = None;
+    }
+}

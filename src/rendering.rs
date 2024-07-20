@@ -109,7 +109,10 @@ pub fn draw_frame(
         }
 
         if let InputMode::VisualRect(corners) = program_state.input_mode {
-            canvas.highlight = Some(corners);
+            canvas.visual_rect = Some(corners);
+        }
+        if let Some(ch) = program_state.selection_highlight {
+            canvas.selection = program_state.selections.get(&ch).cloned();
         }
 
         f.render_widget(canvas, inner_area);

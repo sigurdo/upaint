@@ -8,6 +8,7 @@ use ratatui::{
 use crate::{
     canvas::{raw::CanvasIndex, rect::CanvasRect},
     config::{ColorThemeCanvas, Config},
+    selections::Selection,
     Ground,
 };
 
@@ -17,7 +18,8 @@ pub struct CanvasWidget<'a> {
     pub canvas: &'a RawCanvas,
     pub focus: CanvasIndex,
     pub cursor: Option<CanvasIndex>,
-    pub highlight: Option<(CanvasIndex, CanvasIndex)>,
+    pub visual_rect: Option<(CanvasIndex, CanvasIndex)>,
+    pub selection: Option<Selection>,
     pub config: &'a Config,
 }
 
@@ -27,7 +29,8 @@ impl<'a> CanvasWidget<'a> {
             canvas: canvas,
             focus: canvas.area().center(),
             cursor: None,
-            highlight: None,
+            visual_rect: None,
+            selection: None,
             config,
         }
     }
@@ -313,10 +316,15 @@ impl Widget for CanvasWidget<'_> {
                         color_theme,
                     ));
                 }
-                if let Some(corners) = self.highlight {
+                if let Some(ref selection) = self.selection {
+                    if selection.contains(&(row, column)) {
+                        target.set_style(Style::default().bg(self.config.color_theme.canvas.selection_highlight_bg));
+                    }
+                }
+                if let Some(corners) = self.visual_rect {
                     let rect = CanvasRect::from_corners(corners);
                     if rect.includes_index((row, column)) {
-                        target.set_style(Style::default().bg(self.config.color_theme.canvas.selection_highlight_bg));
+                        target.set_style(Style::default().bg(self.config.color_theme.canvas.visual_mode_highlight_bg));
                     }
                 }
             }

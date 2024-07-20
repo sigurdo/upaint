@@ -27,7 +27,7 @@ use crate::canvas::raw::iter::CanvasIterationJump;
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator};
 
 pub trait Motion {
-    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex>;
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
 }
 
 macro_rules! motions_macro {
@@ -102,10 +102,15 @@ motions_macro!(
         direction: Option<DirectionFree> => DirectionFree,
         ch: Option<char> => char,
     },
+    SelectionMotionPreset -> SelectionMotion {
+        slot: Option<char> => char,
+    },
 );
 
 impl Motion for WordBoundary {
-    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let start = program_state.cursor_position;
+        let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
             canvas,
             start,
@@ -118,7 +123,9 @@ impl Motion for WordBoundary {
 }
 
 impl Motion for FindChar {
-    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let start = program_state.cursor_position;
+        let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
             canvas,
             start,
@@ -131,7 +138,9 @@ impl Motion for FindChar {
 }
 
 impl Motion for Once {
-    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let start = program_state.cursor_position;
+        let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
             canvas,
             start,
@@ -144,8 +153,22 @@ impl Motion for Once {
 }
 
 impl Motion for Stay {
-    fn cells(&self, start: CanvasIndex, canvas: &RawCanvas) -> Vec<CanvasIndex> {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let start = program_state.cursor_position;
+        let canvas = program_state.canvas.raw();
         vec![start]
+    }
+}
+
+impl Motion for SelectionMotion {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let start = program_state.cursor_position;
+        let canvas = program_state.canvas.raw();
+        if let Some(selection) = program_state.selections.get(&self.slot) {
+            selection.iter().copied().collect()
+        } else {
+            Vec::new()
+        }
     }
 }
 

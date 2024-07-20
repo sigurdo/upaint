@@ -3,6 +3,7 @@ use crate::{
     brush::Brush,
     DirectionFree, InputMode, ProgramState, ResultCustom,
     canvas::CanvasOperation,
+    canvas::raw::CanvasIndex,
     canvas::raw::iter::CanvasIndexIteratorInfinite,
     canvas::rect::CanvasRect,
     // config::keybindings::deserialize::parse_keystroke_sequence,
@@ -47,6 +48,7 @@ pub fn handle_user_input_visual_rect(event: Event, program_state: &mut ProgramSt
                     let rect = CanvasRect::from_corners((*index_a, *index_b));
                     operator.operate(&rect.indices_contained(), program_state);
                     program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+                    program_state.input_mode = InputMode::Normal;
                 },
                 Err(KeybindCompletionError::MissingKeystrokes) => {
                     log::debug!("Operator MissingKeystrokes");
@@ -56,7 +58,10 @@ pub fn handle_user_input_visual_rect(event: Event, program_state: &mut ProgramSt
                     match <Box<dyn Motion>>::from_keystrokes(&mut it, &program_state.config) {
                         Ok(motion) => {
                             log::debug!("Fant motion");
-                            let cursor_position_new = *motion.cells(program_state.cursor_position, program_state.canvas.raw()).last().unwrap_or(&program_state.cursor_position);
+                            let cursor_position_new = *motion.cells(program_state).last().unwrap_or(&program_state.cursor_position);
+                            let InputMode::VisualRect((ref mut index_a, ref mut index_b)) = program_state.input_mode else {
+                                panic!("handle_user_input_visual_rect called without being in VisualRect mode");
+                            };
                             *index_a = cursor_position_new;
                             program_state.cursor_position = cursor_position_new;
                             let away = program_state.canvas_visible.away_index(program_state.cursor_position);

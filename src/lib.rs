@@ -17,6 +17,7 @@ pub mod rendering;
 pub mod status_bar;
 pub mod user_input;
 pub mod keystrokes;
+pub mod selections;
 
 use crate::config::Config;
 use brush::Brush;
@@ -25,6 +26,7 @@ use color_picker::ColorPicker;
 use keystrokes::{KeystrokeSequence, ColorSlot};
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::CanvasIndex;
+use selections::Selection;
 
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
@@ -110,6 +112,8 @@ pub struct ProgramState<'a> {
     pub canvas: Canvas,
     pub chosen_color: Option<Color>,
     pub color_slots: HashMap<ColorSlot, Color>,
+    pub selections: HashMap<char, Selection>,
+    pub selection_highlight: Option<char>,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
     pub color_picker: ColorPicker,

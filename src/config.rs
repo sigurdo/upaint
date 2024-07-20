@@ -19,6 +19,7 @@ use crate::{
     actions::{UserAction},
     brush::{BrushComponent}, ErrorCustom,
     keystrokes::{ActionIncompleteEnum, OperatorIncompleteEnum, MotionIncompleteEnum, KeystrokeSequence, KeystrokeIterator, actions::MoveCursorPreset, motions::OncePreset, actions::{OperationPreset}},
+    keystrokes::operators::UpdateSelectionOperator,
     Ground,
     canvas::raw::iter::WordBoundaryType,
 
@@ -182,6 +183,7 @@ config_struct_definition!({
                 bright_cyan: (ColorToml => Color),
                 bright_white: (ColorToml => Color),
             },
+            visual_mode_highlight_bg: (ColorToml => Color),
             selection_highlight_bg: (ColorToml => Color),
         },
         row_numbers: (StyleToml => StyleConfig),
@@ -202,6 +204,7 @@ config_struct_definition!({
         word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => Keymaps<WordBoundaryType>),
         colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
         canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => Keymaps<CanvasIterationJump>),
+        update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => Keymaps<UpdateSelectionOperator>),
     },
 });
 
@@ -233,6 +236,7 @@ generic_impl_toml_value_for_incomplete_enums!(
     WordBoundaryType,
     Color,
     CanvasIterationJump,
+    UpdateSelectionOperator,
 );
 
 impl Config {

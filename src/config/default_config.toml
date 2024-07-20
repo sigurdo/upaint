@@ -33,16 +33,22 @@ all = "a"
 # "r" = { Operate = { operation = { Replace = {} } }
 "gp" = { "Pipette" = { "ground" = "Foreground"} }
 "v" = { ModeVisualRect = {} }
+"o" = { HighlightSelection = {} }
+"O" = { HighlightSelectionClear = {} }
 
 [keymaps.operators]
 "c" = { "Colorize" = {} }
 "r" = { Replace = {} }
+"d" = { Replace = { ch = " "} }
+"s" = { UpdateSelection = {} }
+"a" = { UpdateSelection = { operator = "Add" } }
 
 [keymaps.motions]
 " " = { Stay = {} }
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }
+"s" = { SelectionMotion = {} }
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }
@@ -77,6 +83,11 @@ all = "a"
 [keymaps.canvas_iteration_jump]
 "d" = "Diagonals"
 "s" = "DirectionAsStride"
+
+[keymaps.update_selection_operators]
+"a" = "Add"
+"w" = "Overwrite"
+"s" = "Subtract"
 
 # A [[normal_mode_keybindings]] describes a single keybinding. Entries defined in local config sources
 # will be appended to the defaults. Each key can only have one action, meaning that you override default

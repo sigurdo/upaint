@@ -143,7 +143,7 @@ pub fn parse_keystroke_sequence(to_parse: &str) -> Result<KeystrokeSequence, Par
         } else {
             Keystroke {
                 code: KeyCode::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: if ch.is_ascii_uppercase() { KeyModifiers::SHIFT } else { KeyModifiers::NONE },
             }
         };
         keystrokes.push(keystroke);
@@ -187,6 +187,9 @@ mod test {
             ]))),
             ("<D>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('D'), modifiers: KeyModifiers::SHIFT },
+            ]))),
+            ("N", Ok(KeystrokeSequence(vec![
+                Keystroke { code: KeyCode::Char('N'), modifiers: KeyModifiers::SHIFT },
             ]))),
             ("<A-d>", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('d'), modifiers: KeyModifiers::ALT },

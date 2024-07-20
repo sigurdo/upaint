@@ -22,6 +22,7 @@ use crate::DirectionFree;
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::canvas::raw::operations::CanvasOperation;
+use crate::selections::Selection;
 
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, FromPreset, FromKeystrokes, FromKeystrokesByMap, ColorSpecification};
 
@@ -97,6 +98,10 @@ operators_macro!(
     ReplacePreset -> Replace {
         ch: Option<char> => char,
     },
+    UpdateSelectionPreset -> UpdateSelection {
+        operator: Option<UpdateSelectionOperator> => UpdateSelectionOperator,
+        slot: Option<char> => char,
+    },
 );
 
 impl Operator for Colorize {
@@ -125,5 +130,44 @@ impl Operator for Replace {
             canvas_operations.push(CanvasOperation::SetCharacter(*index, self.ch));
         }
         program_state.canvas.create_commit(canvas_operations);
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum UpdateSelectionOperator {
+    Add,
+    Subtract,
+    Overwrite,
+    // Intersect,
+    // Invert,
+}
+impl FromKeystrokesByMap for UpdateSelectionOperator {
+    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+        &config.keymaps.update_selection_operators
+    }
+}
+
+impl Operator for UpdateSelection {
+    fn operate(&self, cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+        let selection = if let Some(selection) = program_state.selections.get_mut(&self.slot) {
+            selection
+        } else {
+            program_state.selections.insert(self.slot, Selection::new());
+            program_state.selections.get_mut(&self.slot).unwrap()
+        };
+        match self.operator {
+            UpdateSelectionOperator::Add => {
+                selection.extend(cell_indices.iter());
+            },
+            UpdateSelectionOperator::Overwrite => {
+                *selection = cell_indices.iter().copied().collect();
+            },
+            UpdateSelectionOperator::Subtract => {
+                for index in cell_indices {
+                    selection.remove(index);
+                }
+            }
+        }
+
     }
 }
