@@ -23,6 +23,7 @@ use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::canvas::raw::operations::CanvasOperation;
 use crate::selections::Selection;
+use crate::canvas::raw::yank::ContentType;
 
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, FromPreset, FromKeystrokes, FromKeystrokesByMap, ColorSpecification};
 
@@ -102,6 +103,10 @@ operators_macro!(
         operator: Option<UpdateSelectionOperator> => UpdateSelectionOperator,
         slot: Option<char> => char,
     },
+    YankPreset -> Yank {
+        content_type: Option<ContentType> => ContentType,
+        slot: Option<char> => char,
+    },
 );
 
 impl Operator for Colorize {
@@ -169,5 +174,14 @@ impl Operator for UpdateSelection {
             }
         }
 
+    }
+}
+
+impl Operator for Yank {
+    fn operate(&self,cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+        // TODO: Find more elegant way to translate iterable than creating Vec
+        let a: Vec<_> = cell_indices.iter().cloned().collect();
+        let yank = program_state.canvas.raw().yank(a, self.content_type, program_state.cursor_position);
+        program_state.yanks.insert(self.slot, yank);
     }
 }

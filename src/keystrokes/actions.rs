@@ -19,6 +19,7 @@ use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
+use crate::canvas::raw::operations::CanvasOperation;
 use crate::DirectionFree;
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
@@ -121,6 +122,9 @@ actions_macro!(
         slot: Option<char> => char,
     },
     HighlightSelectionClearPreset -> HighlightSelectionClear {},
+    PastePreset -> Paste {
+        slot: Option<char> => char,
+    },
 );
 
 
@@ -217,3 +221,14 @@ impl Action for HighlightSelectionClear {
         program_state.selection_highlight = None;
     }
 }
+
+impl Action for Paste {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(yank) = program_state.yanks.get(&self.slot) {
+            program_state.canvas.create_commit(vec![
+                CanvasOperation::Paste(program_state.cursor_position, yank.clone())
+            ]);
+        }
+    }
+}
+

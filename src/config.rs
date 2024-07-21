@@ -22,7 +22,7 @@ use crate::{
     keystrokes::operators::UpdateSelectionOperator,
     Ground,
     canvas::raw::iter::WordBoundaryType,
-
+    canvas::raw::yank::ContentType,
 };
 
 pub mod color_theme;
@@ -205,6 +205,7 @@ config_struct_definition!({
         colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
         canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => Keymaps<CanvasIterationJump>),
         update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => Keymaps<UpdateSelectionOperator>),
+        yank_content_type: (HashMap<KeystrokeSequenceToml, ContentType> => Keymaps<ContentType>),
     },
 });
 
@@ -237,6 +238,7 @@ generic_impl_toml_value_for_incomplete_enums!(
     Color,
     CanvasIterationJump,
     UpdateSelectionOperator,
+    ContentType,
 );
 
 impl Config {

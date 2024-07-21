@@ -35,6 +35,7 @@ all = "a"
 "v" = { ModeVisualRect = {} }
 "o" = { HighlightSelection = {} }
 "O" = { HighlightSelectionClear = {} }
+"p" = { Paste = {} }
 
 [keymaps.operators]
 "c" = { "Colorize" = {} }
@@ -42,6 +43,7 @@ all = "a"
 "d" = { Replace = { ch = " "} }
 "s" = { UpdateSelection = {} }
 "a" = { UpdateSelection = { operator = "Add" } }
+"y" = { Yank = { content_type = "ALL" } }
 
 [keymaps.motions]
 " " = { Stay = {} }
@@ -88,6 +90,14 @@ all = "a"
 "a" = "Add"
 "w" = "Overwrite"
 "s" = "Subtract"
+
+[keymaps.yank_content_type]
+"a" = "ALL"
+"t" = "TEXT"
+"f" = "FG"
+"b" = "BG"
+"c" = "COLOR"
+"m" = "MODIFIERS"
 
 # A [[normal_mode_keybindings]] describes a single keybinding. Entries defined in local config sources
 # will be appended to the defaults. Each key can only have one action, meaning that you override default

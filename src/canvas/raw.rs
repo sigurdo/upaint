@@ -12,6 +12,8 @@ pub mod ansi_import;
 pub mod operations;
 pub mod rendering;
 pub mod iter;
+pub mod yank;
+pub mod paste;
 
 #[cfg(test)]
 mod test;

@@ -3,6 +3,7 @@ use ratatui::style::{Color, Modifier};
 use crate::canvas::raw::CanvasIndex;
 
 use super::RawCanvas;
+use super::yank::CanvasYank;
 
 #[derive(Debug, Clone)]
 pub enum CanvasOperation {
@@ -12,6 +13,7 @@ pub enum CanvasOperation {
     AddModifier(CanvasIndex, Modifier),
     RemoveModifier(CanvasIndex, Modifier),
     SetModifiers(CanvasIndex, Modifier),
+    Paste(CanvasIndex, CanvasYank),
 }
 
 impl RawCanvas {
@@ -34,6 +36,9 @@ impl RawCanvas {
             }
             CanvasOperation::SetModifiers(index, modifiers) => {
                 self.set_modifiers(*index, *modifiers);
+            }
+            CanvasOperation::Paste(index, yank) => {
+                self.paste(yank, *index);
             }
         }
     }

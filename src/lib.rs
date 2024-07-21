@@ -26,6 +26,7 @@ use color_picker::ColorPicker;
 use keystrokes::{KeystrokeSequence, ColorSlot};
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::CanvasIndex;
+use canvas::raw::yank::CanvasYank;
 use selections::Selection;
 
 
@@ -113,6 +114,7 @@ pub struct ProgramState<'a> {
     pub chosen_color: Option<Color>,
     pub color_slots: HashMap<ColorSlot, Color>,
     pub selections: HashMap<char, Selection>,
+    pub yanks: HashMap<char, CanvasYank>,
     pub selection_highlight: Option<char>,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
