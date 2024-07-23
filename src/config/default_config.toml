@@ -38,7 +38,8 @@ all = "a"
 "p" = { Paste = {} }
 
 [keymaps.operators]
-"c" = { "Colorize" = {} }
+"c" = { "Colorize" = { ground = "Foreground"} }
+"b" = { "Colorize" = { ground = "Background"} }
 "r" = { Replace = {} }
 "d" = { Replace = { ch = " "} }
 "s" = { UpdateSelection = {} }

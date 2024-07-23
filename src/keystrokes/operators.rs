@@ -93,8 +93,8 @@ impl FromKeystrokes for Box<dyn Operator> {
 
 operators_macro!(
     ColorizePreset -> Colorize {
+        ground: Option<Ground> => Ground,
         color: Option<ColorSpecification> => ColorSpecification,
-        // ground: Option<Ground> => Ground,
     },
     ReplacePreset -> Replace {
         ch: Option<char> => char,
@@ -122,7 +122,12 @@ impl Operator for Colorize {
             ColorSpecification::Direct(color) => color,
         };
         for index in cell_indices {
-            canvas_operations.push(CanvasOperation::SetFgColor(*index, color));
+            let op = if self.ground == Ground::Foreground {
+                CanvasOperation::SetFgColor(*index, color)
+            } else {
+                CanvasOperation::SetBgColor(*index, color)
+            };
+            canvas_operations.push(op);
         }
         program_state.canvas.create_commit(canvas_operations);
     }
