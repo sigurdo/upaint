@@ -28,30 +28,36 @@ all = "a"
 "u" = { "Undo" = {} }
 "<C-r>" = { "Redo" = {} }
 ":" = { "ModeCommand" = {} }
-"a" = { "ModeInsert" = { jump = "Diagonals" } }
+"i" = { "ModeInsert" = { jump = "Diagonals" } }
 "gc" = { "ModeColorPicker" = {} }
-# "r" = { Operate = { operation = { Replace = {} } }
-"gp" = { "Pipette" = { "ground" = "Foreground"} }
+"gp" = { "Pipette" = {}}
 "v" = { ModeVisualRect = {} }
-"o" = { HighlightSelection = {} }
+"o" = { HighlightSelection = { slot = "#" } }
 "O" = { HighlightSelectionClear = {} }
-"p" = { Paste = {} }
+"P" = { Paste = {} }
+"p" = { Paste = { slot = "#" } }
+"r" = { Operation = { motion = { Stay = {}}, operator = { Replace = {}}}}
+"R" = { Operation = { operator = { Replace = {}}}}
 
 [keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground"} }
 "b" = { "Colorize" = { ground = "Background"} }
 "r" = { Replace = {} }
-"d" = { Replace = { ch = " "} }
-"s" = { UpdateSelection = {} }
-"a" = { UpdateSelection = { operator = "Add" } }
-"y" = { Yank = { content_type = "ALL" } }
+"S" = { UpdateSelection = {} }
+"a" = { UpdateSelection = { operator = "Add", slot = "#" } }
+"s" = { UpdateSelection = { operator = "Subtract", slot = "#" } }
+"z" = { UpdateSelection = { operator = "Overwrite", slot = "#" } }
+"y" = { Yank = { content_type = "ALL", slot = "#" } }
+"D" = { Cut = { content_type = "ALL" } }
+"d" = { Cut = { content_type = "ALL", slot = "#" } }
 
 [keymaps.motions]
 " " = { Stay = {} }
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }
-"s" = { SelectionMotion = {} }
+"S" = { SelectionMotion = {} }
+"s" = { SelectionMotion = { slot = "#" } }
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }

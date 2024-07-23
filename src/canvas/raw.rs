@@ -153,6 +153,10 @@ impl<'a> RawCanvas {
         self.get_mut(&index).modifiers.insert(modifier);
         self
     }
+    pub fn set_cell(&mut self, index: CanvasIndex, cell: CanvasCell) -> &mut Self {
+        self.cells.insert(index, cell);
+        self
+    }
     pub fn remove_modifier(&mut self, index: CanvasIndex, modifier: Modifier) -> &mut Self {
         self.get_mut(&index).modifiers.remove(modifier);
         self

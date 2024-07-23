@@ -4,6 +4,7 @@ use crate::canvas::raw::CanvasIndex;
 
 use super::RawCanvas;
 use super::yank::CanvasYank;
+use super::CanvasCell;
 
 #[derive(Debug, Clone)]
 pub enum CanvasOperation {
@@ -13,6 +14,7 @@ pub enum CanvasOperation {
     AddModifier(CanvasIndex, Modifier),
     RemoveModifier(CanvasIndex, Modifier),
     SetModifiers(CanvasIndex, Modifier),
+    SetCell(CanvasIndex, CanvasCell),
     Paste(CanvasIndex, CanvasYank),
 }
 
@@ -36,6 +38,9 @@ impl RawCanvas {
             }
             CanvasOperation::SetModifiers(index, modifiers) => {
                 self.set_modifiers(*index, *modifiers);
+            }
+            CanvasOperation::SetCell(index, cell) => {
+                self.set_cell(*index, cell.clone());
             }
             CanvasOperation::Paste(index, yank) => {
                 self.paste(yank, *index);

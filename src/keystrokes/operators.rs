@@ -24,6 +24,7 @@ use crate::config::keymaps::Keymaps;
 use crate::canvas::raw::operations::CanvasOperation;
 use crate::selections::Selection;
 use crate::canvas::raw::yank::ContentType;
+use crate::canvas::raw::CanvasCell;
 
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, FromPreset, FromKeystrokes, FromKeystrokesByMap, ColorSpecification};
 
@@ -104,6 +105,10 @@ operators_macro!(
         slot: Option<char> => char,
     },
     YankPreset -> Yank {
+        content_type: Option<ContentType> => ContentType,
+        slot: Option<char> => char,
+    },
+    CutPreset -> Cut {
         content_type: Option<ContentType> => ContentType,
         slot: Option<char> => char,
     },
@@ -190,3 +195,18 @@ impl Operator for Yank {
         program_state.yanks.insert(self.slot, yank);
     }
 }
+
+impl Operator for Cut {
+    fn operate(&self,cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+        Yank {
+            content_type: self.content_type,
+            slot: self.slot,
+        }.operate(cell_indices, program_state);
+        let mut canvas_operations = Vec::new();
+        for index in cell_indices {
+            canvas_operations.push(CanvasOperation::SetCell(*index, CanvasCell::default()));
+        }
+        program_state.canvas.create_commit(canvas_operations);
+    }
+}
+
