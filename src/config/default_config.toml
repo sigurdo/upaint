@@ -38,6 +38,7 @@ all = "a"
 "p" = { Paste = { slot = "#" } }
 "r" = { Operation = { motion = { Stay = {}}, operator = { Replace = {}}}}
 "R" = { Operation = { operator = { Replace = {}}}}
+"m" = { MarkSet = {}}
 
 [keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground"} }
@@ -58,6 +59,8 @@ all = "a"
 "f" = { FindChar = {} }
 "S" = { SelectionMotion = {} }
 "s" = { SelectionMotion = { slot = "#" } }
+"J" = { GoToMark = { jump = "Diagonals" } }
+"L" = { GoToMark = { jump = "Diagonals", slot = "l" } }
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }
@@ -72,8 +75,6 @@ all = "a"
 "m" = { rows = 1, columns = -1 }
 "," = { rows = 1, columns = 1 }
 "." = { rows = 1, columns = 2 }
-# Special no-movement motion needs to be implemented. This currently crashes.
-# " " = { rows = 0, columns = 0 }
 
 [keymaps.grounds]
 "f" = "Foreground"

@@ -169,6 +169,7 @@ bitflags! {
 
 #[derive(Clone, Debug)]
 pub enum StopCondition {
+    Index(CanvasIndex),
     SecondCell,
     CharacterChange,
     WordBoundary(WordBoundaryType),
@@ -220,6 +221,9 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                     let (row, column) = self.index_it.next().unwrap();
                     let area = self.canvas.area();
                     let stop = match &self.stop {
+                        StopCondition::Index((row_stop, column_stop)) => {
+                            row == *row_stop && column == *column_stop
+                        },
                         StopCondition::SecondCell => true,
                         StopCondition::CharacterChange => {
                             if let Some(prev) = indices_iterated.back() {
@@ -256,8 +260,28 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                         // },
                     };
                     indices_iterated.push_back((row, column));
-                    let search_is_infinite = self.direction.rows.signum() == (row - area.row).signum() && !area.includes_index((row, area.column))
-                        || self.direction.columns.signum() == (column - area.column).signum() && !area.includes_index((area.row, column)) ;
+                    let search_is_infinite = match &self.stop {
+                        StopCondition::Index((row_stop, column_stop)) => {
+                            if row == *row_stop || column == *column_stop {
+                                // Almost there
+                                false
+                            } else {
+                                let rows = row_stop - row;
+                                let columns = column_stop - column;
+                                if self.direction.rows.signum() == rows.signum() && self.direction.columns.signum() == columns.signum() {
+                                    // We can still get there
+                                    false
+                                } else {
+                                    // We will never get there.
+                                    true
+                                }
+                            }
+                        },
+                        _ => {
+                            self.direction.rows.signum() == (row - area.row).signum() && !area.includes_index((row, area.column))
+                            || self.direction.columns.signum() == (column - area.column).signum() && !area.includes_index((area.row, column))
+                        },
+                    };
                     if stop || search_is_infinite {
                         if stop {
                             to_yield.append(&mut indices_iterated);

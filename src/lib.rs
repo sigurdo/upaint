@@ -115,6 +115,7 @@ pub struct ProgramState<'a> {
     pub color_slots: HashMap<ColorSlot, Color>,
     pub selections: HashMap<char, Selection>,
     pub yanks: HashMap<char, CanvasYank>,
+    pub marks: HashMap<char, CanvasIndex>,
     pub selection_highlight: Option<char>,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,

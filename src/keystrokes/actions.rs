@@ -125,6 +125,9 @@ actions_macro!(
     PastePreset -> Paste {
         slot: Option<char> => char,
     },
+    MarkSetPreset -> MarkSet {
+        slot: Option<char> => char,
+    },
 );
 
 
@@ -229,6 +232,12 @@ impl Action for Paste {
                 CanvasOperation::Paste(program_state.cursor_position, yank.clone())
             ]);
         }
+    }
+}
+
+impl Action for MarkSet {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.marks.insert(self.slot, program_state.cursor_position); 
     }
 }
 

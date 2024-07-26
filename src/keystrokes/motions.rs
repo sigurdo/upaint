@@ -16,6 +16,7 @@ use crate::config::Config;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::iter::CanvasIndexIterator;
+use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
 use crate::DirectionFree;
@@ -105,6 +106,10 @@ motions_macro!(
     SelectionMotionPreset -> SelectionMotion {
         slot: Option<char> => char,
     },
+    GoToMarkPreset -> GoToMark {
+        jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
+        slot: Option<char> => char,
+    },
 );
 
 impl Motion for WordBoundary {
@@ -166,6 +171,29 @@ impl Motion for SelectionMotion {
         let canvas = program_state.canvas.raw();
         if let Some(selection) = program_state.selections.get(&self.slot) {
             selection.iter().copied().collect()
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+impl Motion for GoToMark {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        if let Some(mark) = program_state.marks.get(&self.slot) {
+            let rows = mark.0 - program_state.cursor_position.0;
+            let columns = mark.1 - program_state.cursor_position.1;
+            let direction = DirectionFree {
+                rows,
+                columns,
+            };
+            let mut it = CanvasIndexIterator::new(
+                program_state.canvas.raw(),
+                program_state.cursor_position,
+                direction,
+                self.jump,
+                StopCondition::Index(*mark),
+            );
+            it.collect()
         } else {
             Vec::new()
         }
