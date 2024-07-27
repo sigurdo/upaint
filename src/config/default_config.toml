@@ -61,6 +61,7 @@ all = "a"
 "s" = { SelectionMotion = { slot = "#" } }
 "J" = { GoToMark = { jump = "Diagonals" } }
 "L" = { GoToMark = { jump = "Diagonals", slot = "l" } }
+"A" = { MatchingCells = {} }
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }
@@ -105,6 +106,9 @@ all = "a"
 "f" = "FG"
 "b" = "BG"
 "c" = "COLOR"
+"F" = "FG | TEXT"
+"B" = "BG | TEXT"
+"C" = "COLOR | TEXT"
 "m" = "MODIFIERS"
 
 # A [[normal_mode_keybindings]] describes a single keybinding. Entries defined in local config sources

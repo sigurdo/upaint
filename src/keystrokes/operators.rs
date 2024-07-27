@@ -23,7 +23,7 @@ use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::canvas::raw::operations::CanvasOperation;
 use crate::selections::Selection;
-use crate::canvas::raw::yank::ContentType;
+use crate::canvas::raw::CellContentType;
 use crate::canvas::raw::CanvasCell;
 
 use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, FromPreset, FromKeystrokes, FromKeystrokesByMap, ColorSpecification};
@@ -105,11 +105,11 @@ operators_macro!(
         slot: Option<char> => char,
     },
     YankPreset -> Yank {
-        content_type: Option<ContentType> => ContentType,
+        content_type: Option<CellContentType> => CellContentType,
         slot: Option<char> => char,
     },
     CutPreset -> Cut {
-        content_type: Option<ContentType> => ContentType,
+        content_type: Option<CellContentType> => CellContentType,
         slot: Option<char> => char,
     },
 );

@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, LinkedList};
+use bitflags::bitflags;
 
 use ratatui::style::{Color, Modifier};
 
 use crate::Ground;
+use crate::selections::Selection;
 
 use super::rect::CanvasRect;
 
@@ -20,6 +22,19 @@ mod test;
 
 /// A tuple on the format `(row, column)`, representing an index in a `CanvasRaw`.
 pub type CanvasIndex = (i16, i16);
+
+bitflags! {
+    #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+    pub struct CellContentType: u8 {
+        const NONE      = 0b0000_0000;
+        const TEXT      = 0b0000_0001;
+        const FG        = 0b0000_0010;
+        const BG        = 0b0000_0100;
+        const COLOR     = 0b0000_0110;
+        const MODIFIERS = 0b0000_1000;
+        const ALL       = 0b0000_1111;
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CanvasCell {
@@ -164,6 +179,39 @@ impl<'a> RawCanvas {
     pub fn set_modifiers(&mut self, index: CanvasIndex, modifiers: Modifier) -> &mut Self {
         self.get_mut(&index).modifiers = modifiers;
         self
+    }
+    pub fn cells_matching(&self, ch: Option<char>, fg: Option<Color>, bg: Option<Color>, modifiers: Option<Modifier>) -> Selection {
+        let mut result = Selection::new();
+        for (index, cell) in &self.cells {
+            let mut matching = true;
+            if let Some(ch) = ch {
+                if cell.character != ch {
+                    matching = false;
+                }
+            }
+            if let Some(fg) = fg {
+                if cell.fg != fg {
+                    matching = false;
+                }
+            }
+            if let Some(bg) = bg {
+                if cell.bg != bg {
+                    matching = false;
+                }
+            }
+            if let Some(modifier) = modifiers {
+                if cell.modifiers != modifier {
+                    matching = false;
+                }
+            }
+            if matching {
+                result.insert(*index);
+            }
+        }
+        // if matching_cell == CanvasCell::default() {
+        //     // TODO: Add all non-existent cell indices within the current canvas area.
+        // }
+        result
     }
 }
 

@@ -19,6 +19,7 @@ use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
+use crate::canvas::raw::CellContentType;
 use crate::DirectionFree;
 use crate::keystrokes::{FromPreset, FromKeystrokes, FromKeystrokesByMap};
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
@@ -110,6 +111,9 @@ motions_macro!(
         jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
         slot: Option<char> => char,
     },
+    MatchingCellsPreset -> MatchingCells {
+        content_type: Option<CellContentType> => CellContentType,
+    },
 );
 
 impl Motion for WordBoundary {
@@ -197,6 +201,41 @@ impl Motion for GoToMark {
         } else {
             Vec::new()
         }
+    }
+}
+
+impl Motion for MatchingCells {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let canvas = program_state.canvas.raw();
+        let index = program_state.cursor_position;
+
+        let ch = if self.content_type.contains(CellContentType::TEXT) {
+            Some(canvas.character(index))
+        } else {
+            None
+        };
+        let fg = if self.content_type.contains(CellContentType::FG) {
+            Some(canvas.fg(index))
+        } else {
+            None
+        };
+        let bg = if self.content_type.contains(CellContentType::BG) {
+            Some(canvas.bg(index))
+        } else {
+            None
+        };
+        let modifiers = if self.content_type.contains(CellContentType::MODIFIERS) {
+            Some(canvas.modifiers(index))
+        } else {
+            None
+        };
+            
+        let selection = program_state.canvas.raw().cells_matching(ch, fg, bg, modifiers);
+        let mut result = Vec::new();
+        for cell in selection {
+            result.push(cell);
+        }
+        result
     }
 }
 

@@ -30,7 +30,7 @@ use crate::config::keymaps::KeymapsEntry;
 use crate::config::keymaps::keymaps_complete;
 use crate::config::load_default_config;
 use crate::canvas::raw::iter::CanvasIterationJump;
-use crate::canvas::raw::yank::ContentType;
+use crate::canvas::raw::CellContentType;
 
 pub mod actions;
 pub mod motions;
@@ -183,7 +183,7 @@ impl FromKeystrokesByMap for CanvasIterationJump {
     }
 }
 
-impl FromKeystrokesByMap for ContentType {
+impl FromKeystrokesByMap for CellContentType {
     fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
         &config.keymaps.yank_content_type
     }
