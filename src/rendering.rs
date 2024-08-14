@@ -147,6 +147,7 @@ pub fn draw_frame(
                 InputMode::ColorPicker(_) => "-- COLOR PICKER --",
                 InputMode::ChooseBrushCharacter => "-- CHOOSE BRUSH CHARACTER --",
                 InputMode::Pipette => "-- PIPETTE --",
+                InputMode::VisualRect(_) => "-- VISUAL RECT --",
                 _ => "",
             };
             let input_mode = Paragraph::new(vec![Line::from(vec![Span::raw(input_mode)])])
