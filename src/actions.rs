@@ -13,8 +13,9 @@ pub use brush::{BrushApply, PipetteTake};
 pub use cursor::MoveCursor;
 pub use misc::{Redo, Undo};
 pub use mode::{
-    ModeChangeBrush, ModeChooseBrushCharacter, ModeChooseInsertDirection, ModeColorPicker,
-    ModeCommand, ModeInsert, ModePipette, ModeReplace, ModeChooseMoveWordDirection,
+    ModeChangeBrush, ModeChooseBrushCharacter, ModeChooseInsertDirection,
+    ModeChooseMoveWordDirection, ModeColorPicker, ModeCommand, ModeInsert, ModePipette,
+    ModeReplace,
 };
 pub use pan::Pan;
 
@@ -112,4 +113,3 @@ action_collection!(
     ModeCommand = ModeCommand {},
     ModeChooseMoveWordDirection = ModeChooseMoveWordDirection {},
 );
-

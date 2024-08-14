@@ -1,8 +1,8 @@
 use ratatui::{
-    prelude::{Buffer, Rect, Constraint, Line},
+    layout::Layout,
+    prelude::{Buffer, Constraint, Line, Rect},
     style::{Color, Modifier, Style},
     widgets::Widget,
-    layout::Layout,
 };
 
 use crate::{
@@ -52,7 +52,7 @@ impl<'a> CanvasWidget<'a> {
             .constraints(
                 [
                     Constraint::Max(row_number_chunk_width), // Row numbers
-                    Constraint::Min(1), // Rest
+                    Constraint::Min(1),                      // Rest
                 ]
                 .as_ref(),
             )
@@ -72,7 +72,6 @@ impl<'a> CanvasWidget<'a> {
         let canvas_chunk = chunks[1];
         (canvas_chunk, row_number_chunk, column_number_chunk)
     }
-
 
     /// Visible canvas area when rendered to `area`
     pub fn visible(&self, area: Rect) -> CanvasRect {
@@ -167,15 +166,17 @@ impl Widget for RowNumbersWidget<'_> {
             let width = usize::from(area.width);
             let text = if let Some(row_cursor) = self.row_number_cursor {
                 if row == row_cursor {
-                    format!("{:<width$}", number, width=width)
+                    format!("{:<width$}", number, width = width)
                 } else {
-                    format!("{:>width$}", number, width=width)
+                    format!("{:>width$}", number, width = width)
                 }
             } else {
-                format!("{:>width$}", number, width=width)
+                format!("{:>width$}", number, width = width)
             };
             let style = self.config.color_theme.row_numbers;
-            ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
+            ratatui::widgets::Paragraph::new(vec![Line::from(text)])
+                .style(style.into())
+                .render(area, buffer);
         }
     }
 }
@@ -205,9 +206,9 @@ impl Widget for ColumnNumbersWidget<'_> {
                     (column - column_cursor).abs()
                 };
                 let text = if (i - i_cursor).abs() == 1 {
-                    format!("{:>width$}", "", width=cell_width as usize)
+                    format!("{:>width$}", "", width = cell_width as usize)
                 } else {
-                    format!("{:>width$}", number, width=cell_width as usize)
+                    format!("{:>width$}", number, width = cell_width as usize)
                 };
                 let area = Rect {
                     x: x as u16,
@@ -216,12 +217,18 @@ impl Widget for ColumnNumbersWidget<'_> {
                     height: 1,
                 };
                 let style = self.config.color_theme.row_numbers;
-                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
+                ratatui::widgets::Paragraph::new(vec![Line::from(text)])
+                    .style(style.into())
+                    .render(area, buffer);
             }
         } else {
             let x_origo = self.column_to_x_translation as i16;
             let x_margin_left = (x_origo - (cell_width - 1) - area.x as i16) % cell_width;
-            let x_margin_left = if x_margin_left < 0 { x_margin_left + cell_width } else { x_margin_left };
+            let x_margin_left = if x_margin_left < 0 {
+                x_margin_left + cell_width
+            } else {
+                x_margin_left
+            };
             let i_rightmost = (area.width as i16 - x_margin_left) / cell_width;
             for i in 0..i_rightmost {
                 let x = area.x as i16 + x_margin_left + cell_width * i;
@@ -230,11 +237,11 @@ impl Widget for ColumnNumbersWidget<'_> {
                     let x_cursor = column_cursor + self.column_to_x_translation;
                     let x_cell_right = x + (cell_width - 1);
                     if x_cell_right > x_cursor - 2 * cell_width && x <= x_cursor + cell_width {
-                        continue
+                        continue;
                     }
                 }
                 let number = column;
-                let text = format!("{:>width$}", number, width=cell_width as usize);
+                let text = format!("{:>width$}", number, width = cell_width as usize);
                 let area = Rect {
                     x: x as u16,
                     y: area.y,
@@ -242,13 +249,15 @@ impl Widget for ColumnNumbersWidget<'_> {
                     height: 1,
                 };
                 let style = self.config.color_theme.row_numbers;
-                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
+                ratatui::widgets::Paragraph::new(vec![Line::from(text)])
+                    .style(style.into())
+                    .render(area, buffer);
             }
             if let Some(column_cursor) = self.column_number_cursor {
                 let x_cursor = column_cursor + self.column_to_x_translation;
                 let x_text = std::cmp::max((x_cursor - (cell_width - 1)) as u16, area.x);
                 let number = column_cursor;
-                let text = format!("{:>width$}", number, width=cell_width as usize);
+                let text = format!("{:>width$}", number, width = cell_width as usize);
                 let area = Rect {
                     x: x_text,
                     y: area.y,
@@ -256,7 +265,9 @@ impl Widget for ColumnNumbersWidget<'_> {
                     height: 1,
                 };
                 let style = self.config.color_theme.row_numbers;
-                ratatui::widgets::Paragraph::new(vec![Line::from(text)]).style(style.into()).render(area, buffer);
+                ratatui::widgets::Paragraph::new(vec![Line::from(text)])
+                    .style(style.into())
+                    .render(area, buffer);
             }
         }
     }
@@ -275,7 +286,8 @@ impl Widget for CanvasWidget<'_> {
             row_number_cursor: row_number_cursor,
             row_to_y_translation,
             config: self.config,
-        }.render(row_number_chunk, buffer);
+        }
+        .render(row_number_chunk, buffer);
         let column_number_cursor = if let Some((_row, column)) = self.cursor {
             Some(column)
         } else {
@@ -285,7 +297,8 @@ impl Widget for CanvasWidget<'_> {
             column_number_cursor,
             column_to_x_translation,
             config: self.config,
-        }.render(column_number_chunk, buffer);
+        }
+        .render(column_number_chunk, buffer);
 
         let x_left = canvas_chunk.left();
         let x_right = canvas_chunk.right();
@@ -309,8 +322,7 @@ impl Widget for CanvasWidget<'_> {
                             .add_modifier(cell.modifiers),
                         color_theme,
                     ));
-                }
-                else {
+                } else {
                     target.set_style(apply_color_theme(
                         color_theme.default_style.clone().into(),
                         color_theme,
@@ -318,13 +330,25 @@ impl Widget for CanvasWidget<'_> {
                 }
                 if let Some(ref selection) = self.selection {
                     if selection.contains(&(row, column)) {
-                        target.set_style(Style::default().bg(self.config.color_theme.canvas.selection_highlight_bg));
+                        target.set_style(
+                            Style::default().bg(self
+                                .config
+                                .color_theme
+                                .canvas
+                                .selection_highlight_bg),
+                        );
                     }
                 }
                 if let Some(corners) = self.visual_rect {
                     let rect = CanvasRect::from_corners(corners);
                     if rect.includes_index((row, column)) {
-                        target.set_style(Style::default().bg(self.config.color_theme.canvas.visual_mode_highlight_bg));
+                        target.set_style(
+                            Style::default().bg(self
+                                .config
+                                .color_theme
+                                .canvas
+                                .visual_mode_highlight_bg),
+                        );
                     }
                 }
             }

@@ -23,12 +23,11 @@
 /// Conclusion: This implementation doesn't give any guarantees for the notation actually working
 /// in practice, as the terminal emulator might not have a proper way to encode it and distinguish
 /// it from other keys.
-
 use super::Keystroke;
+use crossterm::event::{KeyCode, KeyModifiers};
+use serde::{de, Deserialize};
 use std::collections::LinkedList;
 use std::fmt::Display;
-use crossterm::event::{KeyCode, KeyModifiers};
-use serde::{Deserialize, de};
 
 use crate::keystrokes::KeystrokeSequence;
 
@@ -80,13 +79,15 @@ fn parse_key_notation(to_parse: &str) -> Result<Keystroke, ParseKeystrokeSequenc
             "PageUp" => Ok(KeyCode::PageUp),
             "PageDown" => Ok(KeyCode::PageDown),
             _ if notation.starts_with("F") => {
-                let rest = notation.chars().collect::<Vec<_>>()[1..].into_iter().collect::<String>();
+                let rest = notation.chars().collect::<Vec<_>>()[1..]
+                    .into_iter()
+                    .collect::<String>();
                 if let Ok(num) = rest.parse::<u8>() {
                     Ok(KeyCode::F(num))
                 } else {
                     Err(err)
                 }
-            },
+            }
             _ => Err(err),
         }
     }
@@ -96,7 +97,9 @@ fn parse_key_notation(to_parse: &str) -> Result<Keystroke, ParseKeystrokeSequenc
             "S" => Ok(KeyModifiers::SHIFT),
             "C" => Ok(KeyModifiers::CONTROL),
             "A" => Ok(KeyModifiers::ALT),
-            _ => Err(ParseKeystrokeSequenceErr::InvalidModifier(notation.to_string())),
+            _ => Err(ParseKeystrokeSequenceErr::InvalidModifier(
+                notation.to_string(),
+            )),
         }
     }
 
@@ -115,16 +118,15 @@ fn parse_key_notation(to_parse: &str) -> Result<Keystroke, ParseKeystrokeSequenc
                 modifiers |= KeyModifiers::SHIFT;
             }
         }
-        Ok(Keystroke {
-            code,
-            modifiers,
-        })
+        Ok(Keystroke { code, modifiers })
     } else {
         Err(ParseKeystrokeSequenceErr::KeystrokeEmpty)
     }
 }
 
-pub fn parse_keystroke_sequence(to_parse: &str) -> Result<KeystrokeSequence, ParseKeystrokeSequenceErr> {
+pub fn parse_keystroke_sequence(
+    to_parse: &str,
+) -> Result<KeystrokeSequence, ParseKeystrokeSequenceErr> {
     if to_parse.len() == 0 {
         return Err(ParseKeystrokeSequenceErr::SequenceEmpty);
     }
@@ -143,7 +145,11 @@ pub fn parse_keystroke_sequence(to_parse: &str) -> Result<KeystrokeSequence, Par
         } else {
             Keystroke {
                 code: KeyCode::Char(ch),
-                modifiers: if ch.is_ascii_uppercase() { KeyModifiers::SHIFT } else { KeyModifiers::NONE },
+                modifiers: if ch.is_ascii_uppercase() {
+                    KeyModifiers::SHIFT
+                } else {
+                    KeyModifiers::NONE
+                },
             }
         };
         keystrokes.push(keystroke);
@@ -168,6 +174,7 @@ mod test {
     #[test]
     fn test_parse_keystroke_sequence() {
         // Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::NONE }
+        #[rustfmt::skip]
         let tests = vec![
             ("abc", Ok(KeystrokeSequence(vec![
                 Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::NONE },

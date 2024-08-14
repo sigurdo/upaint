@@ -1,32 +1,35 @@
-use std::collections::LinkedList;
-use std::fmt::Debug;
-use std::collections::HashMap;
 use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use serde::{Serialize, Deserialize, de};
 use enum_dispatch::enum_dispatch;
 use ratatui::style::Color;
-use crossterm::event::KeyEvent;
+use serde::{de, Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::LinkedList;
+use std::fmt::Debug;
 
-use crate::Ground;
-use crate::ProgramState;
-use crate::actions::UserAction;
-use crate::actions::Action;
 use crate::actions::cursor::MoveCursor2;
-use crate::config::Config;
+use crate::actions::Action;
+use crate::actions::UserAction;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
+use crate::canvas::raw::operations::CanvasOperation;
+use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
+use crate::canvas::raw::CellContentType;
 use crate::canvas::raw::RawCanvas;
-use crate::DirectionFree;
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
-use crate::canvas::raw::operations::CanvasOperation;
+use crate::config::Config;
 use crate::selections::Selection;
-use crate::canvas::raw::CellContentType;
-use crate::canvas::raw::CanvasCell;
+use crate::DirectionFree;
+use crate::Ground;
+use crate::ProgramState;
 
-use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, FromPreset, FromKeystrokes, FromKeystrokesByMap, ColorSpecification};
+use super::{
+    ColorSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset, KeybindCompletionError,
+    Keystroke, KeystrokeIterator, KeystrokeSequence,
+};
 
 #[enum_dispatch]
 pub trait Operator: Debug {
@@ -87,8 +90,15 @@ impl FromKeystrokesByMap for OperatorIncompleteEnum {
 }
 
 impl FromKeystrokes for Box<dyn Operator> {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
-        Self::from_preset(OperatorIncompleteEnum::from_keystrokes(keystrokes, config)?, keystrokes, config)
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        Self::from_preset(
+            OperatorIncompleteEnum::from_keystrokes(keystrokes, config)?,
+            keystrokes,
+            config,
+        )
     }
 }
 
@@ -122,7 +132,7 @@ impl Operator for Colorize {
                 Some(color) => color,
                 _ => {
                     return;
-                },
+                }
             },
             ColorSpecification::Direct(color) => color,
         };
@@ -139,7 +149,7 @@ impl Operator for Colorize {
 }
 
 impl Operator for Replace {
-    fn operate(&self, cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
         let mut canvas_operations = Vec::new();
         for index in cell_indices {
             canvas_operations.push(CanvasOperation::SetCharacter(*index, self.ch));
@@ -163,7 +173,7 @@ impl FromKeystrokesByMap for UpdateSelectionOperator {
 }
 
 impl Operator for UpdateSelection {
-    fn operate(&self, cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
         let selection = if let Some(selection) = program_state.selections.get_mut(&self.slot) {
             selection
         } else {
@@ -173,35 +183,39 @@ impl Operator for UpdateSelection {
         match self.operator {
             UpdateSelectionOperator::Add => {
                 selection.extend(cell_indices.iter());
-            },
+            }
             UpdateSelectionOperator::Overwrite => {
                 *selection = cell_indices.iter().copied().collect();
-            },
+            }
             UpdateSelectionOperator::Subtract => {
                 for index in cell_indices {
                     selection.remove(index);
                 }
             }
         }
-
     }
 }
 
 impl Operator for Yank {
-    fn operate(&self,cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
         // TODO: Find more elegant way to translate iterable than creating Vec
         let a: Vec<_> = cell_indices.iter().cloned().collect();
-        let yank = program_state.canvas.raw().yank(a, self.content_type, program_state.cursor_position);
+        let yank =
+            program_state
+                .canvas
+                .raw()
+                .yank(a, self.content_type, program_state.cursor_position);
         program_state.yanks.insert(self.slot, yank);
     }
 }
 
 impl Operator for Cut {
-    fn operate(&self,cell_indices: &[CanvasIndex],program_state: &mut ProgramState) {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
         Yank {
             content_type: self.content_type,
             slot: self.slot,
-        }.operate(cell_indices, program_state);
+        }
+        .operate(cell_indices, program_state);
         let mut canvas_operations = Vec::new();
         for index in cell_indices {
             canvas_operations.push(CanvasOperation::SetCell(*index, CanvasCell::default()));
@@ -209,4 +223,3 @@ impl Operator for Cut {
         program_state.canvas.create_commit(canvas_operations);
     }
 }
-

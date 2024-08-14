@@ -1,10 +1,9 @@
-use derive_more::Deref;
+use crate::keystrokes::{Keystroke, KeystrokeSequence};
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
-use crate::keystrokes::{KeystrokeSequence, Keystroke};
+use derive_more::Deref;
 
 // fn stringify_modifiers(modifier: KeyModifiers)
-
 
 fn stringify_keystroke(keystroke: Keystroke) -> String {
     let mut result = String::new();
@@ -28,7 +27,9 @@ fn stringify_keystroke(keystroke: Keystroke) -> String {
         KeyCode::F(num) => Some(format!("F{num}")),
         _ => None,
     };
-    let brackets = special.is_some() || keystroke.modifiers.contains(KeyModifiers::CONTROL) || keystroke.modifiers.contains(KeyModifiers::ALT);
+    let brackets = special.is_some()
+        || keystroke.modifiers.contains(KeyModifiers::CONTROL)
+        || keystroke.modifiers.contains(KeyModifiers::ALT);
     if brackets {
         result.push('<');
     }
@@ -85,6 +86,7 @@ mod test {
 
     #[test]
     fn test_stringify() {
+        #[rustfmt::skip]
         let tests = vec![
             (Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::NONE }, "a"),
             (Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::CONTROL }, "<C-a>"),

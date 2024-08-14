@@ -1,32 +1,32 @@
-use std::collections::LinkedList;
-use std::collections::HashMap;
 use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use serde::{Serialize, Deserialize, de};
 use enum_dispatch::enum_dispatch;
 use ratatui::style::Color;
-use crossterm::event::KeyEvent;
+use serde::{de, Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::LinkedList;
 
-use crate::Ground;
-use crate::ProgramState;
-use crate::actions::UserAction;
-use crate::actions::Action;
 use crate::actions::cursor::MoveCursor2;
-use crate::config::Config;
-use crate::canvas::raw::iter::StopCondition;
-use crate::canvas::raw::iter::WordBoundaryType;
+use crate::actions::Action;
+use crate::actions::UserAction;
 use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
+use crate::canvas::raw::iter::CanvasIterationJump;
+use crate::canvas::raw::iter::StopCondition;
+use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CanvasIndex;
-use crate::canvas::raw::RawCanvas;
 use crate::canvas::raw::CellContentType;
-use crate::DirectionFree;
-use crate::keystrokes::{FromPreset, FromKeystrokes, FromKeystrokesByMap};
+use crate::canvas::raw::RawCanvas;
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
-use crate::canvas::raw::iter::CanvasIterationJump;
+use crate::config::Config;
+use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
+use crate::DirectionFree;
+use crate::Ground;
+use crate::ProgramState;
 
-use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator};
+use super::{KeybindCompletionError, Keystroke, KeystrokeIterator, KeystrokeSequence};
 
 pub trait Motion {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
@@ -58,7 +58,7 @@ macro_rules! motions_macro {
                 }
             }
         )*
-        
+
         #[derive(Debug, Clone, Serialize, Deserialize)]
         pub enum MotionIncompleteEnum {
             $(
@@ -85,8 +85,15 @@ impl FromKeystrokesByMap for MotionIncompleteEnum {
 }
 
 impl FromKeystrokes for Box<dyn Motion> {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
-        Self::from_preset(MotionIncompleteEnum::from_keystrokes(keystrokes, config)?, keystrokes, config)
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        Self::from_preset(
+            MotionIncompleteEnum::from_keystrokes(keystrokes, config)?,
+            keystrokes,
+            config,
+        )
     }
 }
 
@@ -186,10 +193,7 @@ impl Motion for GoToMark {
         if let Some(mark) = program_state.marks.get(&self.slot) {
             let rows = mark.0 - program_state.cursor_position.0;
             let columns = mark.1 - program_state.cursor_position.1;
-            let direction = DirectionFree {
-                rows,
-                columns,
-            };
+            let direction = DirectionFree { rows, columns };
             let mut it = CanvasIndexIterator::new(
                 program_state.canvas.raw(),
                 program_state.cursor_position,
@@ -229,8 +233,11 @@ impl Motion for MatchingCells {
         } else {
             None
         };
-            
-        let selection = program_state.canvas.raw().cells_matching(ch, fg, bg, modifiers);
+
+        let selection = program_state
+            .canvas
+            .raw()
+            .cells_matching(ch, fg, bg, modifiers);
         let mut result = Vec::new();
         for cell in selection {
             result.push(cell);
@@ -238,4 +245,3 @@ impl Motion for MatchingCells {
         result
     }
 }
-

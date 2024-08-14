@@ -1,9 +1,8 @@
-
-use ratatui::{style::Color};
+use ratatui::style::Color;
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
 use std::collections::HashMap;
+use std::fmt::Display;
 
 pub mod canvas;
 // pub mod program_state;
@@ -13,22 +12,21 @@ pub mod color_picker;
 pub mod command_line;
 pub mod config;
 pub mod file_formats;
+pub mod keystrokes;
 pub mod rendering;
+pub mod selections;
 pub mod status_bar;
 pub mod user_input;
-pub mod keystrokes;
-pub mod selections;
 
 use crate::config::Config;
 use brush::Brush;
+use canvas::raw::iter::CanvasIndexIteratorInfinite;
+use canvas::raw::yank::CanvasYank;
+use canvas::raw::CanvasIndex;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
-use keystrokes::{KeystrokeSequence, ColorSlot};
-use canvas::raw::iter::CanvasIndexIteratorInfinite;
-use canvas::raw::CanvasIndex;
-use canvas::raw::yank::CanvasYank;
+use keystrokes::{ColorSlot, KeystrokeSequence};
 use selections::Selection;
-
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Direction {
@@ -54,8 +52,12 @@ impl DirectionFree {
             Ok(DirectionFree { rows, columns })
         }
     }
-    fn x(&self) -> f64 { self.columns as f64 }
-    fn y(&self) -> f64 { self.rows as f64 }
+    fn x(&self) -> f64 {
+        self.columns as f64
+    }
+    fn y(&self) -> f64 {
+        self.rows as f64
+    }
     fn cardinal(&self) -> Option<Direction> {
         match (self.rows, self.columns) {
             (0, 0) => panic!(),

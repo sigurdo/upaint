@@ -1,12 +1,11 @@
 use crate::{
     actions::{cursor::MoveCursor, Action},
     brush::Brush,
-    DirectionFree, InputMode, ProgramState, ResultCustom,
-    canvas::CanvasOperation,
     canvas::raw::iter::CanvasIndexIteratorInfinite,
+    canvas::CanvasOperation,
+    DirectionFree, InputMode, ProgramState, ResultCustom,
 };
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-
 
 // pub fn handle_user_input_choose_insert_direction_mode(
 //     event: Event,
@@ -42,28 +41,44 @@ pub fn handle_user_input_insert_mode(
     };
     match event {
         Event::Key(e) => match e {
-            KeyEvent { code: KeyCode::Backspace, .. }
-            | KeyEvent { code: KeyCode::Char('h'), modifiers: KeyModifiers::CONTROL, .. } => {
+            KeyEvent {
+                code: KeyCode::Backspace,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
                 // I think this is obsolete
                 program_state.cursor_position_previous = Some(program_state.cursor_position);
                 program_state.cursor_position = canvas_it.go_back();
-                let away = program_state.canvas_visible.away_index(program_state.cursor_position);
+                let away = program_state
+                    .canvas_visible
+                    .away_index(program_state.cursor_position);
                 program_state.focus_position.0 += away.0;
                 program_state.focus_position.1 += away.1;
-                let operations = vec![
-                    CanvasOperation::SetCharacter(program_state.cursor_position, ' '),
-                ];
+                let operations = vec![CanvasOperation::SetCharacter(
+                    program_state.cursor_position,
+                    ' ',
+                )];
                 program_state.canvas.amend(operations);
             }
-            KeyEvent { code: KeyCode::Char(character), .. } => {
-                let operations = vec![
-                    CanvasOperation::SetCharacter(program_state.cursor_position, character),
-                ];
+            KeyEvent {
+                code: KeyCode::Char(character),
+                ..
+            } => {
+                let operations = vec![CanvasOperation::SetCharacter(
+                    program_state.cursor_position,
+                    character,
+                )];
                 program_state.canvas.amend(operations);
                 // I think this is obsolete
                 program_state.cursor_position_previous = Some(program_state.cursor_position);
                 program_state.cursor_position = canvas_it.go_forward();
-                let away = program_state.canvas_visible.away_index(program_state.cursor_position);
+                let away = program_state
+                    .canvas_visible
+                    .away_index(program_state.cursor_position);
                 program_state.focus_position.0 += away.0;
                 program_state.focus_position.1 += away.1;
             }

@@ -1,8 +1,6 @@
-
-
 use crossterm::{
     event::{self, Event, KeyCode},
-    terminal::{disable_raw_mode},
+    terminal::disable_raw_mode,
 };
 
 fn application() {

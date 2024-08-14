@@ -1,45 +1,49 @@
-use std::{collections::HashMap};
-use std::iter::Rev;
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::DirectionFree;
+use std::collections::HashMap;
+use std::iter::Rev;
 
 use config::{
     builder::{ConfigBuilder, DefaultState},
     FileFormat, FileSourceFile, FileSourceString, Source, Value, ValueKind,
 };
-use crossterm::event::{KeyCode};
-use ratatui::style::{Color};
-use serde::{
-    Deserialize, Serialize,
-};
+use crossterm::event::KeyCode;
+use ratatui::style::Color;
+use serde::{Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
 use crate::{
+    actions::UserAction,
+    brush::BrushComponent,
     canvas::raw::iter::CanvasIterationJump,
-    actions::{UserAction},
-    brush::{BrushComponent}, ErrorCustom,
-    keystrokes::{ActionIncompleteEnum, OperatorIncompleteEnum, MotionIncompleteEnum, KeystrokeSequence, KeystrokeIterator, actions::MoveCursorPreset, motions::OncePreset, actions::{OperationPreset}},
-    keystrokes::operators::UpdateSelectionOperator,
-    Ground,
     canvas::raw::iter::WordBoundaryType,
     canvas::raw::CellContentType,
+    keystrokes::operators::UpdateSelectionOperator,
+    keystrokes::{
+        actions::MoveCursorPreset, actions::OperationPreset, motions::OncePreset,
+        ActionIncompleteEnum, KeystrokeIterator, KeystrokeSequence, MotionIncompleteEnum,
+        OperatorIncompleteEnum,
+    },
+    ErrorCustom, Ground,
 };
 
 pub mod color_theme;
 pub mod direction_keys;
 pub mod keybindings;
-pub mod keys;
 pub mod keymaps;
+pub mod keys;
 
 use self::{
-    color_theme::{ColorThemePreset, ColorToml, StyleToml, StyleConfig},
+    color_theme::{ColorThemePreset, ColorToml, StyleConfig, StyleToml},
     direction_keys::DirectionKeys,
-    keybindings::{KeybindingToml, Keystroke},
-    keys::KeyCodeToml,
-    keymaps::{Keymaps, KeymapsEntry, keymaps_extend_preserve, keymaps_extend_overwrite, keymaps_insert_preserve, keymaps_iter},
     keybindings::deserialize::KeystrokeSequenceToml,
-    
     // structure::{Config, ConfigToml},
+    keybindings::{KeybindingToml, Keystroke},
+    keymaps::{
+        keymaps_extend_overwrite, keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter,
+        Keymaps, KeymapsEntry,
+    },
+    keys::KeyCodeToml,
 };
 
 #[cfg(test)]
@@ -273,7 +277,9 @@ impl BrushKeys {
 
 pub fn local_config_toml() -> Result<String, ErrorCustom> {
     let Some(mut config_file_path) = dirs::config_dir() else {
-        return Err(ErrorCustom::String("Couldn't detect the system's config directory.".to_string()))
+        return Err(ErrorCustom::String(
+            "Couldn't detect the system's config directory.".to_string(),
+        ));
     };
     config_file_path.push("upaint");
     config_file_path.push("upaint.toml");
@@ -293,7 +299,9 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
             ))
             .unwrap();
 
-            let mut theme_table = include_str!("config/color_theme/base.toml").parse::<toml::Table>().unwrap();
+            let mut theme_table = include_str!("config/color_theme/base.toml")
+                .parse::<toml::Table>()
+                .unwrap();
             theme_table.extend_recurse_tables(preset.toml_str().parse::<toml::Table>().unwrap());
 
             if let Some(toml::Value::Table(theme_custom)) = config_table.get("color_theme") {
@@ -308,27 +316,60 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
 }
 
 fn create_motions_from_directions(config: &mut Config) {
-    keymaps_extend_preserve(&mut config.keymaps.motions, keymaps_iter(&config.keymaps.directions).map(|(keystrokes, direction_preset)| {
-        (keystrokes, MotionIncompleteEnum::Once(OncePreset { direction: Some(*direction_preset), jump: Some(CanvasIterationJump::DirectionAsStride) }))
-    }).into_iter());
+    keymaps_extend_preserve(
+        &mut config.keymaps.motions,
+        keymaps_iter(&config.keymaps.directions)
+            .map(|(keystrokes, direction_preset)| {
+                (
+                    keystrokes,
+                    MotionIncompleteEnum::Once(OncePreset {
+                        direction: Some(*direction_preset),
+                        jump: Some(CanvasIterationJump::DirectionAsStride),
+                    }),
+                )
+            })
+            .into_iter(),
+    );
 }
 
 fn create_move_actions_from_motions(config: &mut Config) {
-    keymaps_extend_preserve(&mut config.keymaps.actions, keymaps_iter(&config.keymaps.motions).map(|(keystrokes, motion_preset)| {
-        (keystrokes, ActionIncompleteEnum::MoveCursor(MoveCursorPreset { motion: Some(motion_preset.clone()) }))
-    }).into_iter());
+    keymaps_extend_preserve(
+        &mut config.keymaps.actions,
+        keymaps_iter(&config.keymaps.motions)
+            .map(|(keystrokes, motion_preset)| {
+                (
+                    keystrokes,
+                    ActionIncompleteEnum::MoveCursor(MoveCursorPreset {
+                        motion: Some(motion_preset.clone()),
+                    }),
+                )
+            })
+            .into_iter(),
+    );
 }
 
 fn create_operator_actions_from_operators(config: &mut Config) {
-    keymaps_extend_preserve(&mut config.keymaps.actions, keymaps_iter(&config.keymaps.operators).map(|(keystrokes, operator_preset)| {
-        (keystrokes, ActionIncompleteEnum::Operation(OperationPreset { operator: Some(operator_preset.clone()), motion: None }))
-    }).into_iter());
+    keymaps_extend_preserve(
+        &mut config.keymaps.actions,
+        keymaps_iter(&config.keymaps.operators)
+            .map(|(keystrokes, operator_preset)| {
+                (
+                    keystrokes,
+                    ActionIncompleteEnum::Operation(OperationPreset {
+                        operator: Some(operator_preset.clone()),
+                        motion: None,
+                    }),
+                )
+            })
+            .into_iter(),
+    );
 }
 
 pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
     load_color_preset(&mut toml_table)?;
     log::debug!("{toml_table:#?}");
-    let config_toml: ConfigToml = toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
+    let config_toml: ConfigToml =
+        toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
     let mut config = config_toml.to_config_value();
     log::debug!("før: {config:#?}");
     create_operator_actions_from_operators(&mut config);
@@ -339,13 +380,16 @@ pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, Err
 }
 
 pub fn load_default_config() -> Config {
-    let toml_table = include_str!("config/default_config.toml").parse::<toml::Table>().unwrap();
+    let toml_table = include_str!("config/default_config.toml")
+        .parse::<toml::Table>()
+        .unwrap();
     load_config_from_table(toml_table).unwrap()
 }
 
 pub fn load_config() -> Result<Config, ErrorCustom> {
-    let mut toml_table = include_str!("config/default_config.toml").parse::<toml::Table>().unwrap();
+    let mut toml_table = include_str!("config/default_config.toml")
+        .parse::<toml::Table>()
+        .unwrap();
     toml_table.extend_recurse_tables(local_config_toml()?.parse::<toml::Table>().unwrap());
     load_config_from_table(toml_table)
 }
-

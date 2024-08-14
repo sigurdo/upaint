@@ -45,21 +45,23 @@ impl RawCanvas {
                 index: CanvasIndex,
             ) -> Result<Color, AnsiImportError> {
                 let Some(second_value) = values.next() else {
-                                return Err(AnsiImportError::BadSgrSequence(index));
-                            };
+                    return Err(AnsiImportError::BadSgrSequence(index));
+                };
                 let second_value = second_value.parse::<u64>().unwrap();
                 match second_value {
                     5 => {
                         let Some(third_value) = values.next() else {
-                                        return Err(AnsiImportError::BadSgrSequence(index));
-                                    };
+                            return Err(AnsiImportError::BadSgrSequence(index));
+                        };
                         let third_value = third_value.parse::<u8>().unwrap();
                         return Ok(Color::Indexed(third_value as u8));
                     }
                     2 => {
-                        let (Some(r), Some(g), Some(b)) = (values.next(), values.next(), values.next()) else {
-                                        return Err(AnsiImportError::BadSgrSequence(index));
-                                    };
+                        let (Some(r), Some(g), Some(b)) =
+                            (values.next(), values.next(), values.next())
+                        else {
+                            return Err(AnsiImportError::BadSgrSequence(index));
+                        };
                         return Ok(Color::Rgb(
                             r.parse::<u8>().unwrap(),
                             g.parse::<u8>().unwrap(),
@@ -111,7 +113,10 @@ impl RawCanvas {
                 return Err(AnsiImportError::BadSgrSequence(index));
             };
             let Ok(first_value) = first_value.parse::<u64>() else {
-                unreachable!("Could not parse first value {:?} of SGR sequence {:?}", first_value, sgr_sequence);
+                unreachable!(
+                    "Could not parse first value {:?} of SGR sequence {:?}",
+                    first_value, sgr_sequence
+                );
             };
 
             match first_value {

@@ -1,4 +1,4 @@
-use crate::{ProgramState};
+use crate::ProgramState;
 
 use super::Action;
 

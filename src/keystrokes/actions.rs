@@ -1,39 +1,42 @@
-use std::collections::LinkedList;
-use std::collections::HashMap;
 use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use serde::{Serialize, Deserialize, de};
 use enum_dispatch::enum_dispatch;
 use ratatui::style::Color;
-use crossterm::event::KeyEvent;
+use serde::{de, Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::LinkedList;
 
-use crate::Ground;
-use crate::ProgramState;
-use crate::actions::UserAction;
-use crate::actions::Action;
 use crate::actions::cursor::MoveCursor2;
-use crate::config::Config;
-use crate::canvas::raw::iter::StopCondition;
-use crate::canvas::raw::iter::WordBoundaryType;
+use crate::actions::Action;
+use crate::actions::UserAction;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
+use crate::canvas::raw::iter::StopCondition;
+use crate::canvas::raw::iter::WordBoundaryType;
+use crate::canvas::raw::operations::CanvasOperation;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::RawCanvas;
-use crate::canvas::raw::operations::CanvasOperation;
-use crate::DirectionFree;
-use crate::config::keybindings::deserialize::parse_keystroke_sequence;
-use crate::config::keymaps::Keymaps;
-use crate::keystrokes::{FromKeystrokes, FromPreset, FromKeystrokesByMap};
-use crate::keystrokes::Motion;
-use crate::keystrokes::MotionIncompleteEnum;
-use crate::keystrokes::OperatorIncompleteEnum;
-use crate::keystrokes::Operator;
-use crate::command_line::create_command_line_textarea;
-use crate::InputMode;
 use crate::canvas::rect::CanvasRect;
 use crate::color_picker::ColorPicker;
+use crate::command_line::create_command_line_textarea;
+use crate::config::keybindings::deserialize::parse_keystroke_sequence;
+use crate::config::keymaps::Keymaps;
+use crate::config::Config;
+use crate::keystrokes::Motion;
+use crate::keystrokes::MotionIncompleteEnum;
+use crate::keystrokes::Operator;
+use crate::keystrokes::OperatorIncompleteEnum;
+use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
+use crate::DirectionFree;
+use crate::Ground;
+use crate::InputMode;
+use crate::ProgramState;
 
-use super::{KeybindCompletionError, Keystroke, KeystrokeSequence, KeystrokeIterator, ColorSpecification, ColorSlot};
+use super::{
+    ColorSlot, ColorSpecification, KeybindCompletionError, Keystroke, KeystrokeIterator,
+    KeystrokeSequence,
+};
 
 macro_rules! actions_macro {
     ($($name_preset:ident -> $name:ident {$($field:ident : $type_preset:ty => $type:ty),*$(,)?}),*,) => {
@@ -61,7 +64,7 @@ macro_rules! actions_macro {
                 }
             }
         )*
-        
+
         #[derive(Debug, Clone, Serialize, Deserialize)]
         pub enum ActionIncompleteEnum {
             $(
@@ -88,8 +91,15 @@ impl FromKeystrokesByMap for ActionIncompleteEnum {
 }
 
 impl FromKeystrokes for Box<dyn Action> {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
-        Self::from_preset(ActionIncompleteEnum::from_keystrokes(keystrokes, config)?, keystrokes, config)
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        Self::from_preset(
+            ActionIncompleteEnum::from_keystrokes(keystrokes, config)?,
+            keystrokes,
+            config,
+        )
     }
 }
 
@@ -130,7 +140,6 @@ actions_macro!(
     },
 );
 
-
 impl Action for Undo {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.canvas.undo();
@@ -151,7 +160,9 @@ impl Action for MoveCursor {
             return;
         };
         program_state.cursor_position = *cursor_to;
-        let (rows_away, columns_away) = program_state.canvas_visible.away_index(program_state.cursor_position);
+        let (rows_away, columns_away) = program_state
+            .canvas_visible
+            .away_index(program_state.cursor_position);
         program_state.focus_position.0 += rows_away;
         program_state.canvas_visible.row += rows_away;
         program_state.focus_position.1 += columns_away;
@@ -177,7 +188,11 @@ impl Action for ModeCommand {
 
 impl Action for ModeInsert {
     fn execute(&self, program_state: &mut ProgramState) {
-        let mut canvas_it = CanvasIndexIteratorInfinite::new(program_state.cursor_position, self.direction, self.jump);
+        let mut canvas_it = CanvasIndexIteratorInfinite::new(
+            program_state.cursor_position,
+            self.direction,
+            self.jump,
+        );
         canvas_it.go_forward();
         program_state.input_mode = InputMode::Insert(canvas_it);
         // Create empty commit for amending to
@@ -202,14 +217,21 @@ impl Action for ModeColorPicker {
 
 impl Action for Pipette {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.color_slots.insert(self.slot, program_state.canvas.raw().color(program_state.cursor_position, self.ground));
+        program_state.color_slots.insert(
+            self.slot,
+            program_state
+                .canvas
+                .raw()
+                .color(program_state.cursor_position, self.ground),
+        );
     }
 }
 
 impl Action for ModeVisualRect {
     fn execute(&self, program_state: &mut ProgramState) {
         let (row, column) = program_state.cursor_position;
-        program_state.input_mode = InputMode::VisualRect((program_state.cursor_position, program_state.cursor_position));
+        program_state.input_mode =
+            InputMode::VisualRect((program_state.cursor_position, program_state.cursor_position));
     }
 }
 
@@ -228,16 +250,20 @@ impl Action for HighlightSelectionClear {
 impl Action for Paste {
     fn execute(&self, program_state: &mut ProgramState) {
         if let Some(yank) = program_state.yanks.get(&self.slot) {
-            program_state.canvas.create_commit(vec![
-                CanvasOperation::Paste(program_state.cursor_position, yank.clone())
-            ]);
+            program_state
+                .canvas
+                .create_commit(vec![CanvasOperation::Paste(
+                    program_state.cursor_position,
+                    yank.clone(),
+                )]);
         }
     }
 }
 
 impl Action for MarkSet {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.marks.insert(self.slot, program_state.cursor_position); 
+        program_state
+            .marks
+            .insert(self.slot, program_state.cursor_position);
     }
 }
-

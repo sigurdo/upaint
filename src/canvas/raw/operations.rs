@@ -2,9 +2,9 @@ use ratatui::style::{Color, Modifier};
 
 use crate::canvas::raw::CanvasIndex;
 
-use super::RawCanvas;
 use super::yank::CanvasYank;
 use super::CanvasCell;
+use super::RawCanvas;
 
 #[derive(Debug, Clone)]
 pub enum CanvasOperation {

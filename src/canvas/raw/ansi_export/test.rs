@@ -353,7 +353,9 @@ fn txt_preserve_returns_error() {
     canvas.apply_operation(&CanvasOperation::SetFgColor((1, 0), Color::Rgb(4, 8, 4)));
     let result = canvas.export_txt_preserve();
 
-    let Err(TxtExportError::CellHasSgrEffects(index)) = result else {panic!()};
+    let Err(TxtExportError::CellHasSgrEffects(index)) = result else {
+        panic!()
+    };
     assert_eq!(index, (1, 0));
 }
 

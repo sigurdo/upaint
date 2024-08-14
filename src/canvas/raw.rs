@@ -1,21 +1,21 @@
+use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, LinkedList};
-use bitflags::bitflags;
 
 use ratatui::style::{Color, Modifier};
 
-use crate::Ground;
 use crate::selections::Selection;
+use crate::Ground;
 
 use super::rect::CanvasRect;
 
 pub mod ansi_export;
 pub mod ansi_import;
-pub mod operations;
-pub mod rendering;
 pub mod iter;
-pub mod yank;
+pub mod operations;
 pub mod paste;
+pub mod rendering;
+pub mod yank;
 
 #[cfg(test)]
 mod test;
@@ -180,7 +180,13 @@ impl<'a> RawCanvas {
         self.get_mut(&index).modifiers = modifiers;
         self
     }
-    pub fn cells_matching(&self, ch: Option<char>, fg: Option<Color>, bg: Option<Color>, modifiers: Option<Modifier>) -> Selection {
+    pub fn cells_matching(
+        &self,
+        ch: Option<char>,
+        fg: Option<Color>,
+        bg: Option<Color>,
+        modifiers: Option<Modifier>,
+    ) -> Selection {
         let mut result = Selection::new();
         for (index, cell) in &self.cells {
             let mut matching = true;
@@ -214,4 +220,3 @@ impl<'a> RawCanvas {
         result
     }
 }
-

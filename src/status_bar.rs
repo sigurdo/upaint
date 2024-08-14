@@ -1,11 +1,11 @@
 use ratatui::{
     prelude::{Constraint, Layout},
-    style::{Style},
+    style::Style,
     text::{Line, Span},
     widgets::{Paragraph, Widget},
 };
 
-use crate::{ProgramState};
+use crate::ProgramState;
 
 pub struct StatusBar<'a> {
     pub program_state: &'a ProgramState<'a>,
@@ -52,11 +52,13 @@ impl<'a> Widget for StatusBar<'a> {
             }
         );
         let base_style = self.program_state.config.color_theme.status_bar;
-        let open_file = Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])])
-            .style(base_style.into());
+        let open_file =
+            Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])]).style(base_style.into());
 
-        let input_sequence = Paragraph::new(vec![Line::from(vec![Span::raw(self.program_state.keystroke_sequence_incomplete.to_string())])])
-            .style(base_style.into());
+        let input_sequence = Paragraph::new(vec![Line::from(vec![Span::raw(
+            self.program_state.keystroke_sequence_incomplete.to_string(),
+        )])])
+        .style(base_style.into());
 
         let brush_character = Paragraph::new(vec![Line::from(vec![Span::raw(
             if let Some(character) = self.program_state.brush.character {

@@ -78,9 +78,7 @@ pub fn draw_frame(
         let inner_area = block.inner(canvas_chunk);
         f.render_widget(block, canvas_chunk);
 
-        let mut canvas = program_state
-            .canvas
-            .widget(&program_state.config);
+        let mut canvas = program_state.canvas.widget(&program_state.config);
         canvas.focus = program_state.focus_position;
         let canvas_visible = canvas.visible(inner_area);
 
@@ -116,7 +114,6 @@ pub fn draw_frame(
         }
 
         f.render_widget(canvas, inner_area);
-
 
         let user_feedback = match &program_state.user_feedback {
             Some(feedback) => feedback,

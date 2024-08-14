@@ -1,12 +1,12 @@
 use std::collections::LinkedList;
 use std::iter::Peekable;
 
-use nalgebra as na;
 use bitflags::bitflags;
-use serde::{Serialize, Deserialize};
+use nalgebra as na;
+use serde::{Deserialize, Serialize};
 
-use crate::DirectionFree;
 use super::{CanvasIndex, RawCanvas};
+use crate::DirectionFree;
 
 #[cfg(test)]
 mod test;
@@ -22,13 +22,17 @@ mod test;
 /// E.g. If `direction` is (1, 1) and `exit` is (-0.5, 0.5), the cell is not exited horizontally,
 /// because the sign of the x-component of `exit` is -, while the x-component of `direction` is +.
 fn find_cell_exit(start: na::Vector2<f64>, direction: DirectionFree) -> na::Vector2<f64> {
-    if start.x.abs() > 0.5 || start.y.abs() > 0.5 { panic!("Illegal start {} for find_cell_exit_3", start) };
+    if start.x.abs() > 0.5 || start.y.abs() > 0.5 {
+        panic!("Illegal start {} for find_cell_exit_3", start)
+    };
     // Intersection with left or right edge (vertical edge)
     let x_intersection_vertical = direction.columns.signum() as f64 * 0.5;
-    let y_intersection_vertical = start.y + direction.y() * (x_intersection_vertical - start.x) / direction.x();
+    let y_intersection_vertical =
+        start.y + direction.y() * (x_intersection_vertical - start.x) / direction.x();
     // Intersection with upper or lower edge (horizontal edge)
     let y_intersection_horizontal = direction.rows.signum() as f64 * 0.5;
-    let x_intersection_horizontal = start.x + direction.x() * (y_intersection_horizontal - start.y) / direction.y();
+    let x_intersection_horizontal =
+        start.x + direction.x() * (y_intersection_horizontal - start.y) / direction.y();
     match y_intersection_vertical {
         -0.5..=0.5 => na::Vector2::new(x_intersection_vertical, y_intersection_vertical),
         _ => na::Vector2::new(x_intersection_horizontal, y_intersection_horizontal),
@@ -52,7 +56,11 @@ pub struct CanvasIndexIteratorInfinite {
 }
 
 impl CanvasIndexIteratorInfinite {
-    pub fn new(start: CanvasIndex, direction: DirectionFree, jump: Option<CanvasIterationJump>) -> Self {
+    pub fn new(
+        start: CanvasIndex,
+        direction: DirectionFree,
+        jump: Option<CanvasIterationJump>,
+    ) -> Self {
         Self {
             direction,
             jump,
@@ -65,24 +73,26 @@ impl CanvasIndexIteratorInfinite {
     fn go_forward_no_jump_no_stride(&mut self) -> <Self as Iterator>::Item {
         let index_current = self.index_next;
         let exit = find_cell_exit(self.entry_next, self.direction);
-        let exit_column = exit.x.signum() as i16 == self.direction.columns.signum() && exit.x.abs() == 0.5;
-        let exit_row = exit.y.signum() as i16 == self.direction.rows.signum() && exit.y.abs() == 0.5;
+        let exit_column =
+            exit.x.signum() as i16 == self.direction.columns.signum() && exit.x.abs() == 0.5;
+        let exit_row =
+            exit.y.signum() as i16 == self.direction.rows.signum() && exit.y.abs() == 0.5;
         match (exit_column, exit_row, self.row_first) {
             (true, false, _) | (true, true, false) => {
                 // Exit column
                 self.index_next.1 += self.direction.columns.signum();
                 self.entry_next = exit;
                 self.entry_next.x -= self.direction.columns.signum() as f64;
-            },
+            }
             (false, true, _) | (true, true, true) => {
                 // Exit row
                 self.index_next.0 += self.direction.rows.signum();
                 self.entry_next = exit;
                 self.entry_next.y -= self.direction.rows.signum() as f64;
-            },
+            }
             (false, false, _) => {
                 panic!();
-            },
+            }
         }
         index_current
     }
@@ -193,7 +203,13 @@ pub struct CanvasIndexIterator<'a> {
 }
 
 impl<'a> CanvasIndexIterator<'a> {
-    pub fn new(canvas: &'a RawCanvas, start: CanvasIndex, direction: DirectionFree, jump: Option<CanvasIterationJump>, stop: StopCondition) -> Self {
+    pub fn new(
+        canvas: &'a RawCanvas,
+        start: CanvasIndex,
+        direction: DirectionFree,
+        jump: Option<CanvasIterationJump>,
+        stop: StopCondition,
+    ) -> Self {
         Self {
             index_it: CanvasIndexIteratorInfinite::new(start, direction, jump).peekable(),
             direction,
@@ -209,9 +225,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
     type Item = CanvasIndex;
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.to_yield {
-            Some(to_yield) => {
-                to_yield.pop_front()
-            },
+            Some(to_yield) => to_yield.pop_front(),
             None => {
                 let start_index = self.index_it.next().unwrap();
                 let mut to_yield = LinkedList::new();
@@ -223,7 +237,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                     let stop = match &self.stop {
                         StopCondition::Index((row_stop, column_stop)) => {
                             row == *row_stop && column == *column_stop
-                        },
+                        }
                         StopCondition::SecondCell => true,
                         StopCondition::CharacterChange => {
                             if let Some(prev) = indices_iterated.back() {
@@ -233,7 +247,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                             } else {
                                 false
                             }
-                        },
+                        }
                         StopCondition::WordBoundary(typ) => {
                             if let Some(prev) = indices_iterated.back() {
                                 let character_prev = self.canvas.character(*prev);
@@ -242,22 +256,22 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                 let character_next = self.canvas.character(*next);
                                 let word_start = character_prev == ' ' && character != ' ';
                                 let word_end = character != ' ' && character_next == ' ';
-                                (typ.contains(WordBoundaryType::START) && word_start) || (typ.contains(WordBoundaryType::END) && word_end)
+                                (typ.contains(WordBoundaryType::START) && word_start)
+                                    || (typ.contains(WordBoundaryType::END) && word_end)
                             } else {
                                 false
                             }
-                        },
+                        }
                         StopCondition::CharacterMatch(ch) => {
                             if *ch == self.canvas.character((row, column)) {
                                 true
                             } else {
                                 false
                             }
-                        }
-                        // StopCondition::CellContent(target) => {
-                        //     let cell = self.canvas.cell((row, column));
-                        //     target(&cell)
-                        // },
+                        } // StopCondition::CellContent(target) => {
+                          //     let cell = self.canvas.cell((row, column));
+                          //     target(&cell)
+                          // },
                     };
                     indices_iterated.push_back((row, column));
                     let search_is_infinite = match &self.stop {
@@ -268,7 +282,9 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                             } else {
                                 let rows = row_stop - row;
                                 let columns = column_stop - column;
-                                if self.direction.rows.signum() == rows.signum() && self.direction.columns.signum() == columns.signum() {
+                                if self.direction.rows.signum() == rows.signum()
+                                    && self.direction.columns.signum() == columns.signum()
+                                {
                                     // We can still get there
                                     false
                                 } else {
@@ -276,11 +292,14 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                     true
                                 }
                             }
-                        },
+                        }
                         _ => {
-                            self.direction.rows.signum() == (row - area.row).signum() && !area.includes_index((row, area.column))
-                            || self.direction.columns.signum() == (column - area.column).signum() && !area.includes_index((area.row, column))
-                        },
+                            self.direction.rows.signum() == (row - area.row).signum()
+                                && !area.includes_index((row, area.column))
+                                || self.direction.columns.signum()
+                                    == (column - area.column).signum()
+                                    && !area.includes_index((area.row, column))
+                        }
                     };
                     if stop || search_is_infinite {
                         if stop {
@@ -295,4 +314,3 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
         }
     }
 }
-

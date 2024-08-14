@@ -86,16 +86,15 @@ impl TryFrom<StringOrU8> for ColorToml {
                 }
 
                 // Try interpreting as a named color
-                let deserialized: Result<Color, _> =
-                    serde::Deserialize::deserialize(ValueDeserializer::new(format!("\"{v}\"").as_str()));
+                let deserialized: Result<Color, _> = serde::Deserialize::deserialize(
+                    ValueDeserializer::new(format!("\"{v}\"").as_str()),
+                );
                 match deserialized {
                     Ok(color) => Ok(ColorToml(color)),
                     Err(_) => Err(format!("Could not parse named color: {v}")),
                 }
-            },
-            StringOrU8::U8(number) => {
-                Ok(ColorToml(Color::Indexed(number)))
-            },
+            }
+            StringOrU8::U8(number) => Ok(ColorToml(Color::Indexed(number))),
         }
     }
 }
@@ -140,4 +139,3 @@ impl From<StyleConfig> for Style {
         value.to_ratatui_style()
     }
 }
-

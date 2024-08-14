@@ -1,13 +1,11 @@
 use crossterm::{
     style::{
-        Attribute as CAttribute, Color as CColor,
-        ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor,
+        Attribute as CAttribute, Color as CColor, ResetColor, SetAttribute, SetBackgroundColor,
+        SetForegroundColor,
     },
     Command,
 };
-use ratatui::{
-    style::{Color, Modifier},
-};
+use ratatui::style::{Color, Modifier};
 
 use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
 

@@ -1,36 +1,36 @@
+use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
+use crossterm::event::KeyModifiers;
+use derive_more::Constructor;
 use derive_more::Deref;
 use derive_more::DerefMut;
-use derive_more::Constructor;
 use derive_more::From;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::collections::LinkedList;
-use std::collections::HashMap;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyModifiers;
-use serde::{Serialize, Deserialize, de};
 use enum_dispatch::enum_dispatch;
 use ratatui::style::Color;
-use crossterm::event::KeyEvent;
+use serde::{de, Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::LinkedList;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
-use crate::Ground;
-use crate::ProgramState;
-use crate::actions::UserAction;
-use crate::actions::Action;
 use crate::actions::cursor::MoveCursor2;
-use crate::config::Config;
+use crate::actions::Action;
+use crate::actions::UserAction;
+use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CanvasIndex;
+use crate::canvas::raw::CellContentType;
 use crate::canvas::raw::RawCanvas;
-use crate::DirectionFree;
 use crate::config::keybindings::deserialize::parse_keystroke_sequence;
+use crate::config::keymaps::keymaps_complete;
 use crate::config::keymaps::Keymaps;
 use crate::config::keymaps::KeymapsEntry;
-use crate::config::keymaps::keymaps_complete;
 use crate::config::load_default_config;
-use crate::canvas::raw::iter::CanvasIterationJump;
-use crate::canvas::raw::CellContentType;
+use crate::config::Config;
+use crate::DirectionFree;
+use crate::Ground;
+use crate::ProgramState;
 
 pub mod actions;
 pub mod motions;
@@ -55,7 +55,9 @@ impl From<KeyEvent> for Keystroke {
     }
 }
 
-#[derive(Deref, DerefMut, From, Default, Clone, PartialEq, Eq, Hash, serde::Serialize, Deserialize)]
+#[derive(
+    Deref, DerefMut, From, Default, Clone, PartialEq, Eq, Hash, serde::Serialize, Deserialize,
+)]
 pub struct KeystrokeSequence(pub Vec<Keystroke>);
 impl KeystrokeSequence {
     pub fn new() -> Self {
@@ -76,7 +78,10 @@ pub trait FromKeystrokesByMap: Sized + Clone {
 }
 
 impl<T: FromKeystrokesByMap + std::fmt::Debug> FromKeystrokes for T {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
         match keymaps_complete(Self::get_map(config), keystrokes) {
             Ok(item) => Ok(item.clone()),
             Err(error) => Err(error),
@@ -85,13 +90,21 @@ impl<T: FromKeystrokesByMap + std::fmt::Debug> FromKeystrokes for T {
 }
 
 impl<T> FromPreset<T> for T {
-    fn from_preset(preset: T, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+    fn from_preset(
+        preset: T,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
         Ok(preset)
     }
 }
 
 impl<T: FromKeystrokes + FromPreset<U>, U> FromPreset<Option<U>> for T {
-    fn from_preset(preset: Option<U>, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+    fn from_preset(
+        preset: Option<U>,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
         match preset {
             Some(u) => Ok(T::from_preset(u, keystrokes, config)?),
             None => T::from_keystrokes(keystrokes, config),
@@ -100,39 +113,61 @@ impl<T: FromKeystrokes + FromPreset<U>, U> FromPreset<Option<U>> for T {
 }
 
 impl FromKeystrokes for i16 {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
         Ok(42)
     }
 }
 
 pub trait FromKeystrokes: Sized {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError>;
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError>;
 }
 
 pub trait FromPreset<T>: Sized {
-    fn from_preset(preset: T, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError>;
+    fn from_preset(
+        preset: T,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError>;
 }
 
 pub trait CompleteWithKeystrokes<T: Sized> {
-    fn complete_with_keystrokes(&self, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<T, KeybindCompletionError>;
+    fn complete_with_keystrokes(
+        &self,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<T, KeybindCompletionError>;
 }
 
 impl<T: FromPreset<U>, U: Clone> CompleteWithKeystrokes<T> for U {
-    fn complete_with_keystrokes(&self, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<T, KeybindCompletionError> {
+    fn complete_with_keystrokes(
+        &self,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<T, KeybindCompletionError> {
         T::from_preset(self.clone(), keystrokes, config)
     }
 }
 
 impl FromKeystrokes for char {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
         match keymaps_complete(&config.keymaps.characters, &mut keystrokes.clone()) {
             Ok(item) => Ok(item.clone()),
-            Err(_) => {
-                match keystrokes.next() {
-                    Some(Keystroke { code: KeyCode::Char(ch), .. }) => Ok(*ch),
-                    Some(keystroke) => Err(KeybindCompletionError::InvalidKeystroke(*keystroke)),
-                    None => Err(KeybindCompletionError::MissingKeystrokes),
-                }
+            Err(_) => match keystrokes.next() {
+                Some(Keystroke {
+                    code: KeyCode::Char(ch),
+                    ..
+                }) => Ok(*ch),
+                Some(keystroke) => Err(KeybindCompletionError::InvalidKeystroke(*keystroke)),
+                None => Err(KeybindCompletionError::MissingKeystrokes),
             },
         }
     }
@@ -151,7 +186,10 @@ impl FromKeystrokesByMap for Color {
     }
 }
 impl FromKeystrokes for ColorSpecification {
-    fn from_keystrokes(keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
         match Color::from_keystrokes(&mut keystrokes.clone(), config) {
             Ok(value) => Ok(Self::Direct(value)),
             Err(_) => Ok(Self::Slot(ColorSlot::from_keystrokes(keystrokes, config)?)),
@@ -188,4 +226,3 @@ impl FromKeystrokesByMap for CellContentType {
         &config.keymaps.yank_content_type
     }
 }
-

@@ -66,7 +66,9 @@ impl CanvasRect {
         let columns = if self.includes_column(column) {
             0
         } else {
-            std::cmp::min_by_key(column - self.column, column - self.last_column(), |x| x.abs())
+            std::cmp::min_by_key(column - self.column, column - self.last_column(), |x| {
+                x.abs()
+            })
         };
         (rows, columns)
     }

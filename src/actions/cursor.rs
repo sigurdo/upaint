@@ -1,7 +1,5 @@
-
-
-use crate::{DirectionFree, Direction, ProgramState};
 use crate::canvas::raw::iter::{CanvasIndexIterator, StopCondition};
+use crate::{Direction, DirectionFree, ProgramState};
 use serde::{Deserialize, Serialize};
 
 use super::Action;
@@ -113,10 +111,8 @@ impl Action for MoveCursor2 {
     }
 }
 
-
 #[derive(Clone, Deserialize, Serialize)]
 pub struct MoveCursorRegionStart {
     pub direction: Direction,
     pub region_contains_different_characters: bool,
 }
-

@@ -11,7 +11,9 @@ fn basic() {
 
     let mut cells = canvas.cells.iter();
 
-    let Some((index, cell)) = cells.next() else {panic!()};
+    let Some((index, cell)) = cells.next() else {
+        panic!()
+    };
     assert_eq!(*index, (0, 0));
     assert_eq!(
         *cell,
@@ -23,7 +25,9 @@ fn basic() {
         }
     );
 
-    let Some((index, cell)) = cells.next() else {panic!()};
+    let Some((index, cell)) = cells.next() else {
+        panic!()
+    };
     assert_eq!(*index, (0, 1));
     assert_eq!(
         *cell,
@@ -35,7 +39,9 @@ fn basic() {
         }
     );
 
-    let Some((index, cell)) = cells.next() else {panic!()};
+    let Some((index, cell)) = cells.next() else {
+        panic!()
+    };
     assert_eq!(*index, (1, 0));
     assert_eq!(
         *cell,
@@ -57,7 +63,9 @@ fn indents() {
 
     let mut cells = canvas.cells.iter();
 
-    let Some((index, cell)) = cells.next() else {panic!()};
+    let Some((index, cell)) = cells.next() else {
+        panic!()
+    };
     assert_eq!(*index, (0, 4));
     assert_eq!(
         *cell,
@@ -69,7 +77,9 @@ fn indents() {
         }
     );
 
-    let Some((index, cell)) = cells.next() else {panic!()};
+    let Some((index, cell)) = cells.next() else {
+        panic!()
+    };
     assert_eq!(*index, (1, 2));
     assert_eq!(
         *cell,

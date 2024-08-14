@@ -1,12 +1,12 @@
-use std::collections::{HashMap, LinkedList, hash_map};
+use std::collections::{hash_map, HashMap, LinkedList};
 use std::iter::Peekable;
 use std::marker::PhantomData;
 
 use crate::config::TomlValue;
 // use crate::config::keybindings::Keystroke;
-use crate::keystrokes::{KeystrokeSequence, Keystroke, KeystrokeIterator, KeybindCompletionError};
+use crate::keystrokes::{KeybindCompletionError, Keystroke, KeystrokeIterator, KeystrokeSequence};
 
-use serde::{Serialize, Deserialize, de};
+use serde::{de, Deserialize, Serialize};
 
 // #[derive(Debug, Clone, Serialize, Deserialize)]
 // pub struct Keymaps<T>(HashMap<String, T>);
@@ -24,7 +24,10 @@ impl<T> TomlValue for Keymaps<T> {
     }
 }
 
-pub fn keymaps_complete<'a, T: Clone + std::fmt::Debug>(keymaps: &'a Keymaps<T>, keystroke_iter: &mut KeystrokeIterator) -> Result<&'a T, KeybindCompletionError> {
+pub fn keymaps_complete<'a, T: Clone + std::fmt::Debug>(
+    keymaps: &'a Keymaps<T>,
+    keystroke_iter: &mut KeystrokeIterator,
+) -> Result<&'a T, KeybindCompletionError> {
     if let Some(keystroke) = keystroke_iter.next() {
         match keymaps.get(keystroke) {
             Some(KeymapsEntry::Incomplete(sub_keymaps)) => {
@@ -47,31 +50,25 @@ impl<'a, T> Iterator for Iter<'a, T> {
     type Item = (KeystrokeSequence, &'a T);
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.sub {
-            Some((key, ref mut it_sub)) => {
-                match it_sub.next() {
-                    Some((mut key_sub, value)) => {
-                        key_sub.insert(0, *key);
-                        Some((key_sub, value))
-                    },
-                    _ => {
-                        self.sub = None;
-                        self.next()
-                    },
+            Some((key, ref mut it_sub)) => match it_sub.next() {
+                Some((mut key_sub, value)) => {
+                    key_sub.insert(0, *key);
+                    Some((key_sub, value))
+                }
+                _ => {
+                    self.sub = None;
+                    self.next()
                 }
             },
-            _ => {
-                match self.it.next() {
-                    Some((key, KeymapsEntry::Incomplete(sub))) => {
-                        self.sub = Some((*key, Box::new(keymaps_iter(sub))));
-                        self.next()
-                    },
-                    Some((key, KeymapsEntry::Complete(value))) => {
-                        Some((KeystrokeSequence(vec![*key]), value))
-                    },
-                    None => {
-                        None
-                    },
+            _ => match self.it.next() {
+                Some((key, KeymapsEntry::Incomplete(sub))) => {
+                    self.sub = Some((*key, Box::new(keymaps_iter(sub))));
+                    self.next()
                 }
+                Some((key, KeymapsEntry::Complete(value))) => {
+                    Some((KeystrokeSequence(vec![*key]), value))
+                }
+                None => None,
             },
         }
     }
@@ -84,42 +81,54 @@ pub fn keymaps_iter<'a, T>(keymaps: &'a Keymaps<T>) -> Iter<'a, T> {
     }
 }
 
-pub fn keymaps_extend_overwrite<'a, T: 'a + Clone>(a: &mut Keymaps<T>, mut b: impl Iterator<Item = (&'a Keystroke, &'a KeymapsEntry<T>)>) {
+pub fn keymaps_extend_overwrite<'a, T: 'a + Clone>(
+    a: &mut Keymaps<T>,
+    mut b: impl Iterator<Item = (&'a Keystroke, &'a KeymapsEntry<T>)>,
+) {
     while let Some((keystroke, b_entry)) = b.next() {
         let a_entry = a.get_mut(keystroke);
         match (a_entry, b_entry) {
             (Some(KeymapsEntry::Incomplete(a_sub)), KeymapsEntry::Incomplete(b_sub)) => {
                 keymaps_extend_overwrite(a_sub, b_sub.iter())
-            },
+            }
             _ => {
                 a.insert(*keystroke, b_entry.clone());
-            },
+            }
         }
     }
 }
 
-pub fn keymaps_insert_preserve<'a, T: 'a + Clone>(a: &mut Keymaps<T>, keystrokes: &mut KeystrokeIterator, value: T) {
-    fn inner<'a, T: 'a + Clone>(a: &mut Keymaps<T>, keystroke: &Keystroke, keystrokes: &mut KeystrokeIterator, value: T) {
+pub fn keymaps_insert_preserve<'a, T: 'a + Clone>(
+    a: &mut Keymaps<T>,
+    keystrokes: &mut KeystrokeIterator,
+    value: T,
+) {
+    fn inner<'a, T: 'a + Clone>(
+        a: &mut Keymaps<T>,
+        keystroke: &Keystroke,
+        keystrokes: &mut KeystrokeIterator,
+        value: T,
+    ) {
         let a_entry = a.get_mut(keystroke);
         let keystroke_next = keystrokes.next();
         match (a_entry, keystroke_next) {
             (Some(KeymapsEntry::Incomplete(a_sub)), Some(keystroke_next)) => {
                 inner(a_sub, keystroke_next, keystrokes, value);
-            },
+            }
             (Some(KeymapsEntry::Incomplete(a_sub)), None) => {
                 // Preserve a, do nothing
-            },
+            }
             (Some(KeymapsEntry::Complete(a_complete)), _) => {
                 // Preserve a, do nothing
-            },
+            }
             (None, Some(keystroke_next)) => {
                 let mut sub = Keymaps::new();
                 inner(&mut sub, keystroke_next, keystrokes, value);
                 a.insert(*keystroke, KeymapsEntry::Incomplete(sub));
-            },
+            }
             (None, None) => {
                 a.insert(*keystroke, KeymapsEntry::Complete(value));
-            },
+            }
         }
     }
     if let Some(keystroke) = keystrokes.next() {
@@ -127,20 +136,24 @@ pub fn keymaps_insert_preserve<'a, T: 'a + Clone>(a: &mut Keymaps<T>, keystrokes
     }
 }
 
-pub fn keymaps_extend_preserve<'a, T: 'a + Clone>(a: &mut Keymaps<T>, mut b: impl Iterator<Item = (KeystrokeSequence, T)>) {
+pub fn keymaps_extend_preserve<'a, T: 'a + Clone>(
+    a: &mut Keymaps<T>,
+    mut b: impl Iterator<Item = (KeystrokeSequence, T)>,
+) {
     while let Some((keystrokes, value)) = b.next() {
         keymaps_insert_preserve(a, &mut keystrokes.iter(), value);
     }
 }
 
 pub struct ConfigFileKeymapsVisitor<T> {
-    keymaps : PhantomData<T>,
+    keymaps: PhantomData<T>,
 }
 impl<'de, T> de::Visitor<'de> for ConfigFileKeymapsVisitor<T> {
     type Value = T;
     fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
     where
-        A: de::MapAccess<'de>, {
+        A: de::MapAccess<'de>,
+    {
         Err(de::Error::custom("TBI"))
     }
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -150,4 +163,3 @@ impl<'de, T> de::Visitor<'de> for ConfigFileKeymapsVisitor<T> {
         )
     }
 }
-

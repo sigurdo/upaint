@@ -124,7 +124,10 @@ mod import_export {
     fn discards_empty_spaces() {
         let input = "       \n\n    \n".to_string();
         let expected = "\n";
-        let output = RawCanvas::from_ansi(input).unwrap().export_txt_preserve().unwrap();
+        let output = RawCanvas::from_ansi(input)
+            .unwrap()
+            .export_txt_preserve()
+            .unwrap();
         assert_eq!(output, expected);
     }
 
@@ -132,7 +135,10 @@ mod import_export {
     fn discards_empty_spaces_with_characters_between() {
         let input = "       \n\n  a  \n".to_string();
         let expected = "a\n";
-        let output = RawCanvas::from_ansi(input).unwrap().export_txt_preserve().unwrap();
+        let output = RawCanvas::from_ansi(input)
+            .unwrap()
+            .export_txt_preserve()
+            .unwrap();
         assert_eq!(output, expected);
     }
 }

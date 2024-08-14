@@ -1,4 +1,4 @@
-use clap::{Parser};
+use clap::Parser;
 use crossterm::{
     cursor::{self, SetCursorStyle},
     event::{
@@ -9,13 +9,10 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use log::Log;
-use ratatui::{
-    backend::CrosstermBackend,
-    Terminal,
-};
+use ratatui::{backend::CrosstermBackend, Terminal};
 use std::{
     io::{self, Write},
-    path::{PathBuf},
+    path::PathBuf,
     sync::{
         mpsc::{self},
         Arc, Mutex,
@@ -25,12 +22,8 @@ use std::{
 };
 
 use upaint::{
-    actions::UserAction,
-    canvas::{Canvas},
-    command_line::create_command_line_textarea,
-    rendering::draw_frame,
-    user_input::handle_user_input,
-    ProgramState, ResultCustom,
+    actions::UserAction, canvas::Canvas, command_line::create_command_line_textarea,
+    rendering::draw_frame, user_input::handle_user_input, ProgramState, ResultCustom,
 };
 
 #[derive(Parser, Debug)]

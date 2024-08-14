@@ -1,7 +1,8 @@
 #[test]
 fn test_find_cell_exit() {
-    use nalgebra as na;
     use crate::DirectionFree;
+    use nalgebra as na;
+    #[rustfmt::skip]
     let tests = vec![
         ((0.0, 0.0), (0, 1), (0.0, 0.5)),
         ((0.0, 0.0), (1, 1), (0.5, 0.5)),
@@ -26,9 +27,10 @@ fn test_find_cell_exit() {
 
 #[test]
 fn test_canvas_index_iterator_infinite() {
-    use crate::DirectionFree;
     use super::CanvasIndexIteratorInfinite;
     use super::CanvasIterationJump;
+    use crate::DirectionFree;
+    #[rustfmt::skip]
     let tests = vec![
         ((0, 0), (0, 1), None, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
         ((0, 0), (1, 1), None, vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)]),
@@ -46,7 +48,11 @@ fn test_canvas_index_iterator_infinite() {
         ((0, 0), (3, 2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (1, 1), (2, 1), (3, 2), (4, 3), (5, 3)]),
     ];
     for (start, (direction_rows, direction_columns), jump, indices) in tests {
-        let mut it = CanvasIndexIteratorInfinite::new(start, DirectionFree::new(direction_rows, direction_columns).unwrap(), jump);
+        let mut it = CanvasIndexIteratorInfinite::new(
+            start,
+            DirectionFree::new(direction_rows, direction_columns).unwrap(),
+            jump,
+        );
         for expected in indices {
             let actual = it.next().unwrap();
             assert_eq!(actual, expected);
@@ -56,8 +62,9 @@ fn test_canvas_index_iterator_infinite() {
 
 #[test]
 fn test_canvas_index_iterator() {
-    use crate::{DirectionFree, Direction};
-    use super::{CanvasIndexIterator, StopCondition, RawCanvas, WordBoundaryType};
+    use super::{CanvasIndexIterator, RawCanvas, StopCondition, WordBoundaryType};
+    use crate::{Direction, DirectionFree};
+    #[rustfmt::skip]
     let tests = vec![
         ("    4567    abcd", (0, 0), DirectionFree::from(Direction::Right), StopCondition::SecondCell, (0, 1)),
         ("    4567    abcd", (0, 0), DirectionFree::from(Direction::Right), StopCondition::WordBoundary(WordBoundaryType::ANY), (0, 4)),
@@ -91,5 +98,3 @@ fn test_canvas_index_iterator() {
         assert_eq!(it.last(), Some(end));
     }
 }
-
-
