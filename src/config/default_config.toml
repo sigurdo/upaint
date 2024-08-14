@@ -45,9 +45,9 @@ all = "a"
 "b" = { "Colorize" = { ground = "Background"} }
 "r" = { Replace = {} }
 "S" = { UpdateSelection = {} }
-"a" = { UpdateSelection = { operator = "Add", slot = "#" } }
-"s" = { UpdateSelection = { operator = "Subtract", slot = "#" } }
-"z" = { UpdateSelection = { operator = "Overwrite", slot = "#" } }
+"a" = { UpdateSelection = { operator = "Add", slot = "#", highlight = true } }
+"s" = { UpdateSelection = { operator = "Subtract", slot = "#", highlight = true } }
+"z" = { UpdateSelection = { operator = "Overwrite", slot = "#", highlight = true } }
 "y" = { Yank = { content_type = "ALL", slot = "#" } }
 "D" = { Cut = { content_type = "ALL" } }
 "d" = { Cut = { content_type = "ALL", slot = "#" } }
@@ -83,6 +83,12 @@ all = "a"
 
 [keymaps.characters]
 "<C-u>-" = "—"
+
+[keymaps.bools]
+"f" = false
+"t" = true
+"n" = false
+" " = true
 
 [keymaps.word_boundary_types]
 "a" = "ANY"

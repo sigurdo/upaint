@@ -113,6 +113,7 @@ operators_macro!(
     UpdateSelectionPreset -> UpdateSelection {
         operator: Option<UpdateSelectionOperator> => UpdateSelectionOperator,
         slot: Option<char> => char,
+        highlight: Option<bool> => bool,
     },
     YankPreset -> Yank {
         content_type: Option<CellContentType> => CellContentType,
@@ -192,6 +193,9 @@ impl Operator for UpdateSelection {
                     selection.remove(index);
                 }
             }
+        }
+        if self.highlight {
+            program_state.selection_highlight = Some(self.slot);
         }
     }
 }

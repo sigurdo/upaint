@@ -226,3 +226,9 @@ impl FromKeystrokesByMap for CellContentType {
         &config.keymaps.yank_content_type
     }
 }
+
+impl FromKeystrokesByMap for bool {
+    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+        &config.keymaps.bools
+    }
+}
