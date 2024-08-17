@@ -22,6 +22,7 @@ use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
+use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
@@ -112,7 +113,7 @@ motions_macro!(
         ch: Option<char> => char,
     },
     SelectionMotionPreset -> SelectionMotion {
-        slot: Option<char> => char,
+        slot: Option<SelectionSlotSpecification> => SelectionSlotSpecification,
     },
     GoToMarkPreset -> GoToMark {
         jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
@@ -178,9 +179,10 @@ impl Motion for Stay {
 
 impl Motion for SelectionMotion {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let slot = self.slot.as_char(program_state);
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
-        if let Some(selection) = program_state.selections.get(&self.slot) {
+        if let Some(selection) = program_state.selections.get(&slot) {
             selection.iter().copied().collect()
         } else {
             Vec::new()

@@ -28,6 +28,7 @@ use crate::config::keymaps::Keymaps;
 use crate::config::keymaps::KeymapsEntry;
 use crate::config::load_default_config;
 use crate::config::Config;
+use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
@@ -170,6 +171,17 @@ impl FromKeystrokes for char {
                 None => Err(KeybindCompletionError::MissingKeystrokes),
             },
         }
+    }
+}
+
+impl FromKeystrokes for SelectionSlotSpecification {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        Ok(SelectionSlotSpecification::Specific(char::from_keystrokes(
+            keystrokes, config,
+        )?))
     }
 }
 

@@ -22,6 +22,7 @@ use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::selections::Selection;
+use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
@@ -112,7 +113,7 @@ operators_macro!(
     },
     UpdateSelectionPreset -> UpdateSelection {
         operator: Option<UpdateSelectionOperator> => UpdateSelectionOperator,
-        slot: Option<char> => char,
+        slot: Option<SelectionSlotSpecification> => SelectionSlotSpecification,
         highlight: Option<bool> => bool,
     },
     YankPreset -> Yank {
@@ -175,11 +176,12 @@ impl FromKeystrokesByMap for UpdateSelectionOperator {
 
 impl Operator for UpdateSelection {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
-        let selection = if let Some(selection) = program_state.selections.get_mut(&self.slot) {
+        let slot = self.slot.as_char(program_state);
+        let selection = if let Some(selection) = program_state.selections.get_mut(&slot) {
             selection
         } else {
-            program_state.selections.insert(self.slot, Selection::new());
-            program_state.selections.get_mut(&self.slot).unwrap()
+            program_state.selections.insert(slot, Selection::new());
+            program_state.selections.get_mut(&slot).unwrap()
         };
         match self.operator {
             UpdateSelectionOperator::Add => {
@@ -195,7 +197,7 @@ impl Operator for UpdateSelection {
             }
         }
         if self.highlight {
-            program_state.selection_highlight = Some(self.slot);
+            program_state.selection_highlight = Some(slot);
         }
     }
 }

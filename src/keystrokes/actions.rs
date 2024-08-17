@@ -132,6 +132,10 @@ actions_macro!(
         slot: Option<char> => char,
     },
     HighlightSelectionClearPreset -> HighlightSelectionClear {},
+    SetActiveSelectionPreset -> SetSelectionActive {
+        slot: Option<char> => char,
+        highlight: bool => bool,
+    },
     PastePreset -> Paste {
         slot: Option<char> => char,
     },
@@ -238,6 +242,15 @@ impl Action for ModeVisualRect {
 impl Action for HighlightSelection {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.selection_highlight = Some(self.slot);
+    }
+}
+
+impl Action for SetSelectionActive {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_active = self.slot;
+        if self.highlight {
+            program_state.selection_highlight = Some(self.slot);
+        }
     }
 }
 

@@ -32,7 +32,7 @@ all = "a"
 "gc" = { "ModeColorPicker" = {} }
 "gp" = { "Pipette" = {}}
 "v" = { ModeVisualRect = {} }
-"o" = { HighlightSelection = { slot = "#" } }
+"o" = { SetSelectionActive = { highlight = true } }
 "O" = { HighlightSelectionClear = {} }
 "P" = { Paste = {} }
 "p" = { Paste = { slot = "#" } }
@@ -44,10 +44,10 @@ all = "a"
 "c" = { "Colorize" = { ground = "Foreground"} }
 "b" = { "Colorize" = { ground = "Background"} }
 "r" = { Replace = {} }
-"S" = { UpdateSelection = {} }
-"a" = { UpdateSelection = { operator = "Add", slot = "#", highlight = true } }
-"s" = { UpdateSelection = { operator = "Subtract", slot = "#", highlight = true } }
-"z" = { UpdateSelection = { operator = "Overwrite", slot = "#", highlight = true } }
+"S" = { UpdateSelection = { highlight = true } }
+"a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true } }
+"s" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true } }
+"z" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true } }
 "y" = { Yank = { content_type = "ALL", slot = "#" } }
 "D" = { Cut = { content_type = "ALL" } }
 "d" = { Cut = { content_type = "ALL", slot = "#" } }
@@ -58,7 +58,7 @@ all = "a"
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }
 "S" = { SelectionMotion = {} }
-"s" = { SelectionMotion = { slot = "#" } }
+"s" = { SelectionMotion = { slot = "Active" } }
 "J" = { GoToMark = { jump = "Diagonals" } }
 "L" = { GoToMark = { jump = "Diagonals", slot = "l" } }
 "A" = { MatchingCells = {} }
