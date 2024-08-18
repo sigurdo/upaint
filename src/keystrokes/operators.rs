@@ -8,9 +8,7 @@ use std::collections::HashMap;
 use std::collections::LinkedList;
 use std::fmt::Debug;
 
-use crate::actions::cursor::MoveCursor2;
 use crate::actions::Action;
-use crate::actions::UserAction;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::operations::CanvasOperation;

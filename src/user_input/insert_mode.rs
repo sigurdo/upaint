@@ -1,9 +1,6 @@
 use crate::{
-    actions::{cursor::MoveCursor, Action},
-    brush::Brush,
-    canvas::raw::iter::CanvasIndexIteratorInfinite,
-    canvas::CanvasOperation,
-    DirectionFree, InputMode, ProgramState, ResultCustom,
+    actions::Action, brush::Brush, canvas::raw::iter::CanvasIndexIteratorInfinite,
+    canvas::CanvasOperation, DirectionFree, InputMode, ProgramState, ResultCustom,
 };
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 

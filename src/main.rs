@@ -1,3 +1,4 @@
+#![allow(warnings)]
 use clap::Parser;
 use crossterm::{
     cursor::{self, SetCursorStyle},
@@ -22,8 +23,8 @@ use std::{
 };
 
 use upaint::{
-    actions::UserAction, canvas::Canvas, command_line::create_command_line_textarea,
-    rendering::draw_frame, user_input::handle_user_input, ProgramState, ResultCustom,
+    canvas::Canvas, command_line::create_command_line_textarea, rendering::draw_frame,
+    user_input::handle_user_input, ProgramState, ResultCustom,
 };
 
 #[derive(Parser, Debug)]
@@ -111,7 +112,6 @@ fn application(
         program_state.last_saved_revision = canvas.get_current_revision();
         canvas
     };
-    let _a = UserAction::CursorLeft;
 
     program_state.config = upaint::config::load_config()?;
     log::debug!("{:#?}", program_state.config);

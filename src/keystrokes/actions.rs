@@ -7,9 +7,7 @@ use serde::{de, Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::LinkedList;
 
-use crate::actions::cursor::MoveCursor2;
 use crate::actions::Action;
-use crate::actions::UserAction;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
@@ -122,7 +120,6 @@ actions_macro!(
         jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
         direction: Option<DirectionFree> => DirectionFree,
     },
-    ModeReplacePreset -> ModeReplace {},
     ModeColorPickerPreset -> ModeColorPicker {
         slot: Option<ColorSlot> => ColorSlot,
         // color: Option<ColorSpecification> => ColorSpecification,
@@ -201,12 +198,6 @@ impl Action for ModeInsert {
         program_state.input_mode = InputMode::Insert(canvas_it);
         // Create empty commit for amending to
         program_state.canvas.create_commit(vec![]);
-    }
-}
-
-impl Action for ModeReplace {
-    fn execute(&self, program_state: &mut ProgramState) {
-        program_state.input_mode = InputMode::Replace;
     }
 }
 

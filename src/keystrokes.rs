@@ -13,9 +13,7 @@ use std::collections::LinkedList;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use crate::actions::cursor::MoveCursor2;
 use crate::actions::Action;
-use crate::actions::UserAction;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;

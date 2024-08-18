@@ -138,12 +138,7 @@ pub fn draw_frame(
         } else {
             let input_mode = match program_state.input_mode {
                 InputMode::Insert(_) => "-- INSERT --",
-                InputMode::Replace => "-- REPLACE --",
-                InputMode::ChooseInsertDirection => "-- CHOOSE INSERT DIRECTION --",
-                InputMode::ChangeBrush => "-- CHANGE BRUSH --",
                 InputMode::ColorPicker(_) => "-- COLOR PICKER --",
-                InputMode::ChooseBrushCharacter => "-- CHOOSE BRUSH CHARACTER --",
-                InputMode::Pipette => "-- PIPETTE --",
                 InputMode::VisualRect(_) => "-- VISUAL RECT --",
                 _ => "",
             };

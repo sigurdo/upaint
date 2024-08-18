@@ -7,9 +7,7 @@ use serde::{de, Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::LinkedList;
 
-use crate::actions::cursor::MoveCursor2;
 use crate::actions::Action;
-use crate::actions::UserAction;
 use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;

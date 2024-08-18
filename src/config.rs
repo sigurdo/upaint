@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
 use crate::{
-    actions::UserAction,
     brush::BrushComponent,
     canvas::raw::iter::CanvasIterationJump,
     canvas::raw::iter::WordBoundaryType,
@@ -38,7 +37,7 @@ use self::{
     direction_keys::DirectionKeys,
     keybindings::deserialize::KeystrokeSequenceToml,
     // structure::{Config, ConfigToml},
-    keybindings::{KeybindingToml, Keystroke},
+    keybindings::Keystroke,
     keymaps::{
         keymaps_extend_overwrite, keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter,
         Keymaps, KeymapsEntry,
@@ -139,7 +138,6 @@ macro_rules! toml_struct_type {
 
 config_struct_definition!({
     (ConfigToml => Config),
-    normal_mode_keybindings: (Vec<KeybindingToml> => HashMap<Keystroke, UserAction>),
     direction_keys: (DirectionKeys),
     brush_keys: {
         (BrushKeysToml => BrushKeys),
@@ -246,12 +244,6 @@ generic_impl_toml_value_for_incomplete_enums!(
     UpdateSelectionOperator,
     CellContentType,
 );
-
-impl Config {
-    pub fn normal_mode_action(&self, keystroke: &Keystroke) -> Option<&UserAction> {
-        self.normal_mode_keybindings.get(keystroke)
-    }
-}
 
 impl Default for Config {
     fn default() -> Self {

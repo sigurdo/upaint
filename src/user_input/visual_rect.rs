@@ -1,5 +1,5 @@
 use crate::{
-    actions::{cursor::MoveCursor, Action},
+    actions::Action,
     brush::Brush,
     canvas::raw::iter::CanvasIndexIteratorInfinite,
     canvas::raw::CanvasIndex,

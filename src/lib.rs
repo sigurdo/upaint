@@ -1,13 +1,13 @@
+#![allow(warnings)]
 use ratatui::style::Color;
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 
-pub mod canvas;
-// pub mod program_state;
 pub mod actions;
 pub mod brush;
+pub mod canvas;
 pub mod color_picker;
 pub mod command_line;
 pub mod config;
@@ -92,16 +92,10 @@ pub enum Ground {
 pub enum InputMode {
     #[default]
     Normal,
-    ChooseInsertDirection,
     Insert(CanvasIndexIteratorInfinite),
     VisualRect((CanvasIndex, CanvasIndex)),
-    ChooseMoveWordDirection,
-    Replace,
     Command,
-    ChangeBrush,
     ColorPicker(ColorSlot),
-    ChooseBrushCharacter,
-    Pipette,
 }
 
 #[derive(Default, Clone)]
