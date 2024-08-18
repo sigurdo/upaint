@@ -18,9 +18,7 @@ use crate::Ground;
 use crate::InputMode;
 use crate::ProgramState;
 
-use super::{
-    ColorSlot, KeybindCompletionError, KeystrokeIterator,
-};
+use super::{ColorSlot, KeybindCompletionError, KeystrokeIterator};
 
 macro_rules! actions_macro {
     ($($name_preset:ident -> $name:ident {$($field:ident : $type_preset:ty => $type:ty),*$(,)?}),*,) => {
@@ -39,6 +37,9 @@ macro_rules! actions_macro {
             }
 
             impl FromPreset<$name_preset> for $name {
+                // Have to allow unused variables, since arguments are not used for action structs
+                // with no fields.
+                #[allow(unused_variables)]
                 fn from_preset(preset: $name_preset, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<Self, KeybindCompletionError> {
                     Ok($name {
                         $(
@@ -141,7 +142,6 @@ impl Action for Redo {
 
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
-        let canvas = program_state.canvas.raw();
         let cells = self.motion.cells(program_state);
         let Some(cursor_to) = cells.last() else {
             return;
@@ -159,7 +159,6 @@ impl Action for MoveCursor {
 
 impl Action for Operation {
     fn execute(&self, program_state: &mut ProgramState) {
-        let canvas = program_state.canvas.raw();
         let cells = self.motion.cells(program_state);
         self.operator.operate(&cells, program_state);
     }
@@ -210,7 +209,6 @@ impl Action for Pipette {
 
 impl Action for ModeVisualRect {
     fn execute(&self, program_state: &mut ProgramState) {
-        let (row, column) = program_state.cursor_position;
         program_state.input_mode =
             InputMode::VisualRect((program_state.cursor_position, program_state.cursor_position));
     }

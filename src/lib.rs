@@ -57,16 +57,6 @@ impl DirectionFree {
     fn y(&self) -> f64 {
         self.rows as f64
     }
-    fn cardinal(&self) -> Option<Direction> {
-        match (self.rows, self.columns) {
-            (0, 0) => panic!(),
-            (0, ..=0) => Some(Direction::Left),
-            (0, 0..) => Some(Direction::Right),
-            (..=0, 0) => Some(Direction::Up),
-            (0.., 0) => Some(Direction::Down),
-            _ => None,
-        }
-    }
 }
 
 impl From<Direction> for DirectionFree {

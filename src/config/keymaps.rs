@@ -1,11 +1,10 @@
 use std::collections::{hash_map, HashMap};
-use std::marker::PhantomData;
 
 use crate::config::TomlValue;
 // use crate::config::keybindings::Keystroke;
 use crate::keystrokes::{KeybindCompletionError, Keystroke, KeystrokeIterator, KeystrokeSequence};
 
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 // #[derive(Debug, Clone, Serialize, Deserialize)]
 // pub struct Keymaps<T>(HashMap<String, T>);
@@ -114,10 +113,10 @@ pub fn keymaps_insert_preserve<'a, T: 'a + Clone>(
             (Some(KeymapsEntry::Incomplete(a_sub)), Some(keystroke_next)) => {
                 inner(a_sub, keystroke_next, keystrokes, value);
             }
-            (Some(KeymapsEntry::Incomplete(a_sub)), None) => {
+            (Some(KeymapsEntry::Incomplete(_a_sub)), None) => {
                 // Preserve a, do nothing
             }
-            (Some(KeymapsEntry::Complete(a_complete)), _) => {
+            (Some(KeymapsEntry::Complete(_a_complete)), _) => {
                 // Preserve a, do nothing
             }
             (None, Some(keystroke_next)) => {
@@ -141,24 +140,5 @@ pub fn keymaps_extend_preserve<'a, T: 'a + Clone>(
 ) {
     while let Some((keystrokes, value)) = b.next() {
         keymaps_insert_preserve(a, &mut keystrokes.iter(), value);
-    }
-}
-
-pub struct ConfigFileKeymapsVisitor<T> {
-    keymaps: PhantomData<T>,
-}
-impl<'de, T> de::Visitor<'de> for ConfigFileKeymapsVisitor<T> {
-    type Value = T;
-    fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
-    where
-        A: de::MapAccess<'de>,
-    {
-        Err(de::Error::custom("TBI"))
-    }
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            formatter,
-            "a key-value map, where the keys represent keystrokes and the values represent actions"
-        )
     }
 }

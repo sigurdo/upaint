@@ -99,15 +99,15 @@ impl CanvasIndexIteratorInfinite {
 
     pub fn go_forward(&mut self) -> <Self as Iterator>::Item {
         let index_current = self.index_next;
-        let entry_current = self.entry_next;
+        let _entry_current = self.entry_next;
         if self.jump == Some(CanvasIterationJump::DirectionAsStride) {
             self.index_next.0 += self.direction.rows;
             self.index_next.1 += self.direction.columns;
             return index_current;
         }
         self.go_forward_no_jump_no_stride();
-        let index_next = self.index_next;
-        let entry_next = self.entry_next;
+        let _index_next = self.index_next;
+        let _entry_next = self.entry_next;
         if self.jump == Some(CanvasIterationJump::Diagonals) {
             // En hare som løper i forveien.
             let mut rabbit = self.clone();
@@ -196,7 +196,6 @@ pub enum StopCondition {
 pub struct CanvasIndexIterator<'a> {
     index_it: Peekable<CanvasIndexIteratorInfinite>,
     direction: DirectionFree,
-    jump: Option<CanvasIterationJump>,
     to_yield: Option<LinkedList<CanvasIndex>>,
     canvas: &'a RawCanvas,
     stop: StopCondition,
@@ -213,7 +212,6 @@ impl<'a> CanvasIndexIterator<'a> {
         Self {
             index_it: CanvasIndexIteratorInfinite::new(start, direction, jump).peekable(),
             direction,
-            jump,
             to_yield: None,
             canvas,
             stop,

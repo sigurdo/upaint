@@ -36,6 +36,9 @@ macro_rules! motions_macro {
             }
 
             impl FromPreset<$name_preset> for Box<dyn Motion> {
+                // Have to allow unused variables, since arguments are not used for action structs
+                // with no fields.
+                #[allow(unused_variables)]
                 fn from_preset(preset: $name_preset, sequence: &mut KeystrokeIterator, config: &Config) -> Result<Box<dyn Motion>, KeybindCompletionError> {
                     Ok(Box::new($name {
                         $(
@@ -158,7 +161,6 @@ impl Motion for Once {
 impl Motion for Stay {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
-        let canvas = program_state.canvas.raw();
         vec![start]
     }
 }
@@ -166,8 +168,6 @@ impl Motion for Stay {
 impl Motion for SelectionMotion {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let slot = self.slot.as_char(program_state);
-        let start = program_state.cursor_position;
-        let canvas = program_state.canvas.raw();
         if let Some(selection) = program_state.selections.get(&slot) {
             selection.iter().copied().collect()
         } else {

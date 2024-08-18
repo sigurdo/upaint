@@ -14,7 +14,8 @@ use crate::Ground;
 use crate::ProgramState;
 
 use super::{
-    ColorSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset, KeybindCompletionError, KeystrokeIterator,
+    ColorSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset, KeybindCompletionError,
+    KeystrokeIterator,
 };
 
 #[enum_dispatch]
@@ -40,6 +41,9 @@ macro_rules! operators_macro {
             }
 
             impl FromPreset<$name_preset> for $name {
+                // Have to allow unused variables, since arguments are not used for action structs
+                // with no fields.
+                #[allow(unused_variables)]
                 fn from_preset(preset: $name_preset, sequence: &mut KeystrokeIterator, config: &Config) -> Result<$name, KeybindCompletionError> {
                     Ok($name {
                         $(

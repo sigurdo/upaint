@@ -67,7 +67,7 @@ pub fn handle_user_input_visual_rect(
                                 .cells(program_state)
                                 .last()
                                 .unwrap_or(&program_state.cursor_position);
-                            let InputMode::VisualRect((ref mut index_a, ref mut index_b)) =
+                            let InputMode::VisualRect((ref mut index_a, ref mut _index_b)) =
                                 program_state.input_mode
                             else {
                                 panic!("handle_user_input_visual_rect called without being in VisualRect mode");

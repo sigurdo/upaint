@@ -77,8 +77,8 @@ impl<T: FromKeystrokesByMap + std::fmt::Debug> FromKeystrokes for T {
 impl<T> FromPreset<T> for T {
     fn from_preset(
         preset: T,
-        keystrokes: &mut KeystrokeIterator,
-        config: &Config,
+        _keystrokes: &mut KeystrokeIterator,
+        _config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
         Ok(preset)
     }
@@ -99,8 +99,8 @@ impl<T: FromKeystrokes + FromPreset<U>, U> FromPreset<Option<U>> for T {
 
 impl FromKeystrokes for i16 {
     fn from_keystrokes(
-        keystrokes: &mut KeystrokeIterator,
-        config: &Config,
+        _keystrokes: &mut KeystrokeIterator,
+        _config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
         Ok(42)
     }
