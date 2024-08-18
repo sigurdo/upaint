@@ -1,7 +1,6 @@
 use crate::keystrokes::{Keystroke, KeystrokeSequence};
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
-use derive_more::Deref;
 
 // fn stringify_modifiers(modifier: KeyModifiers)
 

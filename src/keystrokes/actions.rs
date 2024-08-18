@@ -1,24 +1,11 @@
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyModifiers;
-use enum_dispatch::enum_dispatch;
-use ratatui::style::Color;
-use serde::{de, Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::LinkedList;
+use serde::{Deserialize, Serialize};
 
 use crate::actions::Action;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
-use crate::canvas::raw::iter::StopCondition;
-use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::operations::CanvasOperation;
-use crate::canvas::raw::CanvasIndex;
-use crate::canvas::raw::RawCanvas;
-use crate::canvas::rect::CanvasRect;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
-use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::keystrokes::Motion;
@@ -32,8 +19,7 @@ use crate::InputMode;
 use crate::ProgramState;
 
 use super::{
-    ColorSlot, ColorSpecification, KeybindCompletionError, Keystroke, KeystrokeIterator,
-    KeystrokeSequence,
+    ColorSlot, KeybindCompletionError, KeystrokeIterator,
 };
 
 macro_rules! actions_macro {

@@ -1,5 +1,4 @@
-use std::collections::{hash_map, HashMap, LinkedList};
-use std::iter::Peekable;
+use std::collections::{hash_map, HashMap};
 use std::marker::PhantomData;
 
 use crate::config::TomlValue;

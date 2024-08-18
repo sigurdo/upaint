@@ -1,5 +1,5 @@
 use ratatui::style::{Color, Modifier, Style};
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
 use super::TomlValue;

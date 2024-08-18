@@ -1,35 +1,21 @@
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use derive_more::Constructor;
 use derive_more::Deref;
 use derive_more::DerefMut;
 use derive_more::From;
-use enum_dispatch::enum_dispatch;
 use ratatui::style::Color;
-use serde::{de, Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::LinkedList;
-use std::ops::Deref;
-use std::ops::DerefMut;
+use serde::{Deserialize, Serialize};
 
-use crate::actions::Action;
 use crate::canvas::raw::iter::CanvasIterationJump;
-use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
-use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::canvas::raw::RawCanvas;
-use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::keymaps_complete;
 use crate::config::keymaps::Keymaps;
-use crate::config::keymaps::KeymapsEntry;
-use crate::config::load_default_config;
 use crate::config::Config;
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
-use crate::ProgramState;
 
 pub mod actions;
 pub mod motions;

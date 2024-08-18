@@ -1,12 +1,6 @@
-use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::DirectionFree;
 use std::collections::HashMap;
-use std::iter::Rev;
 
-use config::{
-    builder::{ConfigBuilder, DefaultState},
-    FileFormat, FileSourceFile, FileSourceString, Source, Value, ValueKind,
-};
 use crossterm::event::KeyCode;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
@@ -20,7 +14,7 @@ use crate::{
     keystrokes::operators::UpdateSelectionOperator,
     keystrokes::{
         actions::MoveCursorPreset, actions::OperationPreset, motions::OncePreset,
-        ActionIncompleteEnum, KeystrokeIterator, KeystrokeSequence, MotionIncompleteEnum,
+        ActionIncompleteEnum, MotionIncompleteEnum,
         OperatorIncompleteEnum,
     },
     ErrorCustom, Ground,
@@ -36,11 +30,9 @@ use self::{
     color_theme::{ColorThemePreset, ColorToml, StyleConfig, StyleToml},
     direction_keys::DirectionKeys,
     keybindings::deserialize::KeystrokeSequenceToml,
-    // structure::{Config, ConfigToml},
-    keybindings::Keystroke,
     keymaps::{
-        keymaps_extend_overwrite, keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter,
-        Keymaps, KeymapsEntry,
+        keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter,
+        Keymaps,
     },
     keys::KeyCodeToml,
 };

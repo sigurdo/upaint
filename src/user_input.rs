@@ -3,16 +3,11 @@ use ratatui::style::Color;
 
 use crate::{
     actions::Action,
-    brush::{Brush, BrushComponent},
-    canvas::raw::iter::{StopCondition, WordBoundaryType},
     command_line::execute_command,
     config::keybindings::Keystroke,
-    config::keymaps::keymaps_complete,
     keystrokes::{
-        ColorSlot, FromKeystrokes, KeybindCompletionError, KeystrokeSequence, Motion,
-        MotionIncompleteEnum,
-    },
-    DirectionFree, Ground, InputMode, ProgramState, ResultCustom,
+        ColorSlot, FromKeystrokes, KeybindCompletionError, KeystrokeSequence,
+    }, InputMode, ProgramState, ResultCustom,
 };
 
 mod insert_mode;

@@ -1,33 +1,20 @@
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyModifiers;
 use enum_dispatch::enum_dispatch;
-use ratatui::style::Color;
-use serde::{de, Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::LinkedList;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-use crate::actions::Action;
-use crate::canvas::raw::iter::StopCondition;
-use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::operations::CanvasOperation;
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::canvas::raw::RawCanvas;
-use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
-use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
 
 use super::{
-    ColorSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset, KeybindCompletionError,
-    Keystroke, KeystrokeIterator, KeystrokeSequence,
+    ColorSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset, KeybindCompletionError, KeystrokeIterator,
 };
 
 #[enum_dispatch]

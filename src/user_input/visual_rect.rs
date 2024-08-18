@@ -1,11 +1,5 @@
 use crate::{
-    actions::Action,
-    brush::Brush,
-    canvas::raw::iter::CanvasIndexIteratorInfinite,
-    canvas::raw::CanvasIndex,
     canvas::rect::CanvasRect,
-    canvas::CanvasOperation,
-    keystrokes::actions::Operation,
     // config::keybindings::deserialize::parse_keystroke_sequence,
     keystrokes::motions::Motion,
     keystrokes::operators::Operator,
@@ -13,12 +7,11 @@ use crate::{
     keystrokes::KeybindCompletionError,
     keystrokes::Keystroke,
     keystrokes::KeystrokeSequence,
-    DirectionFree,
     InputMode,
     ProgramState,
     ResultCustom,
 };
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyModifiers};
 
 pub fn handle_user_input_visual_rect(
     event: Event,

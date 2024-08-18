@@ -1,4 +1,3 @@
-#![allow(warnings)]
 use ratatui::style::Color;
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};

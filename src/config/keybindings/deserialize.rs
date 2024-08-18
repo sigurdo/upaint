@@ -25,7 +25,7 @@
 /// it from other keys.
 use super::Keystroke;
 use crossterm::event::{KeyCode, KeyModifiers};
-use serde::{de, Deserialize};
+use serde::{Deserialize};
 use std::collections::LinkedList;
 use std::fmt::Display;
 

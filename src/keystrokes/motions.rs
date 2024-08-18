@@ -1,31 +1,19 @@
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyModifiers;
-use enum_dispatch::enum_dispatch;
-use ratatui::style::Color;
-use serde::{de, Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::LinkedList;
+use serde::{Deserialize, Serialize};
 
-use crate::actions::Action;
 use crate::canvas::raw::iter::CanvasIndexIterator;
-use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::canvas::raw::RawCanvas;
-use crate::config::keybindings::deserialize::parse_keystroke_sequence;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
-use crate::Ground;
 use crate::ProgramState;
 
-use super::{KeybindCompletionError, Keystroke, KeystrokeIterator, KeystrokeSequence};
+use super::{KeybindCompletionError, KeystrokeIterator};
 
 pub trait Motion {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
@@ -194,7 +182,7 @@ impl Motion for GoToMark {
             let rows = mark.0 - program_state.cursor_position.0;
             let columns = mark.1 - program_state.cursor_position.1;
             let direction = DirectionFree { rows, columns };
-            let mut it = CanvasIndexIterator::new(
+            let it = CanvasIndexIterator::new(
                 program_state.canvas.raw(),
                 program_state.cursor_position,
                 direction,

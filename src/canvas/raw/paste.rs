@@ -1,16 +1,7 @@
-use bitflags::bitflags;
-use ratatui::style::Color;
-use ratatui::style::Modifier;
-use serde::Deserialize;
-use serde::Serialize;
-use std::collections::BTreeMap;
 
-use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
-use crate::canvas::raw::CanvasRect;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::raw::RawCanvas;
-use crate::selections::Selection;
 
 use super::yank::CanvasYank;
 

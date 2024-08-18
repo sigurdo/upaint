@@ -1,9 +1,5 @@
-use std::collections::HashMap;
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use serde::{Deserialize, Serialize};
 
-use super::{keys::KeyCodeToml, TomlValue};
 
 pub mod deserialize;
 pub mod serialize;

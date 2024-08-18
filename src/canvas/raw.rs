@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, LinkedList};
+use std::collections::{BTreeMap};
 
 use ratatui::style::{Color, Modifier};
 
