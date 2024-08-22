@@ -16,6 +16,7 @@ pub mod rendering;
 pub mod selections;
 pub mod status_bar;
 pub mod user_input;
+pub mod yank_slots;
 
 use crate::config::Config;
 use brush::Brush;
@@ -102,6 +103,7 @@ pub struct ProgramState<'a> {
     pub yanks: HashMap<char, CanvasYank>,
     pub marks: HashMap<char, CanvasIndex>,
     pub selection_highlight: Option<char>,
+    pub yank_active: char,
     pub selection_active: char,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,

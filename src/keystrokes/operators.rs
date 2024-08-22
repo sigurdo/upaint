@@ -10,6 +10,7 @@ use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
+use crate::yank_slots::YankSlotSpecification;
 use crate::Ground;
 use crate::ProgramState;
 
@@ -107,11 +108,11 @@ operators_macro!(
     },
     YankPreset -> Yank {
         content_type: Option<CellContentType> => CellContentType,
-        slot: Option<char> => char,
+        slot: Option<YankSlotSpecification> => YankSlotSpecification,
     },
     CutPreset -> Cut {
         content_type: Option<CellContentType> => CellContentType,
-        slot: Option<char> => char,
+        slot: Option<YankSlotSpecification> => YankSlotSpecification,
     },
 );
 
@@ -200,7 +201,9 @@ impl Operator for Yank {
                 .canvas
                 .raw()
                 .yank(a, self.content_type, program_state.cursor_position);
-        program_state.yanks.insert(self.slot, yank);
+        program_state
+            .yanks
+            .insert(self.slot.as_char(&program_state), yank);
     }
 }
 

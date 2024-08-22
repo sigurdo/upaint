@@ -14,6 +14,7 @@ use crate::config::keymaps::keymaps_complete;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::selections::SelectionSlotSpecification;
+use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
 
@@ -164,6 +165,17 @@ impl FromKeystrokes for SelectionSlotSpecification {
         config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
         Ok(SelectionSlotSpecification::Specific(char::from_keystrokes(
+            keystrokes, config,
+        )?))
+    }
+}
+
+impl FromKeystrokes for YankSlotSpecification {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        Ok(YankSlotSpecification::Specific(char::from_keystrokes(
             keystrokes, config,
         )?))
     }

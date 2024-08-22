@@ -13,6 +13,7 @@ use crate::keystrokes::MotionIncompleteEnum;
 use crate::keystrokes::Operator;
 use crate::keystrokes::OperatorIncompleteEnum;
 use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
+use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::InputMode;
@@ -116,11 +117,14 @@ actions_macro!(
         slot: Option<char> => char,
     },
     HighlightSelectionClearPreset -> HighlightSelectionClear {},
-    SetActiveSelectionPreset -> SetSelectionActive {
+    SetSelectionActivePreset -> SetSelectionActive {
         slot: Option<char> => char,
         highlight: bool => bool,
     },
     PastePreset -> Paste {
+        slot: Option<YankSlotSpecification> => YankSlotSpecification,
+    },
+    SetYankActivePreset -> SetYankActive {
         slot: Option<char> => char,
     },
     MarkSetPreset -> MarkSet {
@@ -237,7 +241,7 @@ impl Action for HighlightSelectionClear {
 
 impl Action for Paste {
     fn execute(&self, program_state: &mut ProgramState) {
-        if let Some(yank) = program_state.yanks.get(&self.slot) {
+        if let Some(yank) = program_state.yanks.get(&self.slot.as_char(&program_state)) {
             program_state
                 .canvas
                 .create_commit(vec![CanvasOperation::Paste(
@@ -245,6 +249,12 @@ impl Action for Paste {
                     yank.clone(),
                 )]);
         }
+    }
+}
+
+impl Action for SetYankActive {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.yank_active = self.slot;
     }
 }
 
