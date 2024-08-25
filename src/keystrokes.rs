@@ -19,8 +19,10 @@ use crate::DirectionFree;
 use crate::Ground;
 
 pub mod actions;
+pub mod deserialize;
 pub mod motions;
 pub mod operators;
+pub mod serialize;
 
 pub use actions::ActionIncompleteEnum;
 pub use motions::{Motion, MotionIncompleteEnum};

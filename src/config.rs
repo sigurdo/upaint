@@ -7,34 +7,24 @@ use serde::{Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
 use crate::{
-    brush::BrushComponent,
     canvas::raw::iter::CanvasIterationJump,
     canvas::raw::iter::WordBoundaryType,
     canvas::raw::CellContentType,
+    keystrokes::deserialize::KeystrokeSequenceToml,
     keystrokes::operators::UpdateSelectionOperator,
     keystrokes::{
         actions::MoveCursorPreset, actions::OperationPreset, motions::OncePreset,
-        ActionIncompleteEnum, MotionIncompleteEnum,
-        OperatorIncompleteEnum,
+        ActionIncompleteEnum, MotionIncompleteEnum, OperatorIncompleteEnum,
     },
     ErrorCustom, Ground,
 };
 
 pub mod color_theme;
-pub mod direction_keys;
-pub mod keybindings;
 pub mod keymaps;
-pub mod keys;
 
 use self::{
     color_theme::{ColorThemePreset, ColorToml, StyleConfig, StyleToml},
-    direction_keys::DirectionKeys,
-    keybindings::deserialize::KeystrokeSequenceToml,
-    keymaps::{
-        keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter,
-        Keymaps,
-    },
-    keys::KeyCodeToml,
+    keymaps::{keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter, Keymaps},
 };
 
 #[cfg(test)]
@@ -130,15 +120,6 @@ macro_rules! toml_struct_type {
 
 config_struct_definition!({
     (ConfigToml => Config),
-    direction_keys: (DirectionKeys),
-    brush_keys: {
-        (BrushKeysToml => BrushKeys),
-        fg: (KeyCodeToml => KeyCode),
-        bg: (KeyCodeToml => KeyCode),
-        character: (KeyCodeToml => KeyCode),
-        modifiers: (KeyCodeToml => KeyCode),
-        all: (KeyCodeToml => KeyCode),
-    },
     numbers: {
         (ConfigNumbersToml => ConfigNumbers),
         row: {
@@ -240,24 +221,6 @@ generic_impl_toml_value_for_incomplete_enums!(
 impl Default for Config {
     fn default() -> Self {
         load_default_config()
-    }
-}
-
-impl BrushKeys {
-    pub fn component(&self, key: &KeyCode) -> Option<BrushComponent> {
-        if *key == self.fg {
-            Some(BrushComponent::Fg)
-        } else if *key == self.bg {
-            Some(BrushComponent::Bg)
-        } else if *key == self.character {
-            Some(BrushComponent::Character)
-        } else if *key == self.modifiers {
-            Some(BrushComponent::Modifiers)
-        } else if *key == self.all {
-            Some(BrushComponent::All)
-        } else {
-            None
-        }
     }
 }
 

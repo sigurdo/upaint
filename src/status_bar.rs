@@ -1,5 +1,6 @@
 use ratatui::{
     prelude::{Constraint, Layout},
+    style::Modifier,
     style::Style,
     text::{Line, Span},
     widgets::{Paragraph, Widget},
@@ -31,11 +32,11 @@ impl<'a> Widget for StatusBar<'a> {
             .direction(ratatui::prelude::Direction::Horizontal)
             .constraints(
                 [
-                    Constraint::Min(16),
-                    Constraint::Max(8),
-                    Constraint::Max(3),
-                    Constraint::Max(2 + 1 + 2),
-                    Constraint::Max(3 + 5 + 1 + 5 + 1),
+                    Constraint::Min(16),                // Open file
+                    Constraint::Max(8),                 // Input sequence
+                    Constraint::Max(2),                 // Yank active
+                    Constraint::Max(3),                 // Selection active
+                    Constraint::Max(3 + 5 + 1 + 5 + 1), // Cursor index
                 ]
                 .as_ref(),
             )
@@ -60,25 +61,21 @@ impl<'a> Widget for StatusBar<'a> {
         )])])
         .style(base_style.into());
 
-        let brush_character = Paragraph::new(vec![Line::from(vec![Span::raw(
-            if let Some(character) = self.program_state.brush.character {
-                format!("{character}")
-            } else {
-                format!("")
-            },
-        )])])
+        let yank_active = Paragraph::new(vec![Line::from(vec![
+            Span::styled("y", Style::new().add_modifier(Modifier::BOLD)),
+            Span::raw({
+                let yank_active = self.program_state.yank_active;
+                format!("{yank_active}")
+            }),
+        ])])
         .style(base_style.into());
 
-        let brush_colors = Paragraph::new(vec![Line::from(vec![
-            Span::styled(
-                "  ",
-                Style::new().bg(self.program_state.brush.fg.unwrap_or(base_style.fg)),
-            ),
-            Span::raw(" "),
-            Span::styled(
-                "  ",
-                Style::new().bg(self.program_state.brush.bg.unwrap_or(base_style.bg)),
-            ),
+        let selection_active = Paragraph::new(vec![Line::from(vec![
+            Span::styled(" s", Style::new().add_modifier(Modifier::BOLD)),
+            Span::raw({
+                let selection_active = self.program_state.selection_active;
+                format!("{selection_active}")
+            }),
         ])])
         .style(base_style.into());
 
@@ -91,8 +88,8 @@ impl<'a> Widget for StatusBar<'a> {
 
         open_file.render(chunks[0], buf);
         input_sequence.render(chunks[1], buf);
-        brush_character.render(chunks[2], buf);
-        brush_colors.render(chunks[3], buf);
+        yank_active.render(chunks[2], buf);
+        selection_active.render(chunks[3], buf);
         cursor_index.render(chunks[4], buf);
     }
 }

@@ -23,9 +23,9 @@
 /// Conclusion: This implementation doesn't give any guarantees for the notation actually working
 /// in practice, as the terminal emulator might not have a proper way to encode it and distinguish
 /// it from other keys.
-use super::Keystroke;
+use crate::keystrokes::Keystroke;
 use crossterm::event::{KeyCode, KeyModifiers};
-use serde::{Deserialize};
+use serde::Deserialize;
 use std::collections::LinkedList;
 use std::fmt::Display;
 
@@ -173,7 +173,6 @@ mod test {
 
     #[test]
     fn test_parse_keystroke_sequence() {
-        // Keystroke { code: KeyCode::Char('a'), modifiers: KeyModifiers::NONE }
         #[rustfmt::skip]
         let tests = vec![
             ("abc", Ok(KeystrokeSequence(vec![

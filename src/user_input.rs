@@ -4,10 +4,8 @@ use ratatui::style::Color;
 use crate::{
     actions::Action,
     command_line::execute_command,
-    config::keybindings::Keystroke,
-    keystrokes::{
-        ColorSlot, FromKeystrokes, KeybindCompletionError, KeystrokeSequence,
-    }, InputMode, ProgramState, ResultCustom,
+    keystrokes::{ColorSlot, FromKeystrokes, KeybindCompletionError, Keystroke, KeystrokeSequence},
+    InputMode, ProgramState, ResultCustom,
 };
 
 mod insert_mode;

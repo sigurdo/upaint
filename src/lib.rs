@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 pub mod actions;
-pub mod brush;
 pub mod canvas;
 pub mod color_picker;
 pub mod command_line;
@@ -19,7 +18,6 @@ pub mod user_input;
 pub mod yank_slots;
 
 use crate::config::Config;
-use brush::Brush;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;
 use canvas::raw::CanvasIndex;
@@ -108,7 +106,6 @@ pub struct ProgramState<'a> {
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
     pub color_picker: ColorPicker,
-    pub brush: Brush,
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
     pub user_feedback: Option<String>,
