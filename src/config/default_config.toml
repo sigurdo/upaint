@@ -1,6 +1,3 @@
-# All alternatives are listed in `pub enum DirectionKeys {...}` in `src/config/direction_keys.rs`
-direction_keys = "HjklAndArrows"
-
 # All alternatives are listed in `color_theme_presets!(...)` in `src/config/color_theme.rs`
 color_theme_preset = "Basic"
 
@@ -14,23 +11,13 @@ relative = false
 enable = true
 relative = false
 
-# Each property of [brush_keys] is a `KeyCodeToml`, which allows either one of the special keys
-# ("Backspace", "Enter", "Left", "Right", "Up", "Down", "Home", "End", "PageUp", "PageDown", "Tab", "BackTab", "Delete", "Insert", "Null", "Esc")
-# , an F-key ("F1"-"F255"), or a single character for all other keys (e.g. "d" or "#").
-[brush_keys]
-fg = "f"
-bg = "b"
-character = "c"
-modifiers = "m"
-all = "a"
-
 [keymaps.actions]
 "u" = { "Undo" = {} }
 "<C-r>" = { "Redo" = {} }
 ":" = { "ModeCommand" = {} }
 "i" = { "ModeInsert" = { jump = "Diagonals" } }
-"gc" = { "ModeColorPicker" = {} }
-"gp" = { "Pipette" = {}}
+"gc" = { "ModeColorPicker" = { slot = "Active" } }
+"gp" = { "Pipette" = { slot = "Active" }}
 "v" = { ModeVisualRect = {} }
 "o" = { SetSelectionActive = { highlight = true } }
 '"' = { SetYankActive = {} }
@@ -40,10 +27,13 @@ all = "a"
 "r" = { Operation = { motion = { Stay = {}}, operator = { Replace = {}}}}
 "R" = { Operation = { operator = { Replace = {}}}}
 "m" = { MarkSet = {}}
+"#" = { SetColorOrSlotActive = {} }
 
 [keymaps.operators]
-"c" = { "Colorize" = { ground = "Foreground"} }
-"b" = { "Colorize" = { ground = "Background"} }
+"c" = { "Colorize" = { ground = "Foreground", color = "Active" } }
+"C" = { "Colorize" = { ground = "Foreground" } }
+"b" = { "Colorize" = { ground = "Background", color = "Active" } }
+"B" = { "Colorize" = { ground = "Background" } }
 "r" = { Replace = {} }
 "S" = { UpdateSelection = { highlight = true } }
 "a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true } }
@@ -97,6 +87,23 @@ all = "a"
 "e" = "END"
 
 [keymaps.colors]
+"  " = "Reset"
+" b" = "Black"
+" r" = "Red"
+" g" = "Green"
+" y" = "Yellow"
+" l" = "Blue"
+" m" = "Magenta"
+" c" = "Cyan"
+" w" = "Gray" # Non-bright white
+" B" = "DarkGray" # Bright black
+" R" = "LightRed"
+" G" = "LightGreen"
+" Y" = "LightYellow"
+" L" = "LightBlue"
+" M" = "LightMagenta"
+" C" = "LightCyan"
+" W" = "White"
 
 [keymaps.canvas_iteration_jump]
 "d" = "Diagonals"

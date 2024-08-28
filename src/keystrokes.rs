@@ -17,6 +17,7 @@ use crate::selections::SelectionSlotSpecification;
 use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
+use crate::ProgramState;
 
 pub mod actions;
 pub mod deserialize;
@@ -186,24 +187,64 @@ impl FromKeystrokes for YankSlotSpecification {
 // #[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize)]
 pub type ColorSlot = char;
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum ColorSpecification {
+#[serde(untagged)]
+pub enum ColorOrSlot {
+    Color(Color),
     Slot(ColorSlot),
-    Direct(Color),
+}
+impl ColorOrSlot {
+    pub fn as_color(&self, program_state: &ProgramState) -> Option<Color> {
+        match self {
+            Self::Color(color) => Some(*color),
+            Self::Slot(slot) => program_state.color_slots.get(&slot).copied(),
+        }
+    }
+}
+impl Default for ColorOrSlot {
+    fn default() -> Self {
+        Self::Slot('a')
+    }
+}
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum ColorOrSlotSpecification {
+    Active,
+    Specific(ColorOrSlot),
+}
+impl ColorOrSlotSpecification {
+    pub fn as_color_or_slot(&self, program_state: &ProgramState) -> ColorOrSlot {
+        match self {
+            Self::Active => program_state.color_or_slot_active,
+            Self::Specific(color_or_slot) => *color_or_slot,
+        }
+    }
 }
 impl FromKeystrokesByMap for Color {
     fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
         &config.keymaps.colors
     }
 }
-impl FromKeystrokes for ColorSpecification {
+impl FromKeystrokes for ColorOrSlot {
     fn from_keystrokes(
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
         match Color::from_keystrokes(&mut keystrokes.clone(), config) {
-            Ok(value) => Ok(Self::Direct(value)),
-            Err(_) => Ok(Self::Slot(ColorSlot::from_keystrokes(keystrokes, config)?)),
+            Ok(value) => Ok(Self::Color(value)),
+            Err(KeybindCompletionError::InvalidKeystroke(_)) => {
+                Ok(Self::Slot(ColorSlot::from_keystrokes(keystrokes, config)?))
+            }
+            Err(other) => Err(other),
         }
+    }
+}
+impl FromKeystrokes for ColorOrSlotSpecification {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        Ok(ColorOrSlotSpecification::Specific(
+            ColorOrSlot::from_keystrokes(keystrokes, config)?,
+        ))
     }
 }
 

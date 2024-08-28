@@ -1,11 +1,13 @@
 use ratatui::{
     prelude::{Constraint, Layout},
+    style::Color,
     style::Modifier,
     style::Style,
     text::{Line, Span},
     widgets::{Paragraph, Widget},
 };
 
+use crate::keystrokes::ColorOrSlot;
 use crate::ProgramState;
 
 pub struct StatusBar<'a> {
@@ -36,6 +38,7 @@ impl<'a> Widget for StatusBar<'a> {
                     Constraint::Max(8),                 // Input sequence
                     Constraint::Max(2),                 // Yank active
                     Constraint::Max(3),                 // Selection active
+                    Constraint::Max(6),                 // Color or slot active
                     Constraint::Max(3 + 5 + 1 + 5 + 1), // Cursor index
                 ]
                 .as_ref(),
@@ -79,6 +82,31 @@ impl<'a> Widget for StatusBar<'a> {
         ])])
         .style(base_style.into());
 
+        let color_or_slot_active = Paragraph::new(vec![Line::from(vec![
+            Span::styled(" c", Style::new().add_modifier(Modifier::BOLD)),
+            Span::raw({
+                match self.program_state.color_or_slot_active {
+                    ColorOrSlot::Slot(slot) => {
+                        format!("{slot}")
+                    }
+                    ColorOrSlot::Color(_) => {
+                        format!(" ")
+                    }
+                }
+            }),
+            Span::raw(" "),
+            Span::styled(
+                "  ",
+                Style::new().bg(self
+                    .program_state
+                    .color_or_slot_active
+                    .as_color(&self.program_state)
+                    .unwrap_or(self.program_state.config.color_theme.status_bar.bg)),
+            ),
+            // Span::raw(")"),
+        ])])
+        .style(base_style.into());
+
         let cursor_index = format!(
             " │ {},{}",
             self.program_state.cursor_position.0, self.program_state.cursor_position.1
@@ -90,6 +118,7 @@ impl<'a> Widget for StatusBar<'a> {
         input_sequence.render(chunks[1], buf);
         yank_active.render(chunks[2], buf);
         selection_active.render(chunks[3], buf);
-        cursor_index.render(chunks[4], buf);
+        color_or_slot_active.render(chunks[4], buf);
+        cursor_index.render(chunks[5], buf);
     }
 }

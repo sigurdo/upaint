@@ -18,6 +18,7 @@ pub mod user_input;
 pub mod yank_slots;
 
 use crate::config::Config;
+use crate::keystrokes::ColorOrSlot;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;
 use canvas::raw::CanvasIndex;
@@ -103,6 +104,7 @@ pub struct ProgramState<'a> {
     pub selection_highlight: Option<char>,
     pub yank_active: char,
     pub selection_active: char,
+    pub color_or_slot_active: ColorOrSlot,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
     pub color_picker: ColorPicker,

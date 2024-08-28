@@ -19,7 +19,9 @@ use crate::Ground;
 use crate::InputMode;
 use crate::ProgramState;
 
-use super::{ColorSlot, KeybindCompletionError, KeystrokeIterator};
+use super::{
+    ColorOrSlot, ColorOrSlotSpecification, ColorSlot, KeybindCompletionError, KeystrokeIterator,
+};
 
 macro_rules! actions_macro {
     ($($name_preset:ident -> $name:ident {$($field:ident : $type_preset:ty => $type:ty),*$(,)?}),*,) => {
@@ -94,7 +96,7 @@ actions_macro!(
     RedoPreset -> Redo {},
     PipettePreset -> Pipette {
         ground: Option<Ground> => Ground,
-        slot: Option<ColorSlot> => ColorSlot,
+        slot: Option<ColorOrSlotSpecification> => ColorOrSlotSpecification,
     },
     MoveCursorPreset -> MoveCursor {
         motion: Option<MotionIncompleteEnum> => Box<dyn Motion>,
@@ -109,7 +111,7 @@ actions_macro!(
         direction: Option<DirectionFree> => DirectionFree,
     },
     ModeColorPickerPreset -> ModeColorPicker {
-        slot: Option<ColorSlot> => ColorSlot,
+        slot: Option<ColorOrSlotSpecification> => ColorOrSlotSpecification,
         // color: Option<ColorSpecification> => ColorSpecification,
     },
     ModeVisualRectPreset -> ModeVisualRect {},
@@ -120,6 +122,9 @@ actions_macro!(
     SetSelectionActivePreset -> SetSelectionActive {
         slot: Option<char> => char,
         highlight: bool => bool,
+    },
+    SetColorOrSlotActivePreset -> SetColorOrSlotActive {
+        color_or_slot: Option<ColorOrSlot> => ColorOrSlot,
     },
     PastePreset -> Paste {
         slot: Option<YankSlotSpecification> => YankSlotSpecification,
@@ -192,22 +197,26 @@ impl Action for ModeInsert {
 
 impl Action for ModeColorPicker {
     fn execute(&self, program_state: &mut ProgramState) {
-        let title = self.slot.to_string();
-        let initial_color = program_state.color_slots.get(&self.slot);
-        program_state.color_picker = ColorPicker::new(title, initial_color.copied());
-        program_state.input_mode = InputMode::ColorPicker(self.slot);
+        if let ColorOrSlot::Slot(ch) = self.slot.as_color_or_slot(&program_state) {
+            let title = ch.to_string();
+            let initial_color = program_state.color_slots.get(&ch);
+            program_state.color_picker = ColorPicker::new(title, initial_color.copied());
+            program_state.input_mode = InputMode::ColorPicker(ch);
+        }
     }
 }
 
 impl Action for Pipette {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.color_slots.insert(
-            self.slot,
-            program_state
-                .canvas
-                .raw()
-                .color(program_state.cursor_position, self.ground),
-        );
+        if let ColorOrSlot::Slot(ch) = self.slot.as_color_or_slot(&program_state) {
+            program_state.color_slots.insert(
+                ch,
+                program_state
+                    .canvas
+                    .raw()
+                    .color(program_state.cursor_position, self.ground),
+            );
+        }
     }
 }
 
@@ -263,5 +272,11 @@ impl Action for MarkSet {
         program_state
             .marks
             .insert(self.slot, program_state.cursor_position);
+    }
+}
+
+impl Action for SetColorOrSlotActive {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.color_or_slot_active = self.color_or_slot;
     }
 }

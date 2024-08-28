@@ -15,8 +15,8 @@ use crate::Ground;
 use crate::ProgramState;
 
 use super::{
-    ColorSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset, KeybindCompletionError,
-    KeystrokeIterator,
+    ColorOrSlot, ColorOrSlotSpecification, FromKeystrokes, FromKeystrokesByMap, FromPreset,
+    KeybindCompletionError, KeystrokeIterator,
 };
 
 #[enum_dispatch]
@@ -96,7 +96,7 @@ impl FromKeystrokes for Box<dyn Operator> {
 operators_macro!(
     ColorizePreset -> Colorize {
         ground: Option<Ground> => Ground,
-        color: Option<ColorSpecification> => ColorSpecification,
+        color: Option<ColorOrSlotSpecification> => ColorOrSlotSpecification,
     },
     ReplacePreset -> Replace {
         ch: Option<char> => char,
@@ -119,14 +119,15 @@ operators_macro!(
 impl Operator for Colorize {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
         let mut canvas_operations = Vec::new();
-        let color = match self.color {
-            ColorSpecification::Slot(ch) => match program_state.color_slots.get(&ch).copied() {
+        let color = self.color.as_color_or_slot(&program_state);
+        let color = match color {
+            ColorOrSlot::Slot(ch) => match program_state.color_slots.get(&ch).copied() {
                 Some(color) => color,
                 _ => {
                     return;
                 }
             },
-            ColorSpecification::Direct(color) => color,
+            ColorOrSlot::Color(color) => color,
         };
         for index in cell_indices {
             let op = if self.ground == Ground::Foreground {
