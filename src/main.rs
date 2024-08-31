@@ -10,8 +10,9 @@ use crossterm::{
 };
 use log::Log;
 use ratatui::{backend::CrosstermBackend, Terminal};
+use std::io::Read;
 use std::{
-    io::{self, Write},
+    io::{self, BufRead, IsTerminal, Write},
     path::PathBuf,
     sync::{
         mpsc::{self},
@@ -101,19 +102,19 @@ fn application(
     let mut program_state = ProgramState::default();
     program_state.exit = false;
     program_state.open_file = args.ansi_file;
-    program_state.canvas = if let Some(file_path) = &program_state.open_file {
-        let ansi_to_load = std::fs::read_to_string(file_path).unwrap();
-        let canvas = Canvas::from_ansi(ansi_to_load)?;
-        program_state.last_saved_revision = canvas.get_current_revision();
-        canvas
+    let ansi_to_load = if !io::stdin().is_terminal() {
+        let mut input_piped = "".to_string();
+        io::stdin().read_to_string(&mut input_piped).unwrap();
+        input_piped
+    } else if let Some(file_path) = &program_state.open_file {
+        std::fs::read_to_string(file_path).unwrap()
     } else {
-        let canvas = Canvas::default();
-        program_state.last_saved_revision = canvas.get_current_revision();
-        canvas
+        "".to_string()
     };
-
+    program_state.canvas = Canvas::from_ansi(ansi_to_load)?;
+    program_state.last_saved_revision = program_state.canvas.get_current_revision();
     program_state.config = upaint::config::load_config()?;
-    log::debug!("{:#?}", program_state.config);
+    // log::debug!("{:#?}", program_state.config);
     // let canvas_dimensions = program_state.canvas.get_dimensions();
     let canvas_area = program_state.canvas.raw().area();
     program_state.cursor_position = canvas_area.center();

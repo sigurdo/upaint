@@ -316,15 +316,15 @@ fn create_operator_actions_from_operators(config: &mut Config) {
 
 pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
     load_color_preset(&mut toml_table)?;
-    log::debug!("{toml_table:#?}");
+    // log::debug!("{toml_table:#?}");
     let config_toml: ConfigToml =
         toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
     let mut config = config_toml.to_config_value();
-    log::debug!("før: {config:#?}");
+    // log::debug!("før: {config:#?}");
     create_operator_actions_from_operators(&mut config);
     create_motions_from_directions(&mut config);
     create_move_actions_from_motions(&mut config);
-    log::debug!("etter: {config:#?}");
+    // log::debug!("etter: {config:#?}");
     Ok(config)
 }
 
