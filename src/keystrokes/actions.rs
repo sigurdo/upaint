@@ -8,6 +8,7 @@ use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
+use crate::keystrokes::motions::FindChar;
 use crate::keystrokes::Motion;
 use crate::keystrokes::MotionIncompleteEnum;
 use crate::keystrokes::Operator;
@@ -152,6 +153,9 @@ impl Action for Redo {
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
         let cells = self.motion.cells(program_state);
+        if let Some(find_char) = self.motion.as_any().downcast_ref::<FindChar>() {
+            program_state.find_char_last = Some(find_char.clone());
+        }
         let Some(cursor_to) = cells.last() else {
             return;
         };

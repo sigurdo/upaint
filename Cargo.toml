@@ -29,6 +29,7 @@ lending-iterator = "0.1.7"
 bitflags = "2.5.0"
 enum_dispatch = "0.3.13"
 derive_more = "0.99.18"
+as-any = "0.3.1"
 
 [[bin]]
 name = "upaint"

@@ -48,6 +48,8 @@ relative = false
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }
+"," = { FindCharRepeat = { direction_reversed = false } }
+";" = { FindCharRepeat = { direction_reversed = true } }
 "S" = { SelectionMotion = {} }
 "s" = { SelectionMotion = { slot = "Active" } }
 "J" = { GoToMark = { jump = "Diagonals" } }

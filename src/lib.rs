@@ -18,6 +18,7 @@ pub mod user_input;
 pub mod yank_slots;
 
 use crate::config::Config;
+use crate::keystrokes::motions::FindChar;
 use crate::keystrokes::ColorOrSlot;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;
@@ -56,6 +57,12 @@ impl DirectionFree {
     }
     fn y(&self) -> f64 {
         self.rows as f64
+    }
+    fn reversed(&self) -> Self {
+        Self {
+            rows: -self.rows,
+            columns: -self.columns,
+        }
     }
 }
 
@@ -105,6 +112,7 @@ pub struct ProgramState<'a> {
     pub yank_active: char,
     pub selection_active: char,
     pub color_or_slot_active: ColorOrSlot,
+    pub find_char_last: Option<FindChar>,
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'a>,
     pub color_picker: ColorPicker,

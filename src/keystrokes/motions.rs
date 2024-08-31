@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 
 use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIterationJump;
@@ -12,10 +13,11 @@ use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::ProgramState;
+use as_any::AsAny;
 
 use super::{KeybindCompletionError, KeystrokeIterator};
 
-pub trait Motion {
+pub trait Motion: Debug + AsAny {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
 }
 
@@ -29,6 +31,7 @@ macro_rules! motions_macro {
                 )*
             }
 
+            #[derive(Clone, Debug)]
             pub struct $name {
                 $(
                     pub $field: $type,
@@ -101,6 +104,9 @@ motions_macro!(
         direction: Option<DirectionFree> => DirectionFree,
         ch: Option<char> => char,
     },
+    FindCharRepeatIncomplete -> FindCharRepeat {
+        direction_reversed: Option<bool> => bool,
+    },
     SelectionMotionPreset -> SelectionMotion {
         slot: Option<SelectionSlotSpecification> => SelectionSlotSpecification,
     },
@@ -140,6 +146,19 @@ impl Motion for FindChar {
             StopCondition::CharacterMatch(self.ch),
         );
         it.collect()
+    }
+}
+
+impl Motion for FindCharRepeat {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        if let Some(mut find_char) = program_state.find_char_last.clone() {
+            if self.direction_reversed {
+                find_char.direction = find_char.direction.reversed();
+            }
+            find_char.cells(program_state)
+        } else {
+            vec![]
+        }
     }
 }
 
