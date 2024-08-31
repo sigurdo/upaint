@@ -102,78 +102,76 @@ impl RawCanvas {
                 }
             }
 
-            // According to wikipedia (https://en.wikipedia.org/wiki/ANSI_escape_code):
-            // If no codes are given, `CSI m` is treated as `CSI 0 m` (reset / normal)
-            if sgr_sequence == "" {
-                sgr_sequence = "0".to_string()
-            }
-
             let mut values = sgr_sequence.split(';');
-            let Some(first_value) = values.next() else {
-                return Err(AnsiImportError::BadSgrSequence(index));
-            };
-            let Ok(first_value) = first_value.parse::<u64>() else {
-                unreachable!(
-                    "Could not parse first value {:?} of SGR sequence {:?}",
-                    first_value, sgr_sequence
-                );
-            };
-
-            match first_value {
-                0 => {
-                    *fg_color = Color::Reset;
-                    *bg_color = Color::Reset;
-                    *modifiers = Modifier::default();
-                }
-                1 => *modifiers |= Modifier::BOLD,
-                2 => *modifiers |= Modifier::DIM,
-                3 => *modifiers |= Modifier::ITALIC,
-                4 => *modifiers |= Modifier::UNDERLINED,
-                5 => *modifiers |= Modifier::SLOW_BLINK,
-                6 => *modifiers |= Modifier::RAPID_BLINK,
-                7 => *modifiers |= Modifier::REVERSED,
-                8 => *modifiers |= Modifier::HIDDEN,
-                9 => *modifiers |= Modifier::CROSSED_OUT,
-                30 => *fg_color = Color::Black,
-                31 => *fg_color = Color::Red,
-                32 => *fg_color = Color::Green,
-                33 => *fg_color = Color::Yellow,
-                34 => *fg_color = Color::Blue,
-                35 => *fg_color = Color::Magenta,
-                36 => *fg_color = Color::Cyan,
-                37 => *fg_color = Color::Gray,
-                40 => *bg_color = Color::Black,
-                41 => *bg_color = Color::Red,
-                42 => *bg_color = Color::Green,
-                43 => *bg_color = Color::Yellow,
-                44 => *bg_color = Color::Blue,
-                45 => *bg_color = Color::Magenta,
-                46 => *bg_color = Color::Cyan,
-                47 => *bg_color = Color::Gray,
-                90 => *fg_color = Color::DarkGray,
-                91 => *fg_color = Color::LightRed,
-                92 => *fg_color = Color::LightGreen,
-                93 => *fg_color = Color::LightYellow,
-                94 => *fg_color = Color::LightBlue,
-                95 => *fg_color = Color::LightMagenta,
-                96 => *fg_color = Color::LightCyan,
-                97 => *fg_color = Color::White,
-                100 => *bg_color = Color::DarkGray,
-                101 => *bg_color = Color::LightRed,
-                102 => *bg_color = Color::LightGreen,
-                103 => *bg_color = Color::LightYellow,
-                104 => *bg_color = Color::LightBlue,
-                105 => *bg_color = Color::LightMagenta,
-                106 => *bg_color = Color::LightCyan,
-                107 => *bg_color = Color::White,
-                38 => *fg_color = sgr_set_color(&mut values, index)?,
-                39 => *fg_color = Color::Reset,
-                48 => *bg_color = sgr_set_color(&mut values, index)?,
-                49 => *bg_color = Color::Reset,
-                _ => {
-                    return Err(AnsiImportError::UnsupportedSgrSequence(index));
-                }
-            };
+            while let Some(attribute) = values.next() {
+                let attribute = if attribute == "" {
+                    // According to wikipedia (https://en.wikipedia.org/wiki/ANSI_escape_code):
+                    // If no codes are given, `CSI m` is treated as `CSI 0 m` (reset / normal)
+                    0
+                } else {
+                    attribute.parse::<u64>().unwrap_or_else(|_| {
+                        unreachable!(
+                            "Could not parse first value {:?} of SGR sequence {:?}",
+                            attribute, sgr_sequence
+                        );
+                    })
+                };
+                match attribute {
+                    0 => {
+                        *fg_color = Color::Reset;
+                        *bg_color = Color::Reset;
+                        *modifiers = Modifier::default();
+                    }
+                    1 => *modifiers |= Modifier::BOLD,
+                    2 => *modifiers |= Modifier::DIM,
+                    3 => *modifiers |= Modifier::ITALIC,
+                    4 => *modifiers |= Modifier::UNDERLINED,
+                    5 => *modifiers |= Modifier::SLOW_BLINK,
+                    6 => *modifiers |= Modifier::RAPID_BLINK,
+                    7 => *modifiers |= Modifier::REVERSED,
+                    8 => *modifiers |= Modifier::HIDDEN,
+                    9 => *modifiers |= Modifier::CROSSED_OUT,
+                    30 => *fg_color = Color::Black,
+                    31 => *fg_color = Color::Red,
+                    32 => *fg_color = Color::Green,
+                    33 => *fg_color = Color::Yellow,
+                    34 => *fg_color = Color::Blue,
+                    35 => *fg_color = Color::Magenta,
+                    36 => *fg_color = Color::Cyan,
+                    37 => *fg_color = Color::Gray,
+                    40 => *bg_color = Color::Black,
+                    41 => *bg_color = Color::Red,
+                    42 => *bg_color = Color::Green,
+                    43 => *bg_color = Color::Yellow,
+                    44 => *bg_color = Color::Blue,
+                    45 => *bg_color = Color::Magenta,
+                    46 => *bg_color = Color::Cyan,
+                    47 => *bg_color = Color::Gray,
+                    90 => *fg_color = Color::DarkGray,
+                    91 => *fg_color = Color::LightRed,
+                    92 => *fg_color = Color::LightGreen,
+                    93 => *fg_color = Color::LightYellow,
+                    94 => *fg_color = Color::LightBlue,
+                    95 => *fg_color = Color::LightMagenta,
+                    96 => *fg_color = Color::LightCyan,
+                    97 => *fg_color = Color::White,
+                    100 => *bg_color = Color::DarkGray,
+                    101 => *bg_color = Color::LightRed,
+                    102 => *bg_color = Color::LightGreen,
+                    103 => *bg_color = Color::LightYellow,
+                    104 => *bg_color = Color::LightBlue,
+                    105 => *bg_color = Color::LightMagenta,
+                    106 => *bg_color = Color::LightCyan,
+                    107 => *bg_color = Color::White,
+                    38 => *fg_color = sgr_set_color(&mut values, index)?,
+                    39 => *fg_color = Color::Reset,
+                    48 => *bg_color = sgr_set_color(&mut values, index)?,
+                    49 => *bg_color = Color::Reset,
+                    _ => {
+                        return Err(AnsiImportError::UnsupportedSgrSequence(index));
+                    }
+                };
+            }
             Ok(())
         }
 

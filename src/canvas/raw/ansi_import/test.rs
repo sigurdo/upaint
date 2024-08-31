@@ -431,3 +431,53 @@ fn empty_sgr_sequence() {
         ))
     );
 }
+
+#[test]
+fn multiple_attributes() {
+    // Test that multiple attributes can be set at the same time
+    let ansi = "\u{1b}[31;1;42ma\u{1b}[0;38;5;93mb\u{1b}[;42mc".to_string();
+    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+
+    assert_eq!(canvas.cells.len(), 3);
+
+    let mut cells = canvas.cells.iter();
+
+    assert_eq!(
+        cells.next(),
+        Some((
+            &(0, 0),
+            &CanvasCell {
+                character: 'a',
+                fg: Color::Red,
+                bg: Color::Green,
+                modifiers: Modifier::BOLD,
+            }
+        ))
+    );
+
+    assert_eq!(
+        cells.next(),
+        Some((
+            &(0, 1),
+            &CanvasCell {
+                character: 'b',
+                fg: Color::Indexed(93),
+                bg: Color::Reset,
+                modifiers: Modifier::default(),
+            }
+        ))
+    );
+
+    assert_eq!(
+        cells.next(),
+        Some((
+            &(0, 2),
+            &CanvasCell {
+                character: 'c',
+                fg: Color::Reset,
+                bg: Color::Green,
+                modifiers: Modifier::default(),
+            }
+        ))
+    );
+}
