@@ -162,6 +162,37 @@ impl FromKeystrokes for char {
     }
 }
 
+impl FromKeystrokes for u16 {
+    fn from_keystrokes(
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        fn parse_and_return(unparsed: String) -> Result<u16, KeybindCompletionError> {
+            match u16::from_str_radix(unparsed.as_str(), 10) {
+                Ok(parsed) => Ok(parsed),
+                Err(_) => Err(KeybindCompletionError::Other),
+            }
+        }
+        let mut unparsed = "".to_string();
+        while let Some(keystroke) = keystrokes.next() {
+            if let Keystroke {
+                code: KeyCode::Char(ch),
+                modifiers: KeyModifiers::NONE,
+            } = keystroke
+            {
+                if ch.is_ascii_digit() {
+                    unparsed.push(*ch);
+                } else {
+                    return parse_and_return(unparsed);
+                }
+            } else {
+                return parse_and_return(unparsed);
+            }
+        }
+        return Err(KeybindCompletionError::MissingKeystrokes);
+    }
+}
+
 impl FromKeystrokes for SelectionSlotSpecification {
     fn from_keystrokes(
         keystrokes: &mut KeystrokeIterator,

@@ -66,7 +66,8 @@ fn test_canvas_index_iterator() {
     use crate::{Direction, DirectionFree};
     #[rustfmt::skip]
     let tests = vec![
-        ("    4567    abcd", (0, 0), DirectionFree::from(Direction::Right), StopCondition::SecondCell, (0, 1)),
+        ("    4567    abcd", (0, 0), DirectionFree::from(Direction::Right), StopCondition::NthCell(1), (0, 1)),
+        ("    4567    abcd", (1, 1), DirectionFree::from(Direction::Right), StopCondition::NthCell(3), (1, 4)),
         ("    4567    abcd", (0, 0), DirectionFree::from(Direction::Right), StopCondition::WordBoundary(WordBoundaryType::ANY), (0, 4)),
         ("    4567    abcd", (0, 4), DirectionFree::from(Direction::Right), StopCondition::WordBoundary(WordBoundaryType::ANY), (0, 7)),
         ("    4567    abcd", (0, 6), DirectionFree::from(Direction::Right), StopCondition::WordBoundary(WordBoundaryType::ANY), (0, 7)),

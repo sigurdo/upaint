@@ -13,7 +13,7 @@ use crate::{
     keystrokes::deserialize::KeystrokeSequenceToml,
     keystrokes::operators::UpdateSelectionOperator,
     keystrokes::{
-        actions::MoveCursorPreset, actions::OperationPreset, motions::OncePreset,
+        actions::MoveCursorPreset, actions::OperationPreset, motions::FixedNumberOfCellsPreset,
         ActionIncompleteEnum, MotionIncompleteEnum, OperatorIncompleteEnum,
     },
     ErrorCustom, Ground,
@@ -271,8 +271,9 @@ fn create_motions_from_directions(config: &mut Config) {
             .map(|(keystrokes, direction_preset)| {
                 (
                     keystrokes,
-                    MotionIncompleteEnum::Once(OncePreset {
+                    MotionIncompleteEnum::FixedNumberOfCells(FixedNumberOfCellsPreset {
                         direction: Some(*direction_preset),
+                        number_of_cells: Some(1),
                         jump: Some(CanvasIterationJump::DirectionAsStride),
                     }),
                 )

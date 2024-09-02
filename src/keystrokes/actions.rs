@@ -20,9 +20,7 @@ use crate::Ground;
 use crate::InputMode;
 use crate::ProgramState;
 
-use super::{
-    ColorOrSlot, ColorOrSlotSpecification, ColorSlot, KeybindCompletionError, KeystrokeIterator,
-};
+use super::{ColorOrSlot, ColorOrSlotSpecification, KeybindCompletionError, KeystrokeIterator};
 
 macro_rules! actions_macro {
     ($($name_preset:ident -> $name:ident {$($field:ident : $type_preset:ty => $type:ty),*$(,)?}),*,) => {

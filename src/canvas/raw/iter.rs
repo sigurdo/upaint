@@ -180,7 +180,7 @@ bitflags! {
 #[derive(Clone, Debug)]
 pub enum StopCondition {
     Index(CanvasIndex),
-    SecondCell,
+    NthCell(u16),
     CharacterChange,
     WordBoundary(WordBoundaryType),
     CharacterMatch(char),
@@ -236,7 +236,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                         StopCondition::Index((row_stop, column_stop)) => {
                             row == *row_stop && column == *column_stop
                         }
-                        StopCondition::SecondCell => true,
+                        StopCondition::NthCell(n) => indices_iterated.len() + 1 > *n as usize,
                         StopCondition::CharacterChange => {
                             if let Some(prev) = indices_iterated.back() {
                                 let character_prev = self.canvas.character(*prev);
@@ -291,6 +291,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                 }
                             }
                         }
+                        StopCondition::NthCell(_) => false,
                         _ => {
                             self.direction.rows.signum() == (row - area.row).signum()
                                 && !area.includes_index((row, area.column))

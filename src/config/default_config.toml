@@ -45,6 +45,7 @@ relative = false
 
 [keymaps.motions]
 " " = { Stay = {} }
+"n" = { FixedNumberOfCells = { jump = "Diagonals" } }
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }

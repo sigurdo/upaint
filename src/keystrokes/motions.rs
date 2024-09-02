@@ -92,8 +92,9 @@ impl FromKeystrokes for Box<dyn Motion> {
 
 motions_macro!(
     StayPreset -> Stay {,},
-    OncePreset -> Once {
+    FixedNumberOfCellsPreset -> FixedNumberOfCells {
         direction: Option<DirectionFree> => DirectionFree,
+        number_of_cells: Option<u16> => u16,
         jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
     },
     WordBoundaryIncomplete -> WordBoundary {
@@ -162,7 +163,7 @@ impl Motion for FindCharRepeat {
     }
 }
 
-impl Motion for Once {
+impl Motion for FixedNumberOfCells {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
@@ -171,7 +172,7 @@ impl Motion for Once {
             start,
             self.direction,
             self.jump,
-            StopCondition::SecondCell,
+            StopCondition::NthCell(self.number_of_cells),
         );
         it.collect()
     }
