@@ -37,8 +37,8 @@ relative = false
 "r" = { Replace = {} }
 "S" = { UpdateSelection = { highlight = true } }
 "a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true } }
-"s" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true } }
-"z" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true } }
+"z" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true } }
+"s" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true } }
 "y" = { Yank = { content_type = "ALL", slot = "Active" } }
 "D" = { Cut = { content_type = "ALL" } }
 "d" = { Cut = { content_type = "ALL", slot = "Active" } }
@@ -56,6 +56,8 @@ relative = false
 "J" = { GoToMark = { jump = "Diagonals" } }
 "L" = { GoToMark = { jump = "Diagonals", slot = "l" } }
 "A" = { MatchingCells = {} }
+"i" = { ContinuousRegion = { diagonals_allowed = false } }
+"a" = { ContinuousRegion = { diagonals_allowed = true } }
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }
@@ -114,10 +116,11 @@ relative = false
 
 [keymaps.update_selection_operators]
 "a" = "Add"
-"w" = "Overwrite"
-"s" = "Subtract"
+"s" = "Overwrite"
+"z" = "Subtract"
 
-[keymaps.yank_content_type]
+[keymaps.cell_content_types]
+"n" = "NONE"
 "a" = "ALL"
 "t" = "TEXT"
 "f" = "FG"
@@ -127,4 +130,7 @@ relative = false
 "B" = "BG | TEXT"
 "C" = "COLOR | TEXT"
 "m" = "MODIFIERS"
+
+[keymaps.continuous_region_relative_types]
+"w" = { NonBlank = "TEXT" }
 

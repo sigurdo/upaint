@@ -7,6 +7,7 @@ use derive_more::From;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 
+use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
@@ -305,12 +306,18 @@ impl FromKeystrokesByMap for CanvasIterationJump {
 
 impl FromKeystrokesByMap for CellContentType {
     fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
-        &config.keymaps.yank_content_type
+        &config.keymaps.cell_content_types
     }
 }
 
 impl FromKeystrokesByMap for bool {
     fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
         &config.keymaps.bools
+    }
+}
+
+impl FromKeystrokesByMap for ContinuousRegionRelativeType {
+    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+        &config.keymaps.continuous_region_relative_types
     }
 }

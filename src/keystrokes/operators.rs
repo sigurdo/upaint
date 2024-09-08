@@ -30,14 +30,14 @@ macro_rules! operators_macro {
             #[derive(Default, Debug, Clone, Serialize, Deserialize)]
             pub struct $name_preset {
                 $(
-                    $field: $type_preset,
+                    pub $field: $type_preset,
                 )*
             }
 
             #[derive(Debug, Clone)]
             pub struct $name {
                 $(
-                    $field: $type,
+                    pub $field: $type,
                 )*
             }
 

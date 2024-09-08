@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
+use crate::canvas::raw::continuous_region::find_continuous_region;
+use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
+use crate::canvas::raw::continuous_region::MatchCell;
+use crate::canvas::raw::continuous_region::MatchCellSame;
 use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
@@ -117,6 +121,11 @@ motions_macro!(
     },
     MatchingCellsPreset -> MatchingCells {
         content_type: Option<CellContentType> => CellContentType,
+    },
+    ContinuousRegionPreset -> ContinuousRegion {
+        relative_type: Option<ContinuousRegionRelativeType> => ContinuousRegionRelativeType,
+        diagonals_allowed: Option<bool> => bool,
+        // content_type: Option<CellContentType> => CellContentType,
     },
 );
 
@@ -245,11 +254,22 @@ impl Motion for MatchingCells {
         let selection = program_state
             .canvas
             .raw()
-            .cells_matching(ch, fg, bg, modifiers);
+            .cells_matching_old(ch, fg, bg, modifiers);
         let mut result = Vec::new();
         for cell in selection {
             result.push(cell);
         }
         result
+    }
+}
+
+impl Motion for ContinuousRegion {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let canvas = program_state.canvas.raw();
+        let start = program_state.cursor_position;
+        let match_cell = MatchCell::from((canvas.get(&start), self.relative_type));
+        find_continuous_region(&canvas, start, match_cell, self.diagonals_allowed)
+            .into_iter()
+            .collect()
     }
 }

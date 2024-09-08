@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
 use crate::{
+    canvas::raw::continuous_region::ContinuousRegionRelativeType,
     canvas::raw::iter::CanvasIterationJump,
     canvas::raw::iter::WordBoundaryType,
     canvas::raw::CellContentType,
@@ -181,7 +182,8 @@ config_struct_definition!({
         colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
         canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => Keymaps<CanvasIterationJump>),
         update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => Keymaps<UpdateSelectionOperator>),
-        yank_content_type: (HashMap<KeystrokeSequenceToml, CellContentType> => Keymaps<CellContentType>),
+        cell_content_types: (HashMap<KeystrokeSequenceToml, CellContentType> => Keymaps<CellContentType>),
+        continuous_region_relative_types: (HashMap<KeystrokeSequenceToml, ContinuousRegionRelativeType> => Keymaps<ContinuousRegionRelativeType>),
     },
 });
 
@@ -216,6 +218,7 @@ generic_impl_toml_value_for_incomplete_enums!(
     CanvasIterationJump,
     UpdateSelectionOperator,
     CellContentType,
+    ContinuousRegionRelativeType,
 );
 
 impl Default for Config {
@@ -315,6 +318,20 @@ fn create_operator_actions_from_operators(config: &mut Config) {
     );
 }
 
+fn create_continuous_region_relative_types_from_content_types(config: &mut Config) {
+    keymaps_extend_preserve(
+        &mut config.keymaps.continuous_region_relative_types,
+        keymaps_iter(&config.keymaps.cell_content_types)
+            .map(|(keystrokes, content_type)| {
+                (
+                    keystrokes,
+                    ContinuousRegionRelativeType::Same(*content_type),
+                )
+            })
+            .into_iter(),
+    )
+}
+
 pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
     load_color_preset(&mut toml_table)?;
     // log::debug!("{toml_table:#?}");
@@ -325,6 +342,7 @@ pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, Err
     create_operator_actions_from_operators(&mut config);
     create_motions_from_directions(&mut config);
     create_move_actions_from_motions(&mut config);
+    create_continuous_region_relative_types_from_content_types(&mut config);
     // log::debug!("etter: {config:#?}");
     Ok(config)
 }

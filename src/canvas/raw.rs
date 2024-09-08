@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 
 use ratatui::style::{Color, Modifier};
 
@@ -11,11 +11,14 @@ use super::rect::CanvasRect;
 
 pub mod ansi_export;
 pub mod ansi_import;
+pub mod continuous_region;
 pub mod iter;
 pub mod operations;
 pub mod paste;
 pub mod rendering;
 pub mod yank;
+
+use continuous_region::MatchValue;
 
 #[cfg(test)]
 mod test;
@@ -33,6 +36,12 @@ bitflags! {
         const COLOR     = 0b0000_0110;
         const MODIFIERS = 0b0000_1000;
         const ALL       = 0b0000_1111;
+    }
+}
+
+impl Default for CellContentType {
+    fn default() -> Self {
+        Self::NONE
     }
 }
 
@@ -63,14 +72,22 @@ const DEFAULT_FG: Color = Color::Reset;
 const DEFAULT_BG: Color = Color::Reset;
 const DEFAULT_MODIFIERS: Modifier = Modifier::empty();
 
+const DEFAULT_CELL: CanvasCell = CanvasCell {
+    character: DEFAULT_CHARACTER,
+    fg: DEFAULT_FG,
+    bg: DEFAULT_BG,
+    modifiers: DEFAULT_MODIFIERS,
+};
+
+impl Default for &CanvasCell {
+    fn default() -> Self {
+        &DEFAULT_CELL
+    }
+}
+
 impl Default for CanvasCell {
     fn default() -> Self {
-        CanvasCell {
-            character: DEFAULT_CHARACTER,
-            fg: DEFAULT_FG,
-            bg: DEFAULT_BG,
-            modifiers: DEFAULT_MODIFIERS,
-        }
+        DEFAULT_CELL.clone()
     }
 }
 
@@ -91,16 +108,20 @@ impl<'a> RawCanvas {
         self.cells.get_mut(index).unwrap()
     }
 
-    fn _get(&'a mut self, index: &CanvasIndex) -> &'a CanvasCell {
-        self.get_mut(index)
-    }
-
     fn _set(&mut self, index: CanvasIndex, cell: CanvasCell) {
         self.cells.insert(index, cell);
         self.area.include_index(index);
     }
 
     // Public interface
+
+    pub fn get(&'a self, index: &CanvasIndex) -> &'a CanvasCell {
+        if let Some(cell) = self.cells.get(index) {
+            &cell
+        } else {
+            &DEFAULT_CELL
+        }
+    }
 
     pub fn character(&self, index: CanvasIndex) -> char {
         match self.cells.get(&index) {
@@ -180,7 +201,16 @@ impl<'a> RawCanvas {
         self.get_mut(&index).modifiers = modifiers;
         self
     }
-    pub fn cells_matching(
+    pub fn cells_matching(&self, match_cell: impl MatchValue<CanvasCell>) -> Selection {
+        let mut result = Selection::new();
+        for (index, cell) in &self.cells {
+            if match_cell.matches(cell) {
+                result.insert(*index);
+            }
+        }
+        result
+    }
+    pub fn cells_matching_old(
         &self,
         ch: Option<char>,
         fg: Option<Color>,
