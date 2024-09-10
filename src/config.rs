@@ -13,9 +13,11 @@ use crate::{
     canvas::raw::CellContentType,
     keystrokes::deserialize::KeystrokeSequenceToml,
     keystrokes::operators::UpdateSelectionOperator,
+    keystrokes::ColorOrSlotSpecification,
     keystrokes::{
         actions::MoveCursorPreset, actions::OperationPreset, motions::FixedNumberOfCellsPreset,
-        ActionIncompleteEnum, MotionIncompleteEnum, OperatorIncompleteEnum,
+        ActionIncompleteEnum, ColorOrSlot, ColorOrSlotPreset, MotionIncompleteEnum,
+        OperatorIncompleteEnum,
     },
     ErrorCustom, Ground,
 };
@@ -25,7 +27,9 @@ pub mod keymaps;
 
 use self::{
     color_theme::{ColorThemePreset, ColorToml, StyleConfig, StyleToml},
-    keymaps::{keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter, Keymaps},
+    keymaps::{
+        keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter, Keymaps, KeymapsEntry,
+    },
 };
 
 #[cfg(test)]
@@ -180,6 +184,8 @@ config_struct_definition!({
         grounds: (HashMap<KeystrokeSequenceToml, Ground> => Keymaps<Ground>),
         word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => Keymaps<WordBoundaryType>),
         colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
+        color_or_slots: (HashMap<KeystrokeSequenceToml, ColorOrSlotPreset> => Keymaps<ColorOrSlotPreset>),
+        color_or_slot_specifications: (HashMap<KeystrokeSequenceToml, ColorOrSlotSpecification> => Keymaps<ColorOrSlotSpecification>),
         canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => Keymaps<CanvasIterationJump>),
         update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => Keymaps<UpdateSelectionOperator>),
         cell_content_types: (HashMap<KeystrokeSequenceToml, CellContentType> => Keymaps<CellContentType>),
@@ -219,6 +225,8 @@ generic_impl_toml_value_for_incomplete_enums!(
     UpdateSelectionOperator,
     CellContentType,
     ContinuousRegionRelativeType,
+    ColorOrSlotSpecification,
+    ColorOrSlotPreset,
 );
 
 impl Default for Config {

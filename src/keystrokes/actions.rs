@@ -9,10 +9,12 @@ use crate::command_line::create_command_line_textarea;
 use crate::config::keymaps::Keymaps;
 use crate::config::Config;
 use crate::keystrokes::motions::FindChar;
+use crate::keystrokes::ColorOrSlotPreset;
 use crate::keystrokes::Motion;
 use crate::keystrokes::MotionIncompleteEnum;
 use crate::keystrokes::Operator;
 use crate::keystrokes::OperatorIncompleteEnum;
+use crate::keystrokes::Preset;
 use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
 use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
@@ -123,7 +125,7 @@ actions_macro!(
         highlight: bool => bool,
     },
     SetColorOrSlotActivePreset -> SetColorOrSlotActive {
-        color_or_slot: Option<ColorOrSlot> => ColorOrSlot,
+        color_or_slot: Option<ColorOrSlotPreset> => ColorOrSlot,
     },
     PastePreset -> Paste {
         slot: Option<YankSlotSpecification> => YankSlotSpecification,
@@ -279,6 +281,6 @@ impl Action for MarkSet {
 
 impl Action for SetColorOrSlotActive {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.color_or_slot_active = self.color_or_slot;
+        program_state.color_or_slot_active = self.color_or_slot; //.as_color_or_slot(program_state);
     }
 }

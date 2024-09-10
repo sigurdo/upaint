@@ -92,23 +92,30 @@ relative = false
 "e" = "END"
 
 [keymaps.colors]
-"  " = "Reset"
-" b" = "Black"
-" r" = "Red"
-" g" = "Green"
-" y" = "Yellow"
-" l" = "Blue"
-" m" = "Magenta"
-" c" = "Cyan"
-" w" = "Gray" # Non-bright white
-" B" = "DarkGray" # Bright black
-" R" = "LightRed"
-" G" = "LightGreen"
-" Y" = "LightYellow"
-" L" = "LightBlue"
-" M" = "LightMagenta"
-" C" = "LightCyan"
-" W" = "White"
+" " = "Reset"
+"b" = "Black"
+"r" = "Red"
+"g" = "Green"
+"y" = "Yellow"
+"l" = "Blue"
+"m" = "Magenta"
+"c" = "Cyan"
+"w" = "Gray" # Non-bright white
+"B" = "DarkGray" # Bright black
+"R" = "LightRed"
+"G" = "LightGreen"
+"Y" = "LightYellow"
+"L" = "LightBlue"
+"M" = "LightMagenta"
+"C" = "LightCyan"
+"W" = "White"
+# "s" = { Slot = "s" }
+
+[keymaps.color_or_slots]
+"s" = { Slot = "FromKeystrokes" }
+" " = { Color = "FromKeystrokes" }
+
+[keymaps.color_or_slot_specifications]
 
 [keymaps.canvas_iteration_jump]
 "d" = "Diagonals"
@@ -133,4 +140,5 @@ relative = false
 
 [keymaps.continuous_region_relative_types]
 "w" = { NonBlank = "TEXT" }
+# "W" = { NonBlank = {} }
 
