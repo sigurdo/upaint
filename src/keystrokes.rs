@@ -13,6 +13,7 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::config::keymaps::keymaps_complete;
 use crate::config::keymaps::Keymaps;
+use crate::config::keymaps::KeymapsEntry;
 use crate::config::Config;
 use crate::selections::SelectionSlotSpecification;
 use crate::yank_slots::YankSlotSpecification;
@@ -65,7 +66,7 @@ pub enum KeybindCompletionError {
 }
 
 pub trait FromKeystrokesByMap: Sized + Clone {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self>;
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self>;
 }
 
 impl<T: FromKeystrokesByMap + std::fmt::Debug> FromKeystrokes for T {
@@ -249,12 +250,12 @@ pub enum ColorOrSlot {
 }
 
 impl FromKeystrokesByMap for Color {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.colors
     }
 }
 impl FromKeystrokesByMap for ColorOrSlotPreset {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.color_or_slots
     }
 }
@@ -312,7 +313,7 @@ impl ColorOrSlotSpecification {
     }
 }
 impl FromKeystrokesByMap for ColorOrSlotSpecification {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.color_or_slot_specifications
     }
 }
@@ -342,43 +343,43 @@ impl FromKeystrokesByMap for ColorOrSlotSpecification {
 // }
 
 impl FromKeystrokesByMap for Ground {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.grounds
     }
 }
 
 impl FromKeystrokesByMap for DirectionFree {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.directions
     }
 }
 
 impl FromKeystrokesByMap for WordBoundaryType {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.word_boundary_types
     }
 }
 
 impl FromKeystrokesByMap for CanvasIterationJump {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.canvas_iteration_jump
     }
 }
 
 impl FromKeystrokesByMap for CellContentType {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.cell_content_types
     }
 }
 
 impl FromKeystrokesByMap for bool {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.bools
     }
 }
 
 impl FromKeystrokesByMap for ContinuousRegionRelativeType {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.continuous_region_relative_types
     }
 }

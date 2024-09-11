@@ -175,21 +175,21 @@ config_struct_definition!({
     },
     keymaps: {
         (KeymapsToml => KeymapsConfig),
-        actions: (HashMap<KeystrokeSequenceToml, ActionIncompleteEnum> => Keymaps<ActionIncompleteEnum>),
-        operators: (HashMap<KeystrokeSequenceToml, OperatorIncompleteEnum> => Keymaps<OperatorIncompleteEnum>),
-        motions: (HashMap<KeystrokeSequenceToml, MotionIncompleteEnum> => Keymaps<MotionIncompleteEnum>),
-        directions: (HashMap<KeystrokeSequenceToml, DirectionFree> => Keymaps<DirectionFree>),
-        characters: (HashMap<KeystrokeSequenceToml, char> => Keymaps<char>),
-        bools: (HashMap<KeystrokeSequenceToml, bool> => Keymaps<bool>),
-        grounds: (HashMap<KeystrokeSequenceToml, Ground> => Keymaps<Ground>),
-        word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => Keymaps<WordBoundaryType>),
-        colors: (HashMap<KeystrokeSequenceToml, Color> => Keymaps<Color>),
-        color_or_slots: (HashMap<KeystrokeSequenceToml, ColorOrSlotPreset> => Keymaps<ColorOrSlotPreset>),
-        color_or_slot_specifications: (HashMap<KeystrokeSequenceToml, ColorOrSlotSpecification> => Keymaps<ColorOrSlotSpecification>),
-        canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => Keymaps<CanvasIterationJump>),
-        update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => Keymaps<UpdateSelectionOperator>),
-        cell_content_types: (HashMap<KeystrokeSequenceToml, CellContentType> => Keymaps<CellContentType>),
-        continuous_region_relative_types: (HashMap<KeystrokeSequenceToml, ContinuousRegionRelativeType> => Keymaps<ContinuousRegionRelativeType>),
+        actions: (HashMap<KeystrokeSequenceToml, ActionIncompleteEnum> => KeymapsEntry<ActionIncompleteEnum>),
+        operators: (HashMap<KeystrokeSequenceToml, OperatorIncompleteEnum> => KeymapsEntry<OperatorIncompleteEnum>),
+        motions: (HashMap<KeystrokeSequenceToml, MotionIncompleteEnum> => KeymapsEntry<MotionIncompleteEnum>),
+        directions: (HashMap<KeystrokeSequenceToml, DirectionFree> => KeymapsEntry<DirectionFree>),
+        characters: (HashMap<KeystrokeSequenceToml, char> => KeymapsEntry<char>),
+        bools: (HashMap<KeystrokeSequenceToml, bool> => KeymapsEntry<bool>),
+        grounds: (HashMap<KeystrokeSequenceToml, Ground> => KeymapsEntry<Ground>),
+        word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => KeymapsEntry<WordBoundaryType>),
+        colors: (HashMap<KeystrokeSequenceToml, Color> => KeymapsEntry<Color>),
+        color_or_slots: (HashMap<KeystrokeSequenceToml, ColorOrSlotPreset> => KeymapsEntry<ColorOrSlotPreset>),
+        color_or_slot_specifications: (HashMap<KeystrokeSequenceToml, ColorOrSlotSpecification> => KeymapsEntry<ColorOrSlotSpecification>),
+        canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => KeymapsEntry<CanvasIterationJump>),
+        update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => KeymapsEntry<UpdateSelectionOperator>),
+        cell_content_types: (HashMap<KeystrokeSequenceToml, CellContentType> => KeymapsEntry<CellContentType>),
+        continuous_region_relative_types: (HashMap<KeystrokeSequenceToml, ContinuousRegionRelativeType> => KeymapsEntry<ContinuousRegionRelativeType>),
     },
 });
 
@@ -197,7 +197,7 @@ macro_rules! generic_impl_toml_value_for_incomplete_enums(
     ($($type:ty),*,) => {
         $(
             impl TomlValue for HashMap<KeystrokeSequenceToml, $type> {
-                type ConfigValue = Keymaps<$type>;
+                type ConfigValue = KeymapsEntry<$type>;
                 fn to_config_value(self) -> Self::ConfigValue {
                     let mut result = HashMap::new();
                     for (KeystrokeSequenceToml(keystrokes), value) in self {
