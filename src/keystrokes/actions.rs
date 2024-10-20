@@ -6,7 +6,8 @@ use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::operations::CanvasOperation;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
-use crate::config::keymaps::Keymaps;
+use crate::config::keymaps::keymaps_complete_complete;
+use crate::config::keymaps::KeymapsEntry;
 use crate::config::Config;
 use crate::keystrokes::motions::FindChar;
 use crate::keystrokes::ColorOrSlotPreset;
@@ -34,6 +35,7 @@ macro_rules! actions_macro {
                 )*
             }
 
+            #[derive(Debug)]
             pub struct $name {
                 $(
                     pub $field: $type,
@@ -74,7 +76,7 @@ macro_rules! actions_macro {
 }
 
 impl FromKeystrokesByMap for ActionIncompleteEnum {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.actions
     }
 }
@@ -84,11 +86,16 @@ impl FromKeystrokes for Box<dyn Action> {
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
-        Self::from_preset(
-            ActionIncompleteEnum::from_keystrokes(keystrokes, config)?,
+        keymaps_complete_complete(
+            ActionIncompleteEnum::get_map(config).clone(),
             keystrokes,
             config,
         )
+        // Self::from_preset(
+        //     ActionIncompleteEnum::from_keystrokes(keystrokes, config)?,
+        //     keystrokes,
+        //     config,
+        // )
     }
 }
 
@@ -136,7 +143,42 @@ actions_macro!(
     MarkSetPreset -> MarkSet {
         slot: Option<char> => char,
     },
+    // CombinePreset -> Combine {
+    //     action: Vec<Box<dyn Action>> => Vec<Box<dyn Action>>,
+    // },
 );
+
+// #[derive(Debug, Clone, Serialize, Deserialize)]
+// pub enum MetaActionIncompleteEnum {
+//     Combined(Vec<ActionIncompleteEnum>),
+//     #[serde(untagged)]
+//     Simple(ActionIncompleteEnum),
+// }
+// impl FromPreset<MetaActionIncompleteEnum> for Box<dyn Action> {
+//     fn from_preset(
+//         preset: MetaActionIncompleteEnum,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, KeybindCompletionError> {
+//         match preset {
+//             MetaActionIncompleteEnum::Simple(action) => {
+//                 Self::from_preset(action, keystrokes, config)
+//             }
+//             MetaActionIncompleteEnum::Combined(actions) => {}
+//         }
+//     }
+// }
+
+// pub enum MetaAction {
+//     Combined(Vec<Box<dyn Action>>),
+// }
+// impl Action for MetaAction {
+//     fn execute(&self, program_state: &mut ProgramState) {
+//         match self {
+//             Self::Combined(actions) => {}
+//         }
+//     }
+// }
 
 impl Action for Undo {
     fn execute(&self, program_state: &mut ProgramState) {

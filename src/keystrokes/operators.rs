@@ -6,7 +6,8 @@ use crate::canvas::raw::operations::CanvasOperation;
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::config::keymaps::Keymaps;
+use crate::config::keymaps::keymaps_complete_complete;
+use crate::config::keymaps::KeymapsEntry;
 use crate::config::Config;
 use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
@@ -75,7 +76,7 @@ macro_rules! operators_macro {
 }
 
 impl FromKeystrokesByMap for OperatorIncompleteEnum {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.operators
     }
 }
@@ -85,11 +86,16 @@ impl FromKeystrokes for Box<dyn Operator> {
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
-        Self::from_preset(
-            OperatorIncompleteEnum::from_keystrokes(keystrokes, config)?,
+        keymaps_complete_complete(
+            OperatorIncompleteEnum::get_map(config).clone(),
             keystrokes,
             config,
         )
+        // Self::from_preset(
+        //     OperatorIncompleteEnum::from_keystrokes(keystrokes, config)?,
+        //     keystrokes,
+        //     config,
+        // )
     }
 }
 
@@ -160,7 +166,7 @@ pub enum UpdateSelectionOperator {
     // Invert,
 }
 impl FromKeystrokesByMap for UpdateSelectionOperator {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.update_selection_operators
     }
 }

@@ -31,6 +31,7 @@ enum_dispatch = "0.3.13"
 derive_more = "0.99.18"
 as-any = "0.3.1"
 upaint_derive = { version = "0.1.0", path = "upaint_derive" }
+keystrokes_parsing = { path = "keystrokes_parsing" }
 
 [[bin]]
 name = "upaint"

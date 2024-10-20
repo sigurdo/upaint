@@ -1,0 +1,9 @@
+[package]
+name = "keystrokes_parsing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.188", features = ["derive"] }
+crossterm = { version = "0.27.0", features = ["serde"] }
+derive_more = "0.99.18"

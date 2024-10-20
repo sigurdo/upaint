@@ -1,9 +1,8 @@
-
 use crate::ProgramState;
 
 pub mod session;
 
-pub trait Action {
+pub trait Action: std::fmt::Debug {
     fn execute(&self, program_state: &mut ProgramState);
 }
 

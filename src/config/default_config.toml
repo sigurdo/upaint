@@ -28,6 +28,10 @@ relative = false
 "R" = { Operation = { operator = { Replace = {}}}}
 "m" = { MarkSet = {}}
 "#" = { SetColorOrSlotActive = {} }
+"Kr" = { Operation = { motion = { Stay = {}}, operator = { Replace = { ch = "h"}}}}
+# "" = { Operation = { operator = { Replace = { ch = "h"}}}}
+# "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
+"" = { MoveCursor = {}}
 
 [keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground", color = "Active" } }
@@ -58,6 +62,7 @@ relative = false
 "A" = { MatchingCells = {} }
 "i" = { ContinuousRegion = { diagonals_allowed = false } }
 "a" = { ContinuousRegion = { diagonals_allowed = true } }
+"" = { FixedNumberOfCells = { number_of_cells = 1, jump = "DirectionAsStride" }}
 
 [keymaps.directions]
 "h" = { rows = 0, columns = -1 }
@@ -113,7 +118,7 @@ relative = false
 
 [keymaps.color_or_slots]
 "s" = { Slot = "FromKeystrokes" }
-" " = { Color = "FromKeystrokes" }
+"" = { Color = "FromKeystrokes" }
 
 [keymaps.color_or_slot_specifications]
 

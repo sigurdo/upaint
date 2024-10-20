@@ -4,14 +4,19 @@ use crossterm::event::KeyModifiers;
 use derive_more::Deref;
 use derive_more::DerefMut;
 use derive_more::From;
+use enum_dispatch::enum_dispatch;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::HashMap;
+use std::marker::PhantomData;
 
+use crate::actions::Action;
 use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::config::keymaps::keymaps_complete;
+use crate::config::keymaps::keymaps_complete_complete;
 use crate::config::keymaps::Keymaps;
 use crate::config::keymaps::KeymapsEntry;
 use crate::config::Config;
@@ -62,6 +67,8 @@ pub type KeystrokeIterator<'a> = <&'a [Keystroke] as IntoIterator>::IntoIter;
 pub enum KeybindCompletionError {
     MissingKeystrokes,
     InvalidKeystroke(Keystroke),
+    Invalid, // Equivalent to InvalidKeystroke(), but without specifying which keystroke caused invalidity.
+    EntryEmpty, // Special error used only in the meaningless case of encountering an empty KeymapsEntry
     Other,
 }
 
@@ -126,6 +133,66 @@ impl<T: FromKeystrokes + FromPreset<U>, U> FromPreset<Option<U>> for T {
     }
 }
 
+// impl<T, U: FromPreset<T>> FromPreset<KeymapsEntry<T>> for U
+// where
+//     T: std::fmt::Debug,
+//     U: std::fmt::Debug,
+// {
+//     fn from_preset(
+//         preset: KeymapsEntry<T>,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, KeybindCompletionError> {
+//         match keymaps_complete_complete::<T, U>(preset, keystrokes, config) {
+//             Ok(item) => Ok(item),
+//             Err(error) => Err(error),
+//         }
+//     }
+// }
+macro_rules! impl_from_preset_keymaps_entry {
+    ($($preset:ty => $complete:ty),*,) => {
+        $(
+        impl FromPreset<KeymapsEntry<$preset>> for $complete {
+            fn from_preset(
+                preset: KeymapsEntry<$preset>,
+                keystrokes: &mut KeystrokeIterator,
+                config: &Config,
+            ) -> Result<Self, KeybindCompletionError> {
+                keymaps_complete_complete::<$preset, $complete>(preset, keystrokes, config)
+            }
+        }
+        )*
+    };
+}
+
+impl_from_preset_keymaps_entry!(
+    ActionIncompleteEnum => Box<dyn Action>,
+    OperatorIncompleteEnum => Box<dyn Operator>,
+    MotionIncompleteEnum => Box<dyn Motion>,
+);
+
+impl<T, U: FromPreset<KeymapsEntry<T>>> FromPreset<Keymaps<T>> for U
+where
+    T: std::fmt::Debug,
+    U: std::fmt::Debug,
+{
+    fn from_preset(
+        mut preset: Keymaps<T>,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, KeybindCompletionError> {
+        if let Some(keystroke) = keystrokes.next() {
+            if let Some(entry) = preset.remove(keystroke) {
+                U::from_preset(entry, keystrokes, config)
+            } else {
+                Err(KeybindCompletionError::InvalidKeystroke(*keystroke))
+            }
+        } else {
+            Err(KeybindCompletionError::MissingKeystrokes)
+        }
+    }
+}
+
 impl FromKeystrokes for i16 {
     fn from_keystrokes(
         _keystrokes: &mut KeystrokeIterator,
@@ -142,13 +209,63 @@ pub trait FromKeystrokes: Sized {
     ) -> Result<Self, KeybindCompletionError>;
 }
 
+#[enum_dispatch]
 pub trait FromPreset<T>: Sized {
     fn from_preset(
         preset: T,
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, KeybindCompletionError>;
+
+    // fn increment_preset(
+    //     preset: &mut T,
+    //     keystrokes: &mut KeystrokeIterator,
+    //     config: &Config,
+    // ) -> Result<Self, KeybindCompletionError>;
 }
+
+#[enum_dispatch]
+pub trait IntoComplete<U>: Sized
+where
+    U: FromPreset<Self>,
+{
+    fn into_complete(
+        self,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<U, KeybindCompletionError> {
+        U::from_preset(self, keystrokes, config)
+    }
+}
+
+// impl<T, U: FromPreset<T>> IntoComplete<U> for T {}
+
+#[enum_dispatch(IntoComplete<U>)]
+pub enum KeymapsOrT<U, T> {
+    KeymapsEntry(KeymapsEntry<T>),
+    Keymaps(Keymaps<T>),
+    T(T),
+    Phantom(PhantomData<U>),
+}
+// impl<T> IntoComplete<Box<dyn Action>> for KeymapsOrT<T> {}
+
+// pub trait FromPresetIncremental<T>: Sized {
+//     // Like
+//     fn from_preset_incremental(
+//         preset: &mut T,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, KeybindCompletionError>;
+// }
+// pub trait PresetTrait<T: FromPreset<Self>> {
+//     fn preset_complete(
+//         self,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<T, KeybindCompletionError> {
+//         T::from_preset(self, keystrokes, config)
+//     }
+// }
 
 pub trait CompleteWithKeystrokes<T: Sized> {
     fn complete_with_keystrokes(

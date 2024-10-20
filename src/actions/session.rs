@@ -15,6 +15,7 @@ impl FallibleAction for Quit {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct ForceQuit {}
 impl Action for ForceQuit {
     fn execute(&self, program_state: &mut ProgramState) {

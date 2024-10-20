@@ -11,7 +11,8 @@ use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::config::keymaps::Keymaps;
+use crate::config::keymaps::keymaps_complete_complete;
+use crate::config::keymaps::KeymapsEntry;
 use crate::config::Config;
 use crate::keystrokes::{FromKeystrokes, FromKeystrokesByMap, FromPreset};
 use crate::selections::SelectionSlotSpecification;
@@ -76,7 +77,7 @@ macro_rules! motions_macro {
 }
 
 impl FromKeystrokesByMap for MotionIncompleteEnum {
-    fn get_map<'a>(config: &'a Config) -> &'a Keymaps<Self> {
+    fn get_map<'a>(config: &'a Config) -> &'a KeymapsEntry<Self> {
         &config.keymaps.motions
     }
 }
@@ -86,13 +87,21 @@ impl FromKeystrokes for Box<dyn Motion> {
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, KeybindCompletionError> {
-        Self::from_preset(
-            MotionIncompleteEnum::from_keystrokes(keystrokes, config)?,
+        keymaps_complete_complete(
+            MotionIncompleteEnum::get_map(config).clone(),
             keystrokes,
             config,
         )
+        // Self::from_preset(
+        //     MotionIncompleteEnum::from_keystrokes(keystrokes, config)?,
+        //     keystrokes,
+        //     config,
+        // )
     }
 }
+
+// Bedre:
+// pub enum MotionEnum
 
 motions_macro!(
     StayPreset -> Stay {,},

@@ -199,7 +199,7 @@ macro_rules! generic_impl_toml_value_for_incomplete_enums(
             impl TomlValue for HashMap<KeystrokeSequenceToml, $type> {
                 type ConfigValue = KeymapsEntry<$type>;
                 fn to_config_value(self) -> Self::ConfigValue {
-                    let mut result = HashMap::new();
+                    let mut result = KeymapsEntry::new();
                     for (KeystrokeSequenceToml(keystrokes), value) in self {
                         let mut it = keystrokes.iter();
                         keymaps_insert_preserve(&mut result, &mut it, value);
@@ -207,6 +207,7 @@ macro_rules! generic_impl_toml_value_for_incomplete_enums(
                     result
                 }
             }
+
         )*
     }
 );
@@ -346,10 +347,12 @@ pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, Err
     let config_toml: ConfigToml =
         toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
     let mut config = config_toml.to_config_value();
-    // log::debug!("før: {config:#?}");
+    log::debug!("før: {:#?}", config.keymaps.actions);
     create_operator_actions_from_operators(&mut config);
-    create_motions_from_directions(&mut config);
-    create_move_actions_from_motions(&mut config);
+    log::debug!("etter: {:#?}", config.keymaps.actions);
+    // log::debug!("etter: {config:#?}");
+    // create_motions_from_directions(&mut config);
+    // create_move_actions_from_motions(&mut config);
     create_continuous_region_relative_types_from_content_types(&mut config);
     // log::debug!("etter: {config:#?}");
     Ok(config)

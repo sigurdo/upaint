@@ -127,9 +127,9 @@ fn parse_key_notation(to_parse: &str) -> Result<Keystroke, ParseKeystrokeSequenc
 pub fn parse_keystroke_sequence(
     to_parse: &str,
 ) -> Result<KeystrokeSequence, ParseKeystrokeSequenceErr> {
-    if to_parse.len() == 0 {
-        return Err(ParseKeystrokeSequenceErr::SequenceEmpty);
-    }
+    // if to_parse.len() == 0 {
+    //     return Err(ParseKeystrokeSequenceErr::SequenceEmpty);
+    // }
     let mut keystrokes = KeystrokeSequence::new();
     let mut it = to_parse.chars();
     while let Some(ch) = it.next() {

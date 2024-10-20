@@ -553,6 +553,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "keystrokes_parsing"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "derive_more",
+ "serde",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1358,6 +1367,7 @@ dependencies = [
  "dirs",
  "enum_dispatch",
  "hsv",
+ "keystrokes_parsing",
  "lending-iterator",
  "log",
  "nalgebra",
