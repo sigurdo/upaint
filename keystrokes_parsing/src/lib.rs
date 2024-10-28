@@ -3,13 +3,39 @@ use serde::{Deserialize, Serialize};
 pub mod keymap;
 pub mod keystroke;
 
-use keymap::Keymap;
-use keystroke::Keystroke;
-use keystroke::KeystrokeIterator;
+pub use keymap::from_keystrokes_by_preset_iterator;
+pub use keymap::from_keystrokes_by_preset_keymap;
+pub use keymap::Keymap;
+pub use keystroke::Keystroke;
+pub use keystroke::KeystrokeIterator;
+pub use keystroke::KeystrokeSequence;
+pub use keystrokes_parsing_derive::impl_from_keystrokes_by_preset_keymap;
+pub use keystrokes_parsing_derive::GetKeymap;
+pub use keystrokes_parsing_derive::Presetable;
 
 pub trait FromKeystrokes<P, Config>: Sized {
     fn from_keystrokes(
         preset: P,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, FromKeystrokesError>;
+}
+
+// Conflicts with Preset<T> impls
+impl<T, Config> FromKeystrokes<T, Config> for T {
+    fn from_keystrokes(
+        preset: T,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, FromKeystrokesError> {
+        Ok(preset)
+    }
+}
+
+pub trait Presetable<Config>: Sized {
+    type Preset;
+    fn from_keystrokes_by_preset(
+        preset: Self::Preset,
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, FromKeystrokesError>;
@@ -21,78 +47,55 @@ pub enum FromKeystrokesError {
     Invalid,
 }
 
-pub fn from_keystrokes_by_keymap<P, Config, C: FromKeystrokes<P, Config>>(
-    mut keymap: Keymap<P>,
-    keystrokes: &mut KeystrokeIterator,
-    config: &Config,
-) -> Result<C, FromKeystrokesError> {
-    let error = {
-        let mut keystrokes = keystrokes.clone();
-        if let Some(keystroke) = keystrokes.next() {
-            if let Some(keymap_next) = keymap.next.remove(keystroke) {
-                match from_keystrokes_by_keymap(keymap_next, &mut keystrokes, config) {
-                    Ok(complete) => return Ok(complete),
-                    Err(FromKeystrokesError::MissingKeystrokes) => {
-                        return Err(FromKeystrokesError::MissingKeystrokes)
-                    }
-                    Err(other) => other,
-                }
-            } else {
-                FromKeystrokesError::Invalid
-            }
-        } else {
-            FromKeystrokesError::MissingKeystrokes
-        }
-    };
-    if let Some(current) = keymap.current {
-        if let Ok(complete) = C::from_keystrokes(current, keystrokes, config) {
-            return Ok(complete);
-        }
-    }
-    Err(error)
-}
-
-pub fn from_keystrokes_by_preset_iterator<P, Config, C: FromKeystrokes<P, Config>>(
-    presets: impl Iterator<Item = P>,
-    keystrokes: &mut KeystrokeIterator,
-    config: &Config,
-) -> Result<C, FromKeystrokesError> {
-    for preset in presets {
-        let mut keystrokes = keystrokes.clone();
-        match C::from_keystrokes(preset, &mut keystrokes, config) {
-            Ok(complete) => return Ok(complete),
-            Err(FromKeystrokesError::MissingKeystrokes) => {
-                return Err(FromKeystrokesError::MissingKeystrokes)
-            }
-            _ => (),
-        }
-    }
-    Err(FromKeystrokesError::Invalid)
+pub trait GetKeymap<Config>: Sized {
+    fn get_keymap<'a>(config: &'a Config) -> &'a Keymap<Self>;
 }
 
 /// Basically a custom Option type with more appropriate Deserialize behavior and distinct meaning.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub enum Preset<T> {
+pub enum PresetStructField<T> {
     #[default]
     FromKeystrokes,
     #[serde(untagged)]
     Preset(T),
 }
 
-impl<P, Config, C: FromKeystrokes<P, Config> + FromKeystrokes<(), Config>>
-    FromKeystrokes<Preset<P>, Config> for C
-{
-    fn from_keystrokes(
-        preset: Preset<P>,
-        keystrokes: &mut KeystrokeIterator,
-        config: &Config,
-    ) -> Result<Self, FromKeystrokesError> {
-        match preset {
-            Preset::Preset(value) => C::from_keystrokes(value, keystrokes, config),
-            Preset::FromKeystrokes => C::from_keystrokes((), keystrokes, config),
-        }
+pub fn from_keystrokes_by_preset_struct_field<
+    P,
+    Config,
+    C: Presetable<Config, Preset = P> + FromKeystrokes<(), Config>,
+>(
+    preset: PresetStructField<P>,
+    keystrokes: &mut KeystrokeIterator,
+    config: &Config,
+) -> Result<C, FromKeystrokesError> {
+    match preset {
+        PresetStructField::Preset(value) => C::from_keystrokes_by_preset(value, keystrokes, config),
+        PresetStructField::FromKeystrokes => C::from_keystrokes((), keystrokes, config),
     }
 }
+
+// impl<P, Config, C: FromKeystrokes<P, Config> + FromKeystrokes<(), Config>>
+//     FromKeystrokes<Preset<P>, Config> for C
+// {
+//     fn from_keystrokes(
+//         preset: Preset<P>,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, FromKeystrokesError> {
+//         from_keystrokes_by_preset(preset, keystrokes, config)
+//     }
+// }
+
+// impl<T, Config> FromKeystrokes<T, Config> for T {
+//     fn from_keystrokes(
+//         preset: T,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, FromKeystrokesError> {
+//         Ok(preset)
+//     }
+// }
 
 // use keystrokes_parsing::{FromKeystrokes};
 // use keystrokes_parsing::{GetKeymap};

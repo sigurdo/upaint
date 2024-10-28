@@ -120,6 +120,9 @@ relative = false
 "s" = { Slot = "FromKeystrokes" }
 "" = { Color = "FromKeystrokes" }
 
+[keymaps.test]
+"h" = { a = "FromKeystrokes" }
+
 [keymaps.color_or_slot_specifications]
 
 [keymaps.canvas_iteration_jump]

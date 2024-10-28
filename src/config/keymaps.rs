@@ -4,8 +4,6 @@ use crate::config::Config;
 use crate::config::TomlValue;
 // use crate::config::keybindings::Keystroke;
 use crate::keystrokes::FromPreset;
-use crate::keystrokes::IntoComplete;
-use crate::keystrokes::KeymapsOrT;
 use crate::keystrokes::{KeybindCompletionError, Keystroke, KeystrokeIterator, KeystrokeSequence};
 
 use enum_dispatch::enum_dispatch;
@@ -139,11 +137,7 @@ macro_rules! presets_complete_complete {
 pub fn keymaps_complete_complete<
     'a,
     T: std::fmt::Debug,
-    U: FromPreset<T>
-        + FromPreset<KeymapsEntry<T>>
-        + FromPreset<Keymaps<T>>
-        + FromPreset<KeymapsOrT<T>>
-        + std::fmt::Debug,
+    U: FromPreset<T> + FromPreset<KeymapsEntry<T>> + FromPreset<Keymaps<T>> + std::fmt::Debug,
 >(
     entry: KeymapsEntry<T>,
     keystroke_iter: &mut KeystrokeIterator,
@@ -152,28 +146,29 @@ pub fn keymaps_complete_complete<
     // let a = entry.complete.clone();
     // let b = entry.incomplete.clone();
     // let hm = &keystroke_iter;
-    // let result: Result<U, KeybindCompletionError> =
-    //     presets_complete_complete!([entry.incomplete, entry.complete], keystroke_iter, config,);
-    // result
+    let result: Result<U, KeybindCompletionError> =
+        presets_complete_complete!([entry.incomplete, entry.complete], keystroke_iter, config,);
+    result
     // "5".parse().ok()
     // #[enum_dispatch(IntoComplete)]
     // enum EntryOrT<T> {
     //     Map(Keymaps<T>),
     //     T(T),
     // }
-    let mut presets = vec![];
-    if let Some(incomplete) = entry.incomplete {
-        presets.push(KeymapsOrT::Keymaps(incomplete));
-    }
-    // let a: U = KeymapsOrT::T(entry.complete.unwrap()).into_complete(keystroke_iter, config)?;
-    if let Some(complete) = entry.complete {
-        presets.push(KeymapsOrT::T(complete))
-    }
+
+    // let mut presets = vec![];
+    // if let Some(incomplete) = entry.incomplete {
+    //     presets.push(KeymapsOrT::Keymaps(incomplete));
+    // }
+    // // let a: U = KeymapsOrT::T(entry.complete.unwrap()).into_complete(keystroke_iter, config)?;
+    // if let Some(complete) = entry.complete {
+    //     presets.push(KeymapsOrT::T(complete))
+    // }
     // let presets = vec![entry.incomplete, entry.complete]
     //     .into_iter()
     //     .filter_map(|preset| if Some(preset) = preset { Some(EntryOrT::from(preset)) } else None)
     //     .collect();
-    presets_complete_complete_nomacro(presets, keystroke_iter, config)
+    // presets_complete_complete_nomacro(presets, keystroke_iter, config)
     // let incomplete = if let KeymapsEntry {
     //     incomplete: Some(sub_keymaps),
     //     ..

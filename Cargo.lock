@@ -558,7 +558,18 @@ version = "0.1.0"
 dependencies = [
  "crossterm",
  "derive_more",
+ "keystrokes_parsing_derive",
  "serde",
+]
+
+[[package]]
+name = "keystrokes_parsing_derive"
+version = "0.1.0"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]

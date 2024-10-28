@@ -7,9 +7,13 @@ pub trait FromKeystrokes<P> {
     fn from_keystrokes(preset: P, keystrokes: &mut Keystrokeiter, config: &Config) -> Result<Self, FromKeystrokesError>;
 }
 
-pub fn from_keystrokes_by_keymap<P, C: FromKeystrokes<P>>(keymap: Keymap<P>, keystrokes: &mut Keystrokeiter, config: &Config) -> Result<C, FromKeystrokesError> {
+pub trait GetKeymap<Config> {
+    fn get_keymap(config: &Config) -> Keymap<Self>;
+}
+
+pub fn from_keystrokes_by_preset_keymap<P, C: FromKeystrokes<P>>(keymap: Keymap<P>, keystrokes: &mut Keystrokeiter, config: &Config) -> Result<C, FromKeystrokesError> {
     match ... {
-        ... => from_keystrokes_by_keymap(sub_keymap, keystrokes, config),
+        ... => from_keystrokes_by_preset_keymap(sub_keymap, keystrokes, config),
         ... => Ok(complete),
         ... => Err(...),
     }
@@ -21,30 +25,23 @@ pub struct Preset
 ## Usage
 
 ```rust
+use keystrokes_parsing::{Preset};
 use keystrokes_parsing::{FromKeystrokes};
 use keystrokes_parsing::{GetKeymap};
 use keystrokes_parsing::{Keymap};
 use keystrokes_parsing::{impl_from_keystrokes_by_keymap};
 use enum_dispatch::enum_dispatch;
 
-#[derive(GetKeymap)]
+#[derive(FromKeystrokesByPresetKeymap)]
 pub struct Config {
     keymap_u32: Keymap<u32>,
     keymap_i16_i16: Keymap<(i16, i16)>,
-    keymap_action: Keymap<(ActionPresetEnum)>,
+    keymap_action: Keymap<ActionEnumPreset>,
 }
 
-impl GetKeymap<'a, u32> for Config {
-    fn get_keymap(&'a self) -> &'a Keymap<u32> {
-        &self.keymap_u32
-    }
-}
+impl_from_keystrokes_by_preset_keymap!(u32 => u32);
 
-impl_from_keystrokes_by_keymap!(u32);
-impl_from_keystrokes_by_keymap!((i16, i16));
-
-#[derive(FromKeystrokes)]
-#[]
+#[derive(Preset)]
 pub struct ActionA {
     count: u32,
     direction: (i16, i16),
@@ -57,7 +54,7 @@ pub trait Action {
 
 impl Action for ActionA { ... }
 
-#[derive(FromKeystrokes)]
+#[derive(Preset)]
 #[enum_dispatch(Action)]
 pub enum ActionEnum {
     A(ActionA),
@@ -77,33 +74,60 @@ impl FromKeystrokesByPreset<Keymap<u32>> for u32 {
     }
 }
 
-impl FromKeystrokes<Keymap<u32>> for u32 {
-
+impl GetKeymap for u32 {
+    fn get_keymap(config: &'a Config) -> &'a Keymap<Self> {
+        config.keymap_u32
+    }
+}
+impl GetKeymap for (u16, u16) {
+    fn get_keymap(config: &'a Config) -> &'a Keymap<Self> {
+        config.keymap_u16_u16
+    }
+}
+impl GetKeymap for ActionEnumPreset {
+    fn get_keymap(config: &'a Config) -> &'a Keymap<Self> {
+        config.keymap_action
+    }
+}
+impl FromKeystrokes<()> for u32 {
+    fn from_keystrokes(preset: (), keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<ActionEnum, FromKeystrokesError> {
+        ::keystrokes_parsing::from_keystrokes_by_preset_keymap(u32::get_keymap(config), keystrokes, config)
+    }
+}
+impl FromKeystrokes<()> for (u16, u16) {
+    fn from_keystrokes(preset: (), keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<ActionEnum, FromKeystrokesError> {
+        ::keystrokes_parsing::from_keystrokes_by_preset_keymap((u16, u16)::get_keymap(config), keystrokes, config)
+    }
+}
+impl FromKeystrokes<()> for ActionEnum {
+    fn from_keystrokes(preset: (), keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<ActionEnum, FromKeystrokesError> {
+        ::keystrokes_parsing::from_keystrokes_by_preset_keymap(ActionEnumPreset::get_keymap(config), keystrokes, config)
+    }
 }
 
 pub struct ActionAPreset {
     count: Preset<u32>,
     direction: Preset<(i16, i16)>,
 }
-
-impl FromKeystrokes<ActionAPreset> for ActionA {
-    fn from_keystrokes(preset: ActionAPreset, keystrokes: &mut KeystrokeIterator, config: &Config) -> u32 {
+impl FromKeystrokes<ActionAPreset, Config> for ActionA {
+    fn from_keystrokes(preset: ActionAPreset, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<ActionA, FromKeystrokesError> {
         ActionA {
-            count: u32::from_keystrokes((), keystrokes, config)?,
-            direction: (i16, i16)::from_keystrokes((), keystrokes, config)?,
+            count: u32::from_keystrokes(preset.count, keystrokes, config)?,
+            direction: (i16, i16)::from_keystrokes(preset.direction, keystrokes, config)?,
         }
     }
 }
-impl FromKeystrokes<Keymap<ActionAPreset>> for ActionA {...}
-impl FromKeystrokes<KeymapEntry<ActionAPreset>> for ActionA {...}
 
 pub enum ActionEnumPreset {
     A(Preset<ActionA>)
 }
-
-impl FromKeystrokes<ActionEnumPreset> for ActionEnum {...}
-impl FromKeystrokes<Keymap<ActionEnumPreset>> for ActionEnum {...}
-impl FromKeystrokes<KeymapEntry<ActionEnumPreset>> for ActionEnum {...}
+impl FromKeystrokes<ActionEnumPreset, Config> for ActionEnum {
+    fn from_keystrokes(preset: ActionAPreset, keystrokes: &mut KeystrokeIterator, config: &Config) -> Result<ActionEnum, FromKeystrokesError> {
+        match preset {
+            A(preset) => Self::A(ActionA::from_keystrokes(preset, keystrokes, config)),
+        }
+    }
+}
 
 // From enum_dispatch:
 impl Action for ActionEnum {

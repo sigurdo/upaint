@@ -190,8 +190,80 @@ config_struct_definition!({
         update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => KeymapsEntry<UpdateSelectionOperator>),
         cell_content_types: (HashMap<KeystrokeSequenceToml, CellContentType> => KeymapsEntry<CellContentType>),
         continuous_region_relative_types: (HashMap<KeystrokeSequenceToml, ContinuousRegionRelativeType> => KeymapsEntry<ContinuousRegionRelativeType>),
+        test: (HashMap<KeystrokeSequenceToml, TestPreset> => KeymapsEntry<TestPreset>),
     },
 });
+
+mod teste {
+    use crossterm::event::KeyCode;
+    use crossterm::event::KeyModifiers;
+    use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
+    use keystrokes_parsing::FromKeystrokes;
+    use keystrokes_parsing::GetKeymap;
+    use keystrokes_parsing::Keymap;
+    use keystrokes_parsing::Keystroke;
+    use keystrokes_parsing::Presetable;
+    // use keystrokes_parsing::PresetDerive;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Clone, Deserialize, Serialize)]
+    pub enum U32KeymapEntry {
+        TypeDecimal,
+        #[serde(untagged)]
+        U32(u32),
+    }
+    impl Presetable<Config> for u32 {
+        type Preset = U32KeymapEntry;
+        fn from_keystrokes_by_preset(
+            preset: U32KeymapEntry,
+            _keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+            _config: &Config,
+        ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+            match preset {
+                U32KeymapEntry::U32(value) => Ok(value),
+                U32KeymapEntry::TypeDecimal => panic!("Not implemented"),
+            }
+        }
+    }
+    // #[derive(Debug, Clone, Deserialize, Serialize)]
+    // pub enum ActionAKeymapEntry {
+    //     TypeDecimal,
+    //     #[serde(untagged)]
+    //     U32(u32),
+    // }
+    // impl_from_keystrokes_by_preset_keymap!(U32KeymapEntry => u32);
+    // impl_from_keystrokes_by_preset_keymap!(ActionAPreset => ActionA);
+    #[derive(Presetable)]
+    pub struct ActionA {
+        a: u32,
+    }
+    #[derive(GetKeymap)]
+    pub struct Config {
+        #[preset_for(u32)]
+        keymap_u32: Keymap<U32KeymapEntry>,
+        #[preset_for(ActionA)]
+        keymap_action_a: Keymap<ActionAPreset>,
+    }
+    fn test() {
+        let config = Config {
+            keymap_u32: Keymap::new(),
+            keymap_action_a: Keymap::new(),
+        };
+        let res = U32KeymapEntry::get_keymap(&config);
+        let a = vec![Keystroke {
+            code: KeyCode::Up,
+            modifiers: KeyModifiers::NONE,
+        }];
+        let action_a = ActionA::from_keystrokes((), &mut a.iter(), &config);
+    }
+}
+
+use upaint_derive::Preset;
+#[derive(Clone, Debug, Preset)]
+pub struct Test {
+    a: Color,
+    b: Color,
+}
 
 macro_rules! generic_impl_toml_value_for_incomplete_enums(
     ($($type:ty),*,) => {
@@ -228,6 +300,7 @@ generic_impl_toml_value_for_incomplete_enums!(
     ContinuousRegionRelativeType,
     ColorOrSlotSpecification,
     ColorOrSlotPreset,
+    TestPreset,
 );
 
 impl Default for Config {

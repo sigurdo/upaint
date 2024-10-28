@@ -224,29 +224,29 @@ pub trait FromPreset<T>: Sized {
     // ) -> Result<Self, KeybindCompletionError>;
 }
 
-#[enum_dispatch]
-pub trait IntoComplete<U>: Sized
-where
-    U: FromPreset<Self>,
-{
-    fn into_complete(
-        self,
-        keystrokes: &mut KeystrokeIterator,
-        config: &Config,
-    ) -> Result<U, KeybindCompletionError> {
-        U::from_preset(self, keystrokes, config)
-    }
-}
+// #[enum_dispatch]
+// pub trait IntoComplete<U>: Sized
+// where
+//     U: FromPreset<Self>,
+// {
+//     fn into_complete(
+//         self,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<U, KeybindCompletionError> {
+//         U::from_preset(self, keystrokes, config)
+//     }
+// }
 
 // impl<T, U: FromPreset<T>> IntoComplete<U> for T {}
 
-#[enum_dispatch(IntoComplete<U>)]
-pub enum KeymapsOrT<U, T> {
-    KeymapsEntry(KeymapsEntry<T>),
-    Keymaps(Keymaps<T>),
-    T(T),
-    Phantom(PhantomData<U>),
-}
+// #[enum_dispatch(IntoComplete<U>)]
+// pub enum KeymapsOrT<U, T> {
+//     KeymapsEntry(KeymapsEntry<T>),
+//     Keymaps(Keymaps<T>),
+//     T(T),
+//     Phantom(PhantomData<U>),
+// }
 // impl<T> IntoComplete<Box<dyn Action>> for KeymapsOrT<T> {}
 
 // pub trait FromPresetIncremental<T>: Sized {
