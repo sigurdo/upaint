@@ -170,9 +170,8 @@ pub fn derive_get_keymap(input: TokenStream) -> TokenStream {
             let output = find_keymaps(&data).map(|FindKeymapsResults { ident, type_preset, types_for }| {
                 let impl_from_keystrokes = types_for.iter().map(|type_for| {
                     quote! {
-                        impl ::#ident_crate::FromKeystrokes<(), Config> for #type_for {
+                        impl ::#ident_crate::FromKeystrokes<Config> for #type_for {
                             fn from_keystrokes(
-                                preset: (),
                                 keystrokes: &mut ::#ident_crate::KeystrokeIterator,
                                 config: &Config,
                             ) -> Result<#type_for, ::#ident_crate::FromKeystrokesError> {

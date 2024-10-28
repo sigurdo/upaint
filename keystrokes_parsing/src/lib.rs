@@ -13,24 +13,23 @@ pub use keystrokes_parsing_derive::impl_from_keystrokes_by_preset_keymap;
 pub use keystrokes_parsing_derive::GetKeymap;
 pub use keystrokes_parsing_derive::Presetable;
 
-pub trait FromKeystrokes<P, Config>: Sized {
+pub trait FromKeystrokes<Config>: Sized {
     fn from_keystrokes(
-        preset: P,
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, FromKeystrokesError>;
 }
 
 // Conflicts with Preset<T> impls
-impl<T, Config> FromKeystrokes<T, Config> for T {
-    fn from_keystrokes(
-        preset: T,
-        keystrokes: &mut KeystrokeIterator,
-        config: &Config,
-    ) -> Result<Self, FromKeystrokesError> {
-        Ok(preset)
-    }
-}
+// impl<T, Config> FromKeystrokes<T, Config> for T {
+//     fn from_keystrokes(
+//         preset: T,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, FromKeystrokesError> {
+//         Ok(preset)
+//     }
+// }
 
 pub trait Presetable<Config>: Sized {
     type Preset;
@@ -63,7 +62,7 @@ pub enum PresetStructField<T> {
 pub fn from_keystrokes_by_preset_struct_field<
     P,
     Config,
-    C: Presetable<Config, Preset = P> + FromKeystrokes<(), Config>,
+    C: Presetable<Config, Preset = P> + FromKeystrokes<Config>,
 >(
     preset: PresetStructField<P>,
     keystrokes: &mut KeystrokeIterator,
@@ -71,7 +70,7 @@ pub fn from_keystrokes_by_preset_struct_field<
 ) -> Result<C, FromKeystrokesError> {
     match preset {
         PresetStructField::Preset(value) => C::from_keystrokes_by_preset(value, keystrokes, config),
-        PresetStructField::FromKeystrokes => C::from_keystrokes((), keystrokes, config),
+        PresetStructField::FromKeystrokes => C::from_keystrokes(keystrokes, config),
     }
 }
 

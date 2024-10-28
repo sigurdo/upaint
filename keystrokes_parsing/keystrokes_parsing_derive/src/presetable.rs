@@ -168,7 +168,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                                         format!("arg_{index}").as_str(),
                                         Span::call_site(),
                                     );
-                                    quote! { #ty::from_keystrokes(#ident_arg, keystrokes, config)? }
+                                    quote! { ::#ident_crate::from_keystrokes_by_preset_struct_field(#ident_arg, keystrokes, config)? }
                                 })
                                 .reduce(join_by_comma).unwrap();
                             println!("arglist: {arglist}");
@@ -185,12 +185,13 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 .reduce(join_by_comma).unwrap();
             println!("match_arms: {match_arms}");
 
-            let impl_from_preset = quote! {
-                impl FromKeystrokes<#ident_preset, #ident_config> for #ident {
-                    fn from_keystrokes(
+            let impl_presetable = quote! {
+                impl Presetable<#ident_config> for #ident {
+                    type Preset = #ident_preset;
+                    fn from_keystrokes_by_preset(
                         preset: #ident_preset,
                         keystrokes: &mut ::#ident_crate::KeystrokeIterator,
-                        config: #ident_config,
+                        config: &#ident_config,
                     ) -> Result<Self, ::#ident_crate::FromKeystrokesError> {
                         match preset {
                             #match_arms
@@ -221,7 +222,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
             };
             quote! {
                 #definition_enum
-                #impl_from_preset
+                #impl_presetable
             }
         }
         Data::Struct(data) => {

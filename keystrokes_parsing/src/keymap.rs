@@ -51,14 +51,14 @@ pub fn from_keystrokes_by_preset_keymap<P: Clone, Config, C: Presetable<Config, 
     Err(error)
 }
 
-pub fn from_keystrokes_by_preset_iterator<P, Config, C: FromKeystrokes<P, Config>>(
+pub fn from_keystrokes_by_preset_iterator<P, Config, C: Presetable<Config, Preset = P>>(
     presets: impl Iterator<Item = P>,
     keystrokes: &mut KeystrokeIterator,
     config: &Config,
 ) -> Result<C, FromKeystrokesError> {
     for preset in presets {
         let mut keystrokes = keystrokes.clone();
-        match C::from_keystrokes(preset, &mut keystrokes, config) {
+        match C::from_keystrokes_by_preset(preset, &mut keystrokes, config) {
             Ok(complete) => return Ok(complete),
             Err(FromKeystrokesError::MissingKeystrokes) => {
                 return Err(FromKeystrokesError::MissingKeystrokes)

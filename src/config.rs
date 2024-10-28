@@ -237,24 +237,31 @@ mod teste {
     pub struct ActionA {
         a: u32,
     }
+    #[derive(Presetable)]
+    pub enum ActionEnum {
+        A(ActionA),
+    }
     #[derive(GetKeymap)]
     pub struct Config {
         #[preset_for(u32)]
         keymap_u32: Keymap<U32KeymapEntry>,
         #[preset_for(ActionA)]
         keymap_action_a: Keymap<ActionAPreset>,
+        #[preset_for(ActionEnum)]
+        keymap_action: Keymap<ActionEnumPreset>,
     }
     fn test() {
         let config = Config {
             keymap_u32: Keymap::new(),
             keymap_action_a: Keymap::new(),
+            keymap_action: Keymap::new(),
         };
         let res = U32KeymapEntry::get_keymap(&config);
         let a = vec![Keystroke {
             code: KeyCode::Up,
             modifiers: KeyModifiers::NONE,
         }];
-        let action_a = ActionA::from_keystrokes((), &mut a.iter(), &config);
+        let action_a = ActionEnum::from_keystrokes(&mut a.iter(), &config);
     }
 }
 
