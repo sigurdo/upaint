@@ -225,14 +225,6 @@ mod teste {
             }
         }
     }
-    // #[derive(Debug, Clone, Deserialize, Serialize)]
-    // pub enum ActionAKeymapEntry {
-    //     TypeDecimal,
-    //     #[serde(untagged)]
-    //     U32(u32),
-    // }
-    // impl_from_keystrokes_by_preset_keymap!(U32KeymapEntry => u32);
-    // impl_from_keystrokes_by_preset_keymap!(ActionAPreset => ActionA);
     #[derive(Presetable)]
     pub struct ActionA {
         a: u32,
@@ -250,6 +242,7 @@ mod teste {
         #[preset_for(ActionEnum)]
         keymap_action: Keymap<ActionEnumPreset>,
     }
+    #[test]
     fn test() {
         let config = Config {
             keymap_u32: Keymap::new(),
@@ -262,6 +255,34 @@ mod teste {
             modifiers: KeyModifiers::NONE,
         }];
         let action_a = ActionEnum::from_keystrokes(&mut a.iter(), &config);
+
+        let config_toml = r###"
+        "abc" = { a = 65 }
+        "###;
+        let keymap: Keymap<ActionAPreset> = toml::from_str(config_toml).unwrap();
+
+        dbg!(keymap
+            .next
+            .get(&Keystroke {
+                modifiers: KeyModifiers::NONE,
+                code: KeyCode::Char('a'),
+            })
+            .unwrap()
+            .next
+            .get(&Keystroke {
+                modifiers: KeyModifiers::NONE,
+                code: KeyCode::Char('b'),
+            })
+            .unwrap()
+            .next
+            .get(&Keystroke {
+                modifiers: KeyModifiers::NONE,
+                code: KeyCode::Char('c'),
+            })
+            .unwrap()
+            .current
+            .clone()
+            .unwrap());
     }
 }
 

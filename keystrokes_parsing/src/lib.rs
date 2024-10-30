@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-pub mod keymap;
-pub mod keystroke;
+mod keymap;
+mod keystroke;
 
 pub use keymap::from_keystrokes_by_preset_iterator;
 pub use keymap::from_keystrokes_by_preset_keymap;
 pub use keymap::Keymap;
+pub use keystroke::deserialize::ParseKeystrokeSequenceErr;
 pub use keystroke::Keystroke;
 pub use keystroke::KeystrokeIterator;
 pub use keystroke::KeystrokeSequence;
@@ -46,7 +47,7 @@ pub enum FromKeystrokesError {
     Invalid,
 }
 
-pub trait GetKeymap<Config>: Sized {
+pub trait GetKeymap<Config>: Sized + Clone {
     fn get_keymap<'a>(config: &'a Config) -> &'a Keymap<Self>;
 }
 

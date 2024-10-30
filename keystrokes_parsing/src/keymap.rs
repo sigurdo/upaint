@@ -1,17 +1,23 @@
+use serde::Deserialize;
 use std::collections::HashMap;
 
 use crate::keystroke::Keystroke;
 use crate::keystroke::KeystrokeIterator;
+use crate::keystroke::KeystrokeSequence;
 use crate::FromKeystrokes;
 use crate::FromKeystrokesError;
 use crate::Presetable;
 
-pub struct Keymap<T> {
+pub mod deserialize;
+
+#[derive(Deserialize)]
+#[serde(try_from = "HashMap<KeystrokeSequence, T>")]
+pub struct Keymap<T: Clone> {
     pub current: Option<T>,
     pub next: HashMap<Keystroke, Keymap<T>>,
 }
 
-impl<T> Keymap<T> {
+impl<T: Clone> Keymap<T> {
     pub fn new() -> Self {
         Self {
             current: None,

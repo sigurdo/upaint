@@ -6,13 +6,16 @@ use derive_more::DerefMut;
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 
-#[derive(Hash, PartialEq, Eq, Clone, Copy, Deserialize, Serialize)]
+pub mod deserialize;
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub struct Keystroke {
     pub code: KeyCode,
     pub modifiers: KeyModifiers,
 }
 
-#[derive(Deref, DerefMut, From, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Deref, DerefMut, From, Default, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(try_from = "String")]
 pub struct KeystrokeSequence(pub Vec<Keystroke>);
 impl KeystrokeSequence {
     pub fn new() -> Self {
