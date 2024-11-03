@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 pub mod actions;
+pub mod adopt_new_keystroke_system;
 pub mod canvas;
 pub mod color_picker;
 pub mod command_line;

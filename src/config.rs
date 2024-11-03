@@ -194,97 +194,97 @@ config_struct_definition!({
     },
 });
 
-mod teste {
-    use crossterm::event::KeyCode;
-    use crossterm::event::KeyModifiers;
-    use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
-    use keystrokes_parsing::FromKeystrokes;
-    use keystrokes_parsing::GetKeymap;
-    use keystrokes_parsing::Keymap;
-    use keystrokes_parsing::Keystroke;
-    use keystrokes_parsing::Presetable;
-    // use keystrokes_parsing::PresetDerive;
-    use serde::{Deserialize, Serialize};
-
-    #[derive(Debug, Clone, Deserialize, Serialize)]
-    pub enum U32KeymapEntry {
-        TypeDecimal,
-        #[serde(untagged)]
-        U32(u32),
-    }
-    impl Presetable<Config> for u32 {
-        type Preset = U32KeymapEntry;
-        fn from_keystrokes_by_preset(
-            preset: U32KeymapEntry,
-            _keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
-            _config: &Config,
-        ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
-            match preset {
-                U32KeymapEntry::U32(value) => Ok(value),
-                U32KeymapEntry::TypeDecimal => panic!("Not implemented"),
-            }
-        }
-    }
-    #[derive(Presetable)]
-    pub struct ActionA {
-        a: u32,
-    }
-    #[derive(Presetable)]
-    pub enum ActionEnum {
-        A(ActionA),
-    }
-    #[derive(GetKeymap)]
-    pub struct Config {
-        #[preset_for(u32)]
-        keymap_u32: Keymap<U32KeymapEntry>,
-        #[preset_for(ActionA)]
-        keymap_action_a: Keymap<ActionAPreset>,
-        #[preset_for(ActionEnum)]
-        keymap_action: Keymap<ActionEnumPreset>,
-    }
-    #[test]
-    fn test() {
-        let config = Config {
-            keymap_u32: Keymap::new(),
-            keymap_action_a: Keymap::new(),
-            keymap_action: Keymap::new(),
-        };
-        let res = U32KeymapEntry::get_keymap(&config);
-        let a = vec![Keystroke {
-            code: KeyCode::Up,
-            modifiers: KeyModifiers::NONE,
-        }];
-        let action_a = ActionEnum::from_keystrokes(&mut a.iter(), &config);
-
-        let config_toml = r###"
-        "abc" = { a = 65 }
-        "###;
-        let keymap: Keymap<ActionAPreset> = toml::from_str(config_toml).unwrap();
-
-        dbg!(keymap
-            .next
-            .get(&Keystroke {
-                modifiers: KeyModifiers::NONE,
-                code: KeyCode::Char('a'),
-            })
-            .unwrap()
-            .next
-            .get(&Keystroke {
-                modifiers: KeyModifiers::NONE,
-                code: KeyCode::Char('b'),
-            })
-            .unwrap()
-            .next
-            .get(&Keystroke {
-                modifiers: KeyModifiers::NONE,
-                code: KeyCode::Char('c'),
-            })
-            .unwrap()
-            .current
-            .clone()
-            .unwrap());
-    }
-}
+// mod teste {
+//     use crossterm::event::KeyCode;
+//     use crossterm::event::KeyModifiers;
+//     use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
+//     use keystrokes_parsing::FromKeystrokes;
+//     use keystrokes_parsing::GetKeymap;
+//     use keystrokes_parsing::Keymap;
+//     use keystrokes_parsing::Keystroke;
+//     use keystrokes_parsing::Presetable;
+//     // use keystrokes_parsing::PresetDerive;
+//     use serde::{Deserialize, Serialize};
+//
+//     #[derive(Debug, Clone, Deserialize, Serialize)]
+//     pub enum U32KeymapEntry {
+//         TypeDecimal,
+//         #[serde(untagged)]
+//         U32(u32),
+//     }
+//     impl Presetable<Config> for u32 {
+//         type Preset = U32KeymapEntry;
+//         fn from_keystrokes_by_preset(
+//             preset: U32KeymapEntry,
+//             _keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+//             _config: &Config,
+//         ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+//             match preset {
+//                 U32KeymapEntry::U32(value) => Ok(value),
+//                 U32KeymapEntry::TypeDecimal => panic!("Not implemented"),
+//             }
+//         }
+//     }
+//     #[derive(Presetable)]
+//     pub struct ActionA {
+//         a: u32,
+//     }
+//     #[derive(Presetable)]
+//     pub enum ActionEnum {
+//         A(ActionA),
+//     }
+//     #[derive(GetKeymap)]
+//     pub struct Config {
+//         #[preset_for(u32)]
+//         keymap_u32: Keymap<U32KeymapEntry>,
+//         #[preset_for(ActionA)]
+//         keymap_action_a: Keymap<ActionAPreset>,
+//         #[preset_for(ActionEnum)]
+//         keymap_action: Keymap<ActionEnumPreset>,
+//     }
+//     #[test]
+//     fn test() {
+//         let config = Config {
+//             keymap_u32: Keymap::new(),
+//             keymap_action_a: Keymap::new(),
+//             keymap_action: Keymap::new(),
+//         };
+//         let res = U32KeymapEntry::get_keymap(&config);
+//         let a = vec![Keystroke {
+//             code: KeyCode::Up,
+//             modifiers: KeyModifiers::NONE,
+//         }];
+//         let action_a = ActionEnum::from_keystrokes(&mut a.iter(), &config);
+//
+//         let config_toml = r###"
+//         "abc" = { a = 65 }
+//         "###;
+//         let keymap: Keymap<ActionAPreset> = toml::from_str(config_toml).unwrap();
+//
+//         dbg!(keymap
+//             .next
+//             .get(&Keystroke {
+//                 modifiers: KeyModifiers::NONE,
+//                 code: KeyCode::Char('a'),
+//             })
+//             .unwrap()
+//             .next
+//             .get(&Keystroke {
+//                 modifiers: KeyModifiers::NONE,
+//                 code: KeyCode::Char('b'),
+//             })
+//             .unwrap()
+//             .next
+//             .get(&Keystroke {
+//                 modifiers: KeyModifiers::NONE,
+//                 code: KeyCode::Char('c'),
+//             })
+//             .unwrap()
+//             .current
+//             .clone()
+//             .unwrap());
+//     }
+// }
 
 use upaint_derive::Preset;
 #[derive(Clone, Debug, Preset)]

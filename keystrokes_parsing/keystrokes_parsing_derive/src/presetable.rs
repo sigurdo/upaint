@@ -10,20 +10,30 @@ use syn::{
 use crate::utils::{ident_crate, join_by_comma, join_by_space};
 
 #[derive(FromDeriveInput, Default)]
-#[darling(default, attributes(preset))]
+#[darling(default, attributes(presetable))]
 struct Opts {
     preset_type: Option<String>,
     config_type: Option<String>,
+    fields_required: bool,
 }
 
-fn presetify_fields(fields: &Punctuated<Field, Comma>) -> proc_macro2::TokenStream {
+fn presetify_fields(
+    fields: &Punctuated<Field, Comma>,
+    fields_required: bool,
+) -> proc_macro2::TokenStream {
     let ident_crate = ident_crate();
-    fields
+    let result = fields
         .iter()
         .map(|field| {
             let Field { ident, ty, .. } = field;
-            let value = quote! {
-                ::#ident_crate::PresetStructField<<#ty as Presetable<Config>>::Preset>
+            let value = if fields_required {
+                quote! {
+                    <#ty as Presetable<Config>>::Preset
+                }
+            } else {
+                quote! {
+                    ::#ident_crate::PresetStructField<<#ty as Presetable<Config>>::Preset>
+                }
             };
             if let Some(ident) = ident {
                 quote! {
@@ -36,11 +46,15 @@ fn presetify_fields(fields: &Punctuated<Field, Comma>) -> proc_macro2::TokenStre
                 }
             }
         })
-        .reduce(join_by_space)
-        .unwrap()
+        .reduce(join_by_space);
+    quote! { #result }
 }
 
-fn presetify_ident_fields(ident: &Ident, fields: &Fields) -> proc_macro2::TokenStream {
+fn presetify_ident_fields(
+    ident: &Ident,
+    fields: &Fields,
+    fields_required: bool,
+) -> proc_macro2::TokenStream {
     match fields {
         Fields::Unit => {
             quote! {
@@ -48,13 +62,13 @@ fn presetify_ident_fields(ident: &Ident, fields: &Fields) -> proc_macro2::TokenS
             }
         }
         Fields::Unnamed(unnamed) => {
-            let fields = presetify_fields(&unnamed.unnamed);
+            let fields = presetify_fields(&unnamed.unnamed, fields_required);
             quote! {
                #ident(#fields)
             }
         }
         Fields::Named(named) => {
-            let fields = presetify_fields(&named.named);
+            let fields = presetify_fields(&named.named, fields_required);
             quote! {
                 #ident { #fields }
             }
@@ -95,6 +109,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
     let DeriveInput {
         ident, data, vis, ..
     } = input;
+    // panic!("required: {:#?}", opts.fields_required);
     let ident_preset = Ident::new(
         if let Some(preset_type) = opts.preset_type {
             preset_type
@@ -121,7 +136,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 .iter()
                 .map(|variant| {
                     let Variant { ident, fields, .. } = variant;
-                    presetify_ident_fields(ident, fields)
+                    presetify_ident_fields(ident, fields, opts.fields_required)
                 })
                 .reduce(join_by_comma);
 
@@ -168,7 +183,11 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                                         format!("arg_{index}").as_str(),
                                         Span::call_site(),
                                     );
-                                    quote! { ::#ident_crate::from_keystrokes_by_preset_struct_field(#ident_arg, keystrokes, config)? }
+                                    if opts.fields_required {
+                                        quote! { #ty::from_keystrokes_by_preset(#ident_arg, keystrokes, config)? }
+                                    } else {
+                                        quote! { ::#ident_crate::from_keystrokes_by_preset_struct_field(#ident_arg, keystrokes, config)? }
+                                    }
                                 })
                                 .reduce(join_by_comma).unwrap();
                             println!("arglist: {arglist}");
@@ -227,20 +246,28 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         }
         Data::Struct(data) => {
             let DataStruct { fields, .. } = data;
-            let fields_presetified = presetify_ident_fields(&ident_preset, &fields);
+            let fields_presetified =
+                presetify_ident_fields(&ident_preset, &fields, opts.fields_required);
             let fields = match fields {
                 Fields::Named(FieldsNamed { brace_token, named }) => named
                     .iter()
                     .map(|field| {
                         let Field { ty, ident, .. } = field;
-                        let ident = ident.as_ref().unwrap();
-                        quote! {
-                                #ident: ::#ident_crate::from_keystrokes_by_preset_struct_field(preset.#ident, keystrokes, config)?,
+                        let ident = ident.as_ref().expect("her er det noe");
+                        if opts.fields_required {
+                            quote! {
+                                    #ident: #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?
+                            }
+                        } else {
+                            quote! {
+                                    #ident: ::#ident_crate::from_keystrokes_by_preset_struct_field(preset.#ident, keystrokes, config)?
+                            }
                         }
                     })
                     .reduce(join_by_comma),
                 _ => panic!("Struct with unnamed or unit fields are not supported."),
             };
+            // panic!("Kom hit");
             let impl_from_preset = quote! {
                 impl ::#ident_crate::Presetable<#ident_config> for #ident {
                     type Preset = #ident_preset;
@@ -260,11 +287,11 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 #vis struct #fields_presetified
                 #impl_from_preset
             };
-            println!("result derive Presetable: {result}");
             result
         }
         _ => panic!(),
     };
     let result = TokenStream::from(output);
+    println!("result derive Presetable: {result}");
     result
 }

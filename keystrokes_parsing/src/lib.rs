@@ -11,6 +11,7 @@ pub use keystroke::Keystroke;
 pub use keystroke::KeystrokeIterator;
 pub use keystroke::KeystrokeSequence;
 pub use keystrokes_parsing_derive::impl_from_keystrokes_by_preset_keymap;
+pub use keystrokes_parsing_derive::FromKeystrokes;
 pub use keystrokes_parsing_derive::GetKeymap;
 pub use keystrokes_parsing_derive::Presetable;
 
@@ -47,8 +48,8 @@ pub enum FromKeystrokesError {
     Invalid,
 }
 
-pub trait GetKeymap<Config>: Sized + Clone {
-    fn get_keymap<'a>(config: &'a Config) -> &'a Keymap<Self>;
+pub trait GetKeymap<T: Sized + Clone> {
+    fn get_keymap<'a>(&'a self) -> &'a Keymap<T>;
 }
 
 /// Basically a custom Option type with more appropriate Deserialize behavior and distinct meaning.

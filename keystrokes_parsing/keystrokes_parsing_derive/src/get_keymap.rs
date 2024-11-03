@@ -84,9 +84,9 @@ fn from_preset(
 }
 
 pub struct FindKeymapsResults<'a> {
-    ident: &'a Ident,
-    type_preset: &'a Type,
-    types_for: Vec<Type>,
+    pub ident: &'a Ident,
+    pub type_preset: &'a Type,
+    pub types_for: Vec<Type>,
 }
 pub fn find_keymaps<'a>(data: &'a DataStruct) -> impl Iterator<Item = FindKeymapsResults<'a>> {
     fn inner_type_of_keymaps<'a>(ty: &'a Type) -> Result<&'a Type, ()> {
@@ -176,7 +176,8 @@ pub fn derive_get_keymap(input: TokenStream) -> TokenStream {
                                 config: &Config,
                             ) -> Result<#type_for, ::#ident_crate::FromKeystrokesError> {
                                 ::#ident_crate::from_keystrokes_by_preset_keymap(
-                                    #type_preset::get_keymap(config),
+                                    config.get_keymap(),
+                                    // #type_preset::get_keymap(config),
                                     keystrokes,
                                     config,
                                 )
@@ -199,10 +200,10 @@ pub fn derive_get_keymap(input: TokenStream) -> TokenStream {
                     }
                 }).reduce(join_by_space);
                 quote! {
-                    #impl_from_keystrokes
-                    impl GetKeymap<#ident_config> for #type_preset {
-                        fn get_keymap<'a>(config: &'a #ident_config) -> &'a ::#ident_crate::Keymap<#type_preset> {
-                            &config.#ident
+                    // #impl_from_keystrokes
+                    impl GetKeymap<#type_preset> for #ident_config {
+                        fn get_keymap<'a>(&'a self) -> &'a ::#ident_crate::Keymap<#type_preset> {
+                            &self.#ident
                         }
                     }
                 }
@@ -310,7 +311,7 @@ pub fn derive_get_keymap(input: TokenStream) -> TokenStream {
             //     #output
             //     #impl_from_keystrokes
             // };
-            println!("output: {output}");
+            println!("output GetKeymap: {output}");
             output
         }
         _ => panic!(),
