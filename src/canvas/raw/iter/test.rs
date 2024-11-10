@@ -32,20 +32,20 @@ fn test_canvas_index_iterator_infinite() {
     use crate::DirectionFree;
     #[rustfmt::skip]
     let tests = vec![
-        ((0, 0), (0, 1), None, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
-        ((0, 0), (1, 1), None, vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)]),
-        ((0, 0), (1, 2), None, vec![(0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3), (2, 4), (2, 5), (3, 5), (3, 6)]),
-        ((0, 0), (-1, 2), None, vec![(0, 0), (0, 1), (-1, 1), (-1, 2), (-1, 3), (-2, 3), (-2, 4), (-2, 5), (-3, 5), (-3, 6)]),
-        ((0, 0), (-1, -2), None, vec![(0, 0), (0, -1), (-1, -1), (-1, -2), (-1, -3), (-2, -3), (-2, -4), (-2, -5), (-3, -5), (-3, -6)]),
-        ((0, 0), (1, -2), None, vec![(0, 0), (0, -1), (1, -1), (1, -2), (1, -3), (2, -3), (2, -4), (2, -5), (3, -5), (3, -6)]),
-        ((0, 0), (2, -1), None, vec![(0, 0), (1, 0), (1, -1), (2, -1), (3, -1), (3, -2), (4, -2), (5, -2), (5, -3), (6, -3)]),
-        ((10, 100), (1, 1), None, vec![(10, 100), (10, 101), (11, 101), (11, 102), (12, 102)]),
-        ((0, 0), (0, 1), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
-        ((0, 0), (1, 1), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]),
-        ((0, 0), (-1, 1), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (-1, 1), (-2, 2), (-3, 3), (-4, 4)]),
-        ((0, 0), (1, -2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (0, -1), (1, -2), (1, -3), (2, -4)]),
-        ((0, 0), (-1, -2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (0, -1), (-1, -2), (-1, -3), (-2, -4)]),
-        ((0, 0), (3, 2), Some(CanvasIterationJump::Diagonals), vec![(0, 0), (1, 1), (2, 1), (3, 2), (4, 3), (5, 3)]),
+        ((0, 0), (0, 1), CanvasIterationJump::NoJump, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
+        ((0, 0), (1, 1), CanvasIterationJump::NoJump, vec![(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)]),
+        ((0, 0), (1, 2), CanvasIterationJump::NoJump, vec![(0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3), (2, 4), (2, 5), (3, 5), (3, 6)]),
+        ((0, 0), (-1, 2), CanvasIterationJump::NoJump, vec![(0, 0), (0, 1), (-1, 1), (-1, 2), (-1, 3), (-2, 3), (-2, 4), (-2, 5), (-3, 5), (-3, 6)]),
+        ((0, 0), (-1, -2), CanvasIterationJump::NoJump, vec![(0, 0), (0, -1), (-1, -1), (-1, -2), (-1, -3), (-2, -3), (-2, -4), (-2, -5), (-3, -5), (-3, -6)]),
+        ((0, 0), (1, -2), CanvasIterationJump::NoJump, vec![(0, 0), (0, -1), (1, -1), (1, -2), (1, -3), (2, -3), (2, -4), (2, -5), (3, -5), (3, -6)]),
+        ((0, 0), (2, -1), CanvasIterationJump::NoJump, vec![(0, 0), (1, 0), (1, -1), (2, -1), (3, -1), (3, -2), (4, -2), (5, -2), (5, -3), (6, -3)]),
+        ((10, 100), (1, 1), CanvasIterationJump::NoJump, vec![(10, 100), (10, 101), (11, 101), (11, 102), (12, 102)]),
+        ((0, 0), (0, 1), CanvasIterationJump::Diagonals, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)]),
+        ((0, 0), (1, 1), CanvasIterationJump::Diagonals, vec![(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]),
+        ((0, 0), (-1, 1), CanvasIterationJump::Diagonals, vec![(0, 0), (-1, 1), (-2, 2), (-3, 3), (-4, 4)]),
+        ((0, 0), (1, -2), CanvasIterationJump::Diagonals, vec![(0, 0), (0, -1), (1, -2), (1, -3), (2, -4)]),
+        ((0, 0), (-1, -2), CanvasIterationJump::Diagonals, vec![(0, 0), (0, -1), (-1, -2), (-1, -3), (-2, -4)]),
+        ((0, 0), (3, 2), CanvasIterationJump::Diagonals, vec![(0, 0), (1, 1), (2, 1), (3, 2), (4, 3), (5, 3)]),
     ];
     for (start, (direction_rows, direction_columns), jump, indices) in tests {
         let mut it = CanvasIndexIteratorInfinite::new(
@@ -62,7 +62,9 @@ fn test_canvas_index_iterator_infinite() {
 
 #[test]
 fn test_canvas_index_iterator() {
-    use super::{CanvasIndexIterator, RawCanvas, StopCondition, WordBoundaryType};
+    use super::{
+        CanvasIndexIterator, CanvasIterationJump, RawCanvas, StopCondition, WordBoundaryType,
+    };
     use crate::{Direction, DirectionFree};
     #[rustfmt::skip]
     let tests = vec![
@@ -95,7 +97,13 @@ fn test_canvas_index_iterator() {
     ];
     for (txt, start, direction, stop, end) in tests {
         let mut canvas = RawCanvas::from_txt(txt.to_string()).unwrap();
-        let it = CanvasIndexIterator::new(&mut canvas, start, direction, None, stop);
+        let it = CanvasIndexIterator::new(
+            &mut canvas,
+            start,
+            direction,
+            CanvasIterationJump::NoJump,
+            stop,
+        );
         assert_eq!(it.last(), Some(end));
     }
 }

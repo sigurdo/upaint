@@ -115,7 +115,7 @@ actions_macro!(
     },
     ModeCommandPreset -> ModeCommand {},
     ModeInsertPreset -> ModeInsert {
-        jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
+        jump: Option<CanvasIterationJump> => CanvasIterationJump,
         direction: Option<DirectionFree> => DirectionFree,
     },
     ModeColorPickerPreset -> ModeColorPicker {

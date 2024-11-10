@@ -41,6 +41,7 @@ fn find_cell_exit(start: na::Vector2<f64>, direction: DirectionFree) -> na::Vect
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CanvasIterationJump {
+    NoJump,
     Diagonals,
     DirectionAsStride,
 }
@@ -48,7 +49,7 @@ pub enum CanvasIterationJump {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CanvasIndexIteratorInfinite {
     direction: DirectionFree,
-    jump: Option<CanvasIterationJump>,
+    jump: CanvasIterationJump,
     index_next: CanvasIndex,
     entry_next: na::Vector2<f64>,
     // Not intended for configuration from outside. Used internally for backward movements.
@@ -56,11 +57,7 @@ pub struct CanvasIndexIteratorInfinite {
 }
 
 impl CanvasIndexIteratorInfinite {
-    pub fn new(
-        start: CanvasIndex,
-        direction: DirectionFree,
-        jump: Option<CanvasIterationJump>,
-    ) -> Self {
+    pub fn new(start: CanvasIndex, direction: DirectionFree, jump: CanvasIterationJump) -> Self {
         Self {
             direction,
             jump,
@@ -100,7 +97,7 @@ impl CanvasIndexIteratorInfinite {
     pub fn go_forward(&mut self) -> <Self as Iterator>::Item {
         let index_current = self.index_next;
         let _entry_current = self.entry_next;
-        if self.jump == Some(CanvasIterationJump::DirectionAsStride) {
+        if self.jump == CanvasIterationJump::DirectionAsStride {
             self.index_next.0 += self.direction.rows;
             self.index_next.1 += self.direction.columns;
             return index_current;
@@ -108,7 +105,7 @@ impl CanvasIndexIteratorInfinite {
         self.go_forward_no_jump_no_stride();
         let _index_next = self.index_next;
         let _entry_next = self.entry_next;
-        if self.jump == Some(CanvasIterationJump::Diagonals) {
+        if self.jump == CanvasIterationJump::Diagonals {
             // En hare som løper i forveien.
             let mut rabbit = self.clone();
             rabbit.go_forward_no_jump_no_stride();
@@ -169,7 +166,7 @@ impl Iterator for CanvasIndexIteratorInfinite {
 }
 
 bitflags! {
-    #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
     pub struct WordBoundaryType: u8 {
         const START = 0b01;
         const END   = 0b10;
@@ -206,7 +203,7 @@ impl<'a> CanvasIndexIterator<'a> {
         canvas: &'a RawCanvas,
         start: CanvasIndex,
         direction: DirectionFree,
-        jump: Option<CanvasIterationJump>,
+        jump: CanvasIterationJump,
         stop: StopCondition,
     ) -> Self {
         Self {

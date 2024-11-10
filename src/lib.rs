@@ -40,15 +40,41 @@ pub enum Direction {
 
 /// A free direction defined by a number of rows and columns.
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
+#[serde(try_from = "(i16, i16)")]
 pub struct DirectionFree {
     rows: i16,
     columns: i16,
 }
+#[derive(Debug, Clone, Copy)]
+pub enum DirectionFreeError {
+    Is00,
+}
+impl Display for DirectionFreeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Is00 => write!(f, "(0, 0) has no direction"),
+        }
+    }
+}
+impl TryFrom<(i16, i16)> for DirectionFree {
+    type Error = DirectionFreeError;
+    fn try_from(value: (i16, i16)) -> Result<Self, Self::Error> {
+        Self::new(value.0, value.1)
+    }
+}
+// impl From<(i16, i16)> for DirectionFree {
+//     fn from(value: (i16, i16)) -> Self {
+//         Self {
+//             rows: value.0,
+//             columns: value.1,
+//         }
+//     }
+// }
 
 impl DirectionFree {
-    fn new(rows: i16, columns: i16) -> Result<DirectionFree, ()> {
+    fn new(rows: i16, columns: i16) -> Result<DirectionFree, DirectionFreeError> {
         if rows == 0 && columns == 0 {
-            Err(())
+            Err(DirectionFreeError::Is00)
         } else {
             Ok(DirectionFree { rows, columns })
         }
@@ -64,6 +90,18 @@ impl DirectionFree {
             rows: -self.rows,
             columns: -self.columns,
         }
+    }
+    pub fn left() -> Self {
+        Self::from(Direction::Left)
+    }
+    pub fn right() -> Self {
+        Self::from(Direction::Right)
+    }
+    pub fn up() -> Self {
+        Self::from(Direction::Up)
+    }
+    pub fn down() -> Self {
+        Self::from(Direction::Down)
     }
 }
 

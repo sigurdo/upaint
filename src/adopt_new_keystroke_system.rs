@@ -10,9 +10,13 @@ use crossterm::event::KeyModifiers;
 use keystrokes_parsing::from_keystrokes_by_preset_keymap;
 use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
 use keystrokes_parsing::FromKeystrokes;
+use keystrokes_parsing::FromKeystrokesError;
 use keystrokes_parsing::GetKeymap;
 use keystrokes_parsing::Keymap;
 use keystrokes_parsing::Keystroke;
+use keystrokes_parsing::KeystrokeIterator;
+use keystrokes_parsing::KeystrokeSequence;
+use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use nestify::nest;
 // use keystrokes_parsing::PresetDerive;
@@ -41,7 +45,7 @@ fn testa() {
     let keymap = <TestA as GetKeymap<u32>>::get_keymap(&a);
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum U32KeymapEntry {
     TypeDecimal,
     #[serde(untagged)]
@@ -60,6 +64,58 @@ impl Presetable<Config> for u32 {
         }
     }
 }
+// #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+// pub struct U16Preset(pub u16);
+// impl Presetable<Config> for u16 {
+//     type Preset = U16Preset;
+//     fn from_keystrokes_by_preset(
+//         preset: Self::Preset,
+//         keystrokes: &mut KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, FromKeystrokesError> {
+//         Ok(preset.0)
+//     }
+// }
+// impl Default for U16Preset {
+//     fn default() -> Self {
+//         Self(1),
+//     }
+// }
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub enum CharKeymapEntry {
+    Type,
+    #[serde(untagged)]
+    Char(char),
+}
+impl Presetable<Config> for char {
+    type Preset = CharKeymapEntry;
+    fn from_keystrokes_by_preset(
+        preset: Self::Preset,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+        match preset {
+            CharKeymapEntry::Char(value) => Ok(value),
+            CharKeymapEntry::Type => {
+                if let Some(keystroke) = keystrokes.next() {
+                    if keystroke.modifiers == KeyModifiers::NONE {
+                        if let KeyCode::Char(ch) = keystroke.code {
+                            Ok(ch)
+                        } else {
+                            Err(FromKeystrokesError::Invalid)
+                        }
+                    } else {
+                        Err(FromKeystrokesError::Invalid)
+                    }
+                } else {
+                    Err(FromKeystrokesError::MissingKeystrokes)
+                }
+            }
+        }
+    }
+}
+
 #[derive(Presetable)]
 pub struct ActionA {
     a: u32,
@@ -70,7 +126,8 @@ pub enum ActionEnum {
 }
 
 macro_rules! keymaps {
-    ($($ident:ident : $type:ty,)*) => {
+    {$($ident:ident : $type:ty,)*} => {
+        #[derive(Deserialize)]
         pub struct Keymaps {
             $(
                 $ident: Keymap<<$type as Presetable<Config>>::Preset>,
@@ -150,15 +207,16 @@ macro_rules! impl_presetable_by_self {
 pub trait Motion: Debug {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
 }
-#[derive(Presetable)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(fields_required)]
 pub enum MotionEnum {
     Stay(Stay),
     FixedNumberOfCells(FixedNumberOfCells),
     WordBoundary(WordBoundary),
+    FindChar(FindChar),
 }
 
-#[derive(Debug, Presetable)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Stay {}
 impl Motion for Stay {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
@@ -167,10 +225,18 @@ impl Motion for Stay {
     }
 }
 
-#[derive(Debug, Presetable)]
+fn default_number_of_cells() -> u16 {
+    1
+}
+fn default_jump() -> PresetStructField<CanvasIterationJump> {
+    PresetStructField::Preset(CanvasIterationJump::DirectionAsStride)
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct FixedNumberOfCells {
     direction: DirectionFree,
+    #[presetable(required, default = "default_number_of_cells")]
     number_of_cells: u16,
+    // #[presetable(default = "default_jump")]
     jump: CanvasIterationJump,
 }
 impl Motion for FixedNumberOfCells {
@@ -181,14 +247,14 @@ impl Motion for FixedNumberOfCells {
             canvas,
             start,
             self.direction,
-            Some(self.jump),
+            self.jump,
             StopCondition::NthCell(self.number_of_cells),
         );
         it.collect()
     }
 }
 
-#[derive(Debug, Presetable)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct WordBoundary {
     direction: DirectionFree,
     boundary_type: WordBoundaryType,
@@ -201,8 +267,28 @@ impl Motion for WordBoundary {
             canvas,
             start,
             self.direction,
-            Some(CanvasIterationJump::Diagonals),
+            CanvasIterationJump::Diagonals,
             StopCondition::WordBoundary(self.boundary_type),
+        );
+        it.collect()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct FindChar {
+    direction: DirectionFree,
+    ch: char,
+}
+impl Motion for FindChar {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let start = program_state.cursor_position;
+        let canvas = program_state.canvas.raw();
+        let it = CanvasIndexIterator::new(
+            canvas,
+            start,
+            self.direction,
+            CanvasIterationJump::Diagonals,
+            StopCondition::CharacterMatch(self.ch),
         );
         it.collect()
     }
@@ -213,33 +299,186 @@ impl_presetable_by_self!(DirectionFree);
 impl_presetable_by_self!(CanvasIterationJump);
 impl_presetable_by_self!(WordBoundaryType);
 
-keymaps!(
+keymaps! {
     keymap_u32: u32,
-    keymap_u16: u16,
+    // keymap_u16: u16,
+    character: char,
     motions: MotionEnum,
     directions: DirectionFree,
     canvas_iteration_jumps: CanvasIterationJump,
     word_boundary_type: WordBoundaryType,
-);
+}
 nest! {
+    #[derive(Deserialize)]
     pub struct Config {
         keymaps: Keymaps,
     }
 }
 
+const CONFIG_TOML: &str = r###"
+[keymaps.keymap_u32]
+"6G" = 65
+[keymaps.keymap_u16]
+[keymaps.character]
+"<C-f>" = "f"
+"<C-e>" = "e"
+# Fallback to typing in character directly
+"" = "Type"
+[keymaps.motions]
+"<C-f>" = { FindChar = { direction = "FromKeystrokes" }}
+"<C-l>" = { FindChar = { direction = [0, 1] }}
+"<C-h>" = { FindChar = { direction = [0, -1], ch = "@" }}
+"<C-j>" = { FindChar = { ch = "@" }}
+"t" = { FixedNumberOfCells = { jump = "DirectionAsStride" }}
+"f" = { FixedNumberOfCells = { jump = "FromKeystrokes" }}
+"" = { FixedNumberOfCells = { number_of_cells = 1, jump = "DirectionAsStride" }}
+[keymaps.directions]
+"h" = [0, -1]
+"j" = [1, 0]
+"k" = [-1, 0]
+"l" = [0, 1]
+[keymaps.canvas_iteration_jumps]
+"n" = "NoJump"
+"d" = "Diagonals"
+"s" = "DirectionAsStride"
+[keymaps.word_boundary_type]
+"###;
+
 #[test]
-fn test() {
-    let keymaps = Keymaps {
-        keymap_u32: Keymap::new(),
-        keymap_u16: Keymap::new(),
-        motions: Keymap::new(),
-        directions: Keymap::new(),
-        canvas_iteration_jumps: Keymap::new(),
-        word_boundary_type: Keymap::new(),
-        // keymap_action_a: Keymap::new(),
-        // keymap_action: Keymap::new(),
-        // motions: Keymap::new(),
-    };
+pub fn test() {
+    let config: Config = toml::from_str(CONFIG_TOML).unwrap();
+    // config.keymaps.character.get("abc".into())
+    macro_rules! keymaps_contents {
+        ($($keymap:ident[$keystrokes:expr] = $expected:expr,)*) => {
+            $(
+                assert_eq!(
+                    config
+                        .keymaps
+                        .$keymap
+                        .get($keystrokes.to_string().try_into().unwrap())
+                        .unwrap(),
+                    &$expected
+                );
+            )*
+        };
+    }
+    keymaps_contents!(
+        character["<C-f>"] = CharKeymapEntry::Char('f'),
+        keymap_u32["6G"] = U32KeymapEntry::U32(65),
+        motions["<C-f>"] = MotionEnumPreset::FindChar(FindCharPreset {
+            direction: PresetStructField::FromKeystrokes,
+            ch: PresetStructField::FromKeystrokes,
+        }),
+        motions["<C-l>"] = MotionEnumPreset::FindChar(FindCharPreset {
+            direction: PresetStructField::Preset(DirectionFree {
+                rows: 0,
+                columns: 1
+            }),
+            ch: PresetStructField::FromKeystrokes,
+        }),
+        motions["<C-h>"] = MotionEnumPreset::FindChar(FindCharPreset {
+            direction: PresetStructField::Preset(DirectionFree {
+                rows: 0,
+                columns: -1
+            }),
+            ch: PresetStructField::Preset(CharKeymapEntry::Char('@')),
+        }),
+        directions["l"] = DirectionFree {
+            rows: 0,
+            columns: 1
+        },
+        // motions["f"] = MotionEnumPreset::FixedNumberOfCells(FixedNumberOfCellsPreset {
+        //     direction: PresetStructField::FromKeystrokes,
+        //     number_of_cells: 1,
+        //     jump: PresetStructField::FromKeystrokes,
+        // }),
+        canvas_iteration_jumps["n"] = CanvasIterationJump::NoJump,
+        canvas_iteration_jumps["d"] = CanvasIterationJump::Diagonals,
+        canvas_iteration_jumps["s"] = CanvasIterationJump::DirectionAsStride,
+    );
+    macro_rules! keystroke_parsing {
+        ($($keystrokes:expr => $expected:expr,)*) => {
+            $({
+                // Assign expected value to result variable to enable type inference in next statement.
+                #[allow(unused_assignments)]
+                let mut result = $expected;
+                result = <_>::from_keystrokes(
+                    &mut KeystrokeSequence::try_from($keystrokes.to_string())
+                        .unwrap()
+                        .iter(),
+                    &config,
+                )
+                .unwrap();
+                assert_eq!(result, $expected,);
+            })*
+        };
+    }
+    keystroke_parsing!(
+        "k" => MotionEnum::FixedNumberOfCells(FixedNumberOfCells {
+           direction: DirectionFree {
+               rows: -1,
+               columns: 0
+           },
+           number_of_cells: 1,
+           jump: CanvasIterationJump::DirectionAsStride,
+        }),
+        "l" => MotionEnum::FixedNumberOfCells(FixedNumberOfCells {
+           direction: DirectionFree {
+               rows: 0,
+               columns: 1
+           },
+           number_of_cells: 1,
+           jump: CanvasIterationJump::DirectionAsStride,
+        }),
+        "h" => 'h',
+        "<C-e>" => 'e',
+        "6G" => 65u32,
+        "tl" => MotionEnum::FixedNumberOfCells(
+           FixedNumberOfCells {
+               direction: DirectionFree {
+                   rows: 0,
+                   columns: 1,
+               },
+               number_of_cells: 1,
+               jump: CanvasIterationJump::DirectionAsStride,
+           }
+        ),
+        // "fl" => MotionEnum::FixedNumberOfCells(
+        //     FixedNumberOfCells {
+        //         direction: DirectionFree {
+        //             rows: 0,
+        //             columns: 1,
+        //         },
+        //         number_of_cells: 1,
+        //         jump: CanvasIterationJump::DirectionAsStride,
+        //     }
+        // ),
+        "<C-f>l" => MotionEnum::FindChar(
+            FindChar {
+                direction: DirectionFree {
+                    rows: 0,
+                    columns: 1,
+                },
+                ch: 'l',
+            }
+        ),
+    );
+    // let motion = MotionEnum::from_keystrokes(
+    //     &mut KeystrokeSequence::try_from("k".to_string()).unwrap().iter(),
+    //     &config,
+    // )
+    // .unwrap();
+    // assert_eq!(
+    //     motion,
+    //     MotionEnum::FixedNumberOfCells(FixedNumberOfCells {
+    //         direction: DirectionFree {
+    //             rows: -1,
+    //             columns: 0
+    //         },
+    //         number_of_cells: 1,
+    //         jump: CanvasIterationJump::NoJump,
+    //     })
+    // );
     /*
     let config = Config { keymaps };
     let res = U32KeymapEntry::get_keymap(&config);

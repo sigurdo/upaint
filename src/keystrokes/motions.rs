@@ -108,7 +108,7 @@ motions_macro!(
     FixedNumberOfCellsPreset -> FixedNumberOfCells {
         direction: Option<DirectionFree> => DirectionFree,
         number_of_cells: Option<u16> => u16,
-        jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
+        jump: Option<CanvasIterationJump> => CanvasIterationJump,
     },
     WordBoundaryIncomplete -> WordBoundary {
         direction: Option<DirectionFree> => DirectionFree,
@@ -125,7 +125,7 @@ motions_macro!(
         slot: Option<SelectionSlotSpecification> => SelectionSlotSpecification,
     },
     GoToMarkPreset -> GoToMark {
-        jump: Option<CanvasIterationJump> => Option<CanvasIterationJump>,
+        jump: Option<CanvasIterationJump> => CanvasIterationJump,
         slot: Option<char> => char,
     },
     MatchingCellsPreset -> MatchingCells {
@@ -146,7 +146,7 @@ impl Motion for WordBoundary {
             canvas,
             start,
             self.direction,
-            Some(CanvasIterationJump::Diagonals),
+            CanvasIterationJump::Diagonals,
             StopCondition::WordBoundary(self.boundary_type),
         );
         it.collect()
@@ -161,7 +161,7 @@ impl Motion for FindChar {
             canvas,
             start,
             self.direction,
-            Some(CanvasIterationJump::Diagonals),
+            CanvasIterationJump::Diagonals,
             StopCondition::CharacterMatch(self.ch),
         );
         it.collect()

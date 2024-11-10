@@ -16,6 +16,22 @@ pub struct Keymap<T: Clone> {
     pub current: Option<T>,
     pub next: HashMap<Keystroke, Keymap<T>>,
 }
+impl<T: Clone> Keymap<T> {
+    pub fn get<'a>(&'a self, keystrokes: KeystrokeSequence) -> Option<&'a T> {
+        self.get_recursive(&mut keystrokes.iter())
+    }
+    fn get_recursive<'a>(&'a self, keystrokes: &mut KeystrokeIterator) -> Option<&'a T> {
+        if let Some(keystroke) = keystrokes.next() {
+            if let Some(keymap_next) = self.next.get(keystroke) {
+                keymap_next.get_recursive(keystrokes)
+            } else {
+                None
+            }
+        } else {
+            self.current.as_ref()
+        }
+    }
+}
 
 impl<T: Clone> Keymap<T> {
     pub fn new() -> Self {

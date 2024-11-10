@@ -42,6 +42,24 @@ pub trait Presetable<Config>: Sized {
     ) -> Result<Self, FromKeystrokesError>;
 }
 
+impl<Config, T: Sized + Presetable<Config>> Presetable<Config> for Option<T> {
+    type Preset = Option<<T as Presetable<Config>>::Preset>;
+    fn from_keystrokes_by_preset(
+        preset: Self::Preset,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, FromKeystrokesError> {
+        Ok(match preset {
+            Some(preset_inner) => Some(T::from_keystrokes_by_preset(
+                preset_inner,
+                keystrokes,
+                config,
+            )?),
+            None => None,
+        })
+    }
+}
+
 #[derive(Debug)]
 pub enum FromKeystrokesError {
     MissingKeystrokes,
@@ -53,7 +71,7 @@ pub trait GetKeymap<T: Sized + Clone> {
 }
 
 /// Basically a custom Option type with more appropriate Deserialize behavior and distinct meaning.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub enum PresetStructField<T> {
     #[default]
     FromKeystrokes,

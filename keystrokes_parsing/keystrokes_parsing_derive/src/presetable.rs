@@ -1,4 +1,4 @@
-use darling::FromDeriveInput;
+use darling::{FromDeriveInput, FromField, FromVariant};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -17,6 +17,25 @@ struct Opts {
     fields_required: bool,
 }
 
+#[derive(FromField, Default)]
+#[darling(default, attributes(presetable))]
+struct FieldOpts {
+    required: bool,
+    default: Option<String>,
+}
+impl FieldOpts {
+    fn from_field_expect(field: &Field) -> Self {
+        Self::from_field(field)
+            .expect(format!("Wrong options for field {:?}", field.ident).as_str())
+    }
+}
+
+#[derive(FromVariant, Default)]
+#[darling(default, attributes(presetable))]
+struct VariantOpts {
+    required: bool,
+}
+
 fn presetify_fields(
     fields: &Punctuated<Field, Comma>,
     fields_required: bool,
@@ -26,7 +45,9 @@ fn presetify_fields(
         .iter()
         .map(|field| {
             let Field { ident, ty, .. } = field;
-            let value = if fields_required {
+            let opts = FieldOpts::from_field_expect(field);
+            let required = fields_required || opts.required;
+            let value = if required {
                 quote! {
                     <#ty as Presetable<Config>>::Preset
                 }
@@ -36,9 +57,16 @@ fn presetify_fields(
                 }
             };
             if let Some(ident) = ident {
-                quote! {
-                    #[serde(default)]
-                    #ident: #value,
+                if let Some(default) = opts.default {
+                    quote! {
+                        #[serde(default = #default)]
+                        #ident: #value,
+                    }
+                } else {
+                    quote! {
+                        #[serde(default)]
+                        #ident: #value,
+                    }
                 }
             } else {
                 quote! {
@@ -141,7 +169,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 .reduce(join_by_comma);
 
             let definition_enum = quote! {
-                #[derive(::core::fmt::Debug, ::core::clone::Clone, ::serde::Serialize, ::serde::Deserialize)]
+                #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::serde::Serialize, ::serde::Deserialize)]
                 #vis enum #ident_preset {
                     #variants
                 }
@@ -183,7 +211,8 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                                         format!("arg_{index}").as_str(),
                                         Span::call_site(),
                                     );
-                                    if opts.fields_required {
+                                    let required = opts.fields_required || FieldOpts::from_field_expect(field).required;
+                                    if required {
                                         quote! { #ty::from_keystrokes_by_preset(#ident_arg, keystrokes, config)? }
                                     } else {
                                         quote! { ::#ident_crate::from_keystrokes_by_preset_struct_field(#ident_arg, keystrokes, config)? }
@@ -254,7 +283,8 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                     .map(|field| {
                         let Field { ty, ident, .. } = field;
                         let ident = ident.as_ref().expect("her er det noe");
-                        if opts.fields_required {
+                        let required = opts.fields_required || FieldOpts::from_field_expect(field).required;
+                        if required {
                             quote! {
                                     #ident: #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?
                             }
@@ -283,7 +313,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 }
             };
             let result = quote! {
-                #[derive(::core::fmt::Debug, ::core::clone::Clone, ::serde::Serialize, ::serde::Deserialize)]
+                #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::serde::Serialize, ::serde::Deserialize)]
                 #vis struct #fields_presetified
                 #impl_from_preset
             };

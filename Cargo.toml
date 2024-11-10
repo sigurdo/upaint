@@ -65,3 +65,7 @@ path = "src/testing/test_crossterm.rs"
 [[bin]]
 name = "test_macros"
 path = "src/testing/test_macros.rs"
+
+# [[bin]]
+# name = "test_adopt_new_keystroke_system"
+# path = "src/testing/test_adopt_new_keystroke_system.rs"
