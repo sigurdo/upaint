@@ -48,11 +48,14 @@ pub fn from_keystrokes_by_preset_keymap<P: Clone, Config, C: Presetable<Config, 
     config: &Config,
 ) -> Result<C, FromKeystrokesError> {
     let error = {
-        let mut keystrokes = keystrokes.clone();
-        if let Some(keystroke) = keystrokes.next() {
+        let mut keystrokes_clone = keystrokes.clone();
+        if let Some(keystroke) = keystrokes_clone.next() {
             if let Some(keymap_next) = keymap.next.get(keystroke) {
-                match from_keystrokes_by_preset_keymap(keymap_next, &mut keystrokes, config) {
-                    Ok(complete) => return Ok(complete),
+                match from_keystrokes_by_preset_keymap(keymap_next, &mut keystrokes_clone, config) {
+                    Ok(complete) => {
+                        *keystrokes = keystrokes_clone;
+                        return Ok(complete);
+                    }
                     Err(FromKeystrokesError::MissingKeystrokes) => {
                         return Err(FromKeystrokesError::MissingKeystrokes)
                     }
@@ -66,8 +69,12 @@ pub fn from_keystrokes_by_preset_keymap<P: Clone, Config, C: Presetable<Config, 
         }
     };
     if let Some(current) = keymap.current.clone() {
-        if let Ok(complete) = C::from_keystrokes_by_preset(current, keystrokes, config) {
-            return Ok(complete);
+        match C::from_keystrokes_by_preset(current, keystrokes, config) {
+            Ok(complete) => return Ok(complete),
+            Err(FromKeystrokesError::MissingKeystrokes) => {
+                return Err(FromKeystrokesError::MissingKeystrokes)
+            }
+            _ => (),
         }
     }
     Err(error)

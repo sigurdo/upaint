@@ -104,33 +104,6 @@ fn presetify_ident_fields(
     }
 }
 
-fn from_preset(
-    ident: &Ident,
-    ident_preset: &Ident,
-    variants: &Variant,
-) -> proc_macro2::TokenStream {
-    // let match_arms = fields.iter();
-    quote! {
-        impl FromPreset<#ident_preset> for #ident {
-            fn from_preset(
-                preset: #ident_preset,
-                keystrokes: &mut crate::keystrokes::KeystrokeIterator,
-                config: &crate::config::Config,
-            ) -> Result<Self, KeybindCompletionError> {
-
-                match preset {
-                    crate::keystrokes::Preset::Preset(value) => {
-                    },
-                    crate::keystrokes::Preset::FromKeystrokes => {
-                        Self::from_keystrokes(keystrokes, config)
-                    },
-                }
-            }
-
-        }
-    }
-}
-
 pub fn derive_presetable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input);
     let opts = Opts::from_derive_input(&input).expect("Wrong options");
@@ -286,15 +259,15 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                         let required = opts.fields_required || FieldOpts::from_field_expect(field).required;
                         if required {
                             quote! {
-                                    #ident: #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?
+                                    #ident: #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?,
                             }
                         } else {
                             quote! {
-                                    #ident: ::#ident_crate::from_keystrokes_by_preset_struct_field(preset.#ident, keystrokes, config)?
+                                    #ident: ::#ident_crate::from_keystrokes_by_preset_struct_field(preset.#ident, keystrokes, config)?,
                             }
                         }
                     })
-                    .reduce(join_by_comma),
+                    .reduce(join_by_space),
                 _ => panic!("Struct with unnamed or unit fields are not supported."),
             };
             // panic!("Kom hit");
