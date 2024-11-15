@@ -174,7 +174,8 @@ impl Motion for FindCharRepeat {
             if self.direction_reversed {
                 find_char.direction = find_char.direction.reversed();
             }
-            find_char.cells(program_state)
+            // find_char.cells(program_state)
+            vec![]
         } else {
             vec![]
         }

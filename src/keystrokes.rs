@@ -359,7 +359,7 @@ impl FromKeystrokes for YankSlotSpecification {
 
 // #[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize)]
 pub type ColorSlot = char;
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Preset)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Preset)]
 pub enum ColorOrSlot {
     Slot(ColorSlot),
     #[serde(untagged)]
@@ -415,7 +415,7 @@ impl Default for ColorOrSlot {
         Self::Slot('a')
     }
 }
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ColorOrSlotSpecification {
     Active,
     #[serde(untagged)]

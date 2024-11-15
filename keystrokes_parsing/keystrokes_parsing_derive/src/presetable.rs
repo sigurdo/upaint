@@ -12,9 +12,12 @@ use crate::utils::{ident_crate, join_by_comma, join_by_space};
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(presetable))]
 struct Opts {
+    // If set to None, "Preset" will be appended to the name of the type Presetable is
+    // derived for.
+    // Can be set to "Self" to not generate a new preset-type just a Presetable implementation.
     preset_type: Option<String>,
     config_type: Option<String>,
-    fields_required: bool,
+    all_required: bool,
 }
 
 #[derive(FromField, Default)]
@@ -38,7 +41,7 @@ struct VariantOpts {
 
 fn presetify_fields(
     fields: &Punctuated<Field, Comma>,
-    fields_required: bool,
+    all_required: bool,
 ) -> proc_macro2::TokenStream {
     let ident_crate = ident_crate();
     let result = fields
@@ -46,7 +49,7 @@ fn presetify_fields(
         .map(|field| {
             let Field { ident, ty, .. } = field;
             let opts = FieldOpts::from_field_expect(field);
-            let required = fields_required || opts.required;
+            let required = all_required || opts.required;
             let value = if required {
                 quote! {
                     <#ty as Presetable<Config>>::Preset
@@ -81,7 +84,7 @@ fn presetify_fields(
 fn presetify_ident_fields(
     ident: &Ident,
     fields: &Fields,
-    fields_required: bool,
+    all_required: bool,
 ) -> proc_macro2::TokenStream {
     match fields {
         Fields::Unit => {
@@ -90,18 +93,34 @@ fn presetify_ident_fields(
             }
         }
         Fields::Unnamed(unnamed) => {
-            let fields = presetify_fields(&unnamed.unnamed, fields_required);
+            let fields = presetify_fields(&unnamed.unnamed, all_required);
             quote! {
                #ident(#fields)
             }
         }
         Fields::Named(named) => {
-            let fields = presetify_fields(&named.named, fields_required);
+            let fields = presetify_fields(&named.named, all_required);
             quote! {
                 #ident { #fields }
             }
         }
     }
+}
+
+pub fn derive_presetable_by_self(derive_for: Ident, config: Ident) -> TokenStream {
+    quote! {
+        impl Presetable<#config> for #derive_for {
+            type Preset = Self;
+            fn from_keystrokes_by_preset(
+                preset: Self::Preset,
+                _keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+                _config: &#config,
+            ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+                Ok(preset)
+            }
+        }
+    }
+    .into()
 }
 
 pub fn derive_presetable(input: TokenStream) -> TokenStream {
@@ -111,20 +130,23 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         ident, data, vis, ..
     } = input;
     // panic!("required: {:#?}", opts.fields_required);
-    let ident_preset = Ident::new(
-        if let Some(preset_type) = opts.preset_type {
-            preset_type
-        } else {
-            format!("{ident}Preset")
-        }
-        .as_str(),
-        Span::call_site(),
-    );
     let ident_config = Ident::new(
         if let Some(config_type) = opts.config_type {
             config_type
         } else {
             format!("Config")
+        }
+        .as_str(),
+        Span::call_site(),
+    );
+    let ident_preset = Ident::new(
+        if let Some(preset_type) = opts.preset_type {
+            if preset_type == "Self" {
+                return derive_presetable_by_self(ident, ident_config);
+            }
+            preset_type
+        } else {
+            format!("{ident}Preset")
         }
         .as_str(),
         Span::call_site(),
@@ -137,7 +159,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 .iter()
                 .map(|variant| {
                     let Variant { ident, fields, .. } = variant;
-                    presetify_ident_fields(ident, fields, opts.fields_required)
+                    presetify_ident_fields(ident, fields, opts.all_required)
                 })
                 .reduce(join_by_comma);
 
@@ -184,7 +206,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                                         format!("arg_{index}").as_str(),
                                         Span::call_site(),
                                     );
-                                    let required = opts.fields_required || FieldOpts::from_field_expect(field).required;
+                                    let required = opts.all_required || FieldOpts::from_field_expect(field).required;
                                     if required {
                                         quote! { #ty::from_keystrokes_by_preset(#ident_arg, keystrokes, config)? }
                                     } else {
@@ -249,14 +271,14 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         Data::Struct(data) => {
             let DataStruct { fields, .. } = data;
             let fields_presetified =
-                presetify_ident_fields(&ident_preset, &fields, opts.fields_required);
+                presetify_ident_fields(&ident_preset, &fields, opts.all_required);
             let fields = match fields {
                 Fields::Named(FieldsNamed { brace_token, named }) => named
                     .iter()
                     .map(|field| {
                         let Field { ty, ident, .. } = field;
                         let ident = ident.as_ref().expect("her er det noe");
-                        let required = opts.fields_required || FieldOpts::from_field_expect(field).required;
+                        let required = opts.all_required || FieldOpts::from_field_expect(field).required;
                         if required {
                             quote! {
                                     #ident: #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?,

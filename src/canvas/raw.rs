@@ -1,9 +1,11 @@
 use bitflags::bitflags;
+use keystrokes_parsing::Presetable;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 use ratatui::style::{Color, Modifier};
 
+use crate::adopt_new_keystroke_system::Config;
 use crate::selections::Selection;
 use crate::Ground;
 
@@ -27,7 +29,8 @@ mod test;
 pub type CanvasIndex = (i16, i16);
 
 bitflags! {
-    #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+    #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Presetable)]
+    #[presetable(preset_type = "Self")]
     pub struct CellContentType: u8 {
         const NONE      = 0b0000_0000;
         const TEXT      = 0b0000_0001;

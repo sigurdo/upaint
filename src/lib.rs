@@ -18,8 +18,8 @@ pub mod status_bar;
 pub mod user_input;
 pub mod yank_slots;
 
+use crate::adopt_new_keystroke_system::FindChar;
 use crate::config::Config;
-use crate::keystrokes::motions::FindChar;
 use crate::keystrokes::ColorOrSlot;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;

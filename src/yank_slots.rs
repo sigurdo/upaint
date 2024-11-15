@@ -2,7 +2,7 @@ use crate::ProgramState;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum YankSlotSpecification {
     Active,
     Specific(char),

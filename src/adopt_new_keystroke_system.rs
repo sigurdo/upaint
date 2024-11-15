@@ -1,12 +1,31 @@
+use crate::actions::Action;
+use crate::canvas::raw::continuous_region::find_continuous_region;
+use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
+use crate::canvas::raw::continuous_region::MatchCell;
 use crate::canvas::raw::iter::CanvasIndexIterator;
+use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
+use crate::canvas::raw::CanvasCell;
+use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
+use crate::canvas::CanvasOperation;
+use crate::color_picker::ColorPicker;
+use crate::command_line::create_command_line_textarea;
+use crate::keystrokes::operators::UpdateSelectionOperator;
+use crate::keystrokes::ColorOrSlot;
+use crate::keystrokes::ColorOrSlotSpecification;
+use crate::selections::Selection;
+use crate::selections::SelectionSlotSpecification;
+use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
+use crate::Ground;
+use crate::InputMode;
 use crate::ProgramState;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
+use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::from_keystrokes_by_preset_keymap;
 use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
 use keystrokes_parsing::FromKeystrokes;
@@ -229,16 +248,23 @@ macro_rules! impl_presetable_by_self {
 //     }
 // }
 
+#[enum_dispatch]
 pub trait Motion: Debug {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
 }
+#[enum_dispatch(Motion)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(fields_required)]
+#[presetable(all_required)]
 pub enum MotionEnum {
     Stay(Stay),
     FixedNumberOfCells(FixedNumberOfCells),
     WordBoundary(WordBoundary),
     FindChar(FindChar),
+    FindCharRepeat(FindCharRepeat),
+    SelectionMotion(SelectionMotion),
+    GoToMark(GoToMark),
+    MatchingCells(MatchingCells),
+    ContinuousRegion(ContinuousRegion),
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -301,8 +327,8 @@ impl Motion for WordBoundary {
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct FindChar {
-    direction: DirectionFree,
-    ch: char,
+    pub direction: DirectionFree,
+    pub ch: char,
 }
 impl Motion for FindChar {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
@@ -319,19 +345,455 @@ impl Motion for FindChar {
     }
 }
 
-// impl_presetable_by_self!(u16);
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct FindCharRepeat {
+    pub direction_reversed: bool,
+}
+impl Motion for FindCharRepeat {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        if let Some(mut find_char) = program_state.find_char_last.clone() {
+            if self.direction_reversed {
+                find_char.direction = find_char.direction.reversed();
+            }
+            find_char.cells(program_state)
+        } else {
+            vec![]
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct SelectionMotion {
+    pub slot: SelectionSlotSpecification,
+}
+impl Motion for SelectionMotion {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let slot = self.slot.as_char(program_state);
+        if let Some(selection) = program_state.selections.get(&slot) {
+            selection.iter().copied().collect()
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct GoToMark {
+    jump: CanvasIterationJump,
+    slot: char,
+}
+impl Motion for GoToMark {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        if let Some(mark) = program_state.marks.get(&self.slot) {
+            let rows = mark.0 - program_state.cursor_position.0;
+            let columns = mark.1 - program_state.cursor_position.1;
+            let direction = DirectionFree { rows, columns };
+            let it = CanvasIndexIterator::new(
+                program_state.canvas.raw(),
+                program_state.cursor_position,
+                direction,
+                self.jump,
+                StopCondition::Index(*mark),
+            );
+            it.collect()
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct MatchingCells {
+    pub content_type: CellContentType,
+}
+impl Motion for MatchingCells {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let canvas = program_state.canvas.raw();
+        let index = program_state.cursor_position;
+
+        let ch = if self.content_type.contains(CellContentType::TEXT) {
+            Some(canvas.character(index))
+        } else {
+            None
+        };
+        let fg = if self.content_type.contains(CellContentType::FG) {
+            Some(canvas.fg(index))
+        } else {
+            None
+        };
+        let bg = if self.content_type.contains(CellContentType::BG) {
+            Some(canvas.bg(index))
+        } else {
+            None
+        };
+        let modifiers = if self.content_type.contains(CellContentType::MODIFIERS) {
+            Some(canvas.modifiers(index))
+        } else {
+            None
+        };
+
+        let selection = program_state
+            .canvas
+            .raw()
+            .cells_matching_old(ch, fg, bg, modifiers);
+        let mut result = Vec::new();
+        for cell in selection {
+            result.push(cell);
+        }
+        result
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct ContinuousRegion {
+    pub relative_type: ContinuousRegionRelativeType,
+    pub diagonals_allowed: bool,
+}
+impl Motion for ContinuousRegion {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let canvas = program_state.canvas.raw();
+        let start = program_state.cursor_position;
+        let match_cell = MatchCell::from((canvas.get(&start), self.relative_type));
+        find_continuous_region(&canvas, start, match_cell, self.diagonals_allowed)
+            .into_iter()
+            .collect()
+    }
+}
+
+// ------------------ Operators ---------
+pub trait Operator: Debug {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState);
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Colorize {
+    ground: Ground,
+    color: ColorOrSlotSpecification,
+}
+impl Operator for Colorize {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        let mut canvas_operations = Vec::new();
+        let color = self.color.as_color_or_slot(&program_state);
+        let color = match color {
+            ColorOrSlot::Slot(ch) => match program_state.color_slots.get(&ch).copied() {
+                Some(color) => color,
+                _ => {
+                    return;
+                }
+            },
+            ColorOrSlot::Color(color) => color,
+        };
+        for index in cell_indices {
+            let op = if self.ground == Ground::Foreground {
+                CanvasOperation::SetFgColor(*index, color)
+            } else {
+                CanvasOperation::SetBgColor(*index, color)
+            };
+            canvas_operations.push(op);
+        }
+        program_state.canvas.create_commit(canvas_operations);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Replace {
+    ch: char,
+}
+impl Operator for Replace {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        let mut canvas_operations = Vec::new();
+        for index in cell_indices {
+            canvas_operations.push(CanvasOperation::SetCharacter(*index, self.ch));
+        }
+        program_state.canvas.create_commit(canvas_operations);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct UpdateSelection {
+    operator: UpdateSelectionOperator,
+    slot: SelectionSlotSpecification,
+    highlight: bool,
+}
+impl Operator for UpdateSelection {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        let slot = self.slot.as_char(program_state);
+        let selection = if let Some(selection) = program_state.selections.get_mut(&slot) {
+            selection
+        } else {
+            program_state.selections.insert(slot, Selection::new());
+            program_state.selections.get_mut(&slot).unwrap()
+        };
+        match self.operator {
+            UpdateSelectionOperator::Add => {
+                selection.extend(cell_indices.iter());
+            }
+            UpdateSelectionOperator::Overwrite => {
+                *selection = cell_indices.iter().copied().collect();
+            }
+            UpdateSelectionOperator::Subtract => {
+                for index in cell_indices {
+                    selection.remove(index);
+                }
+            }
+        }
+        if self.highlight {
+            program_state.selection_highlight = Some(slot);
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Yank {
+    content_type: CellContentType,
+    slot: YankSlotSpecification,
+}
+impl Operator for Yank {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        // TODO: Find more elegant way to translate iterable than creating Vec
+        let a: Vec<_> = cell_indices.iter().cloned().collect();
+        let yank =
+            program_state
+                .canvas
+                .raw()
+                .yank(a, self.content_type, program_state.cursor_position);
+        program_state
+            .yanks
+            .insert(self.slot.as_char(&program_state), yank);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Cut {
+    content_type: CellContentType,
+    slot: YankSlotSpecification,
+}
+impl Operator for Cut {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        Yank {
+            content_type: self.content_type,
+            slot: self.slot,
+        }
+        .operate(cell_indices, program_state);
+        let mut canvas_operations = Vec::new();
+        for index in cell_indices {
+            canvas_operations.push(CanvasOperation::SetCell(*index, CanvasCell::default()));
+        }
+        program_state.canvas.create_commit(canvas_operations);
+    }
+}
+
+// ----------------- Actions ------------
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Undo {}
+impl Action for Undo {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.canvas.undo();
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Redo {}
+impl Action for Redo {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.canvas.redo();
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Pipette {
+    pub ground: Ground,
+    pub slot: ColorOrSlotSpecification,
+}
+impl Action for Pipette {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let ColorOrSlot::Slot(ch) = self.slot.as_color_or_slot(&program_state) {
+            program_state.color_slots.insert(
+                ch,
+                program_state
+                    .canvas
+                    .raw()
+                    .color(program_state.cursor_position, self.ground),
+            );
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct MoveCursor {
+    motion: MotionEnum,
+}
+impl Action for MoveCursor {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let cells = self.motion.cells(program_state);
+        if let MotionEnum::FindChar(ref find_char) = self.motion {
+            program_state.find_char_last = Some(find_char.clone());
+        }
+        let Some(cursor_to) = cells.last() else {
+            return;
+        };
+        program_state.cursor_position = *cursor_to;
+        let (rows_away, columns_away) = program_state
+            .canvas_visible
+            .away_index(program_state.cursor_position);
+        program_state.focus_position.0 += rows_away;
+        program_state.canvas_visible.row += rows_away;
+        program_state.focus_position.1 += columns_away;
+        program_state.canvas_visible.column += columns_away;
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Operation {}
+impl Action for Operation {
+    fn execute(&self, program_state: &mut ProgramState) {
+        // TODO
+        // let cells = self.motion.cells(program_state);
+        // self.operator.operate(&cells, program_state);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct ModeCommand {}
+impl Action for ModeCommand {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.command_line =
+            create_command_line_textarea(program_state.config.color_theme.command_line.into());
+        program_state.input_mode = InputMode::Command;
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct ModeInsert {
+    pub jump: CanvasIterationJump,
+    pub direction: DirectionFree,
+}
+impl Action for ModeInsert {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let mut canvas_it = CanvasIndexIteratorInfinite::new(
+            program_state.cursor_position,
+            self.direction,
+            self.jump,
+        );
+        canvas_it.go_forward();
+        program_state.input_mode = InputMode::Insert(canvas_it);
+        // Create empty commit for amending to
+        program_state.canvas.create_commit(vec![]);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct ModeColorPicker {
+    pub slot: ColorOrSlotSpecification,
+}
+impl Action for ModeColorPicker {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let ColorOrSlot::Slot(ch) = self.slot.as_color_or_slot(&program_state) {
+            let title = ch.to_string();
+            let initial_color = program_state.color_slots.get(&ch);
+            program_state.color_picker = ColorPicker::new(title, initial_color.copied());
+            program_state.input_mode = InputMode::ColorPicker(ch);
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct ModeVisualRect {}
+impl Action for ModeVisualRect {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.input_mode =
+            InputMode::VisualRect((program_state.cursor_position, program_state.cursor_position));
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct HighlightSelection {
+    pub slot: char,
+}
+impl Action for HighlightSelection {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_highlight = Some(self.slot);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct HighlightSelectionClear {}
+impl Action for HighlightSelectionClear {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_highlight = None;
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct SetSelectionActive {
+    pub slot: char,
+    pub highlight: bool,
+}
+impl Action for SetSelectionActive {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_active = self.slot;
+        if self.highlight {
+            program_state.selection_highlight = Some(self.slot);
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct SetColorOrSlotActive {
+    pub color_or_slot: ColorOrSlot,
+}
+impl Action for SetColorOrSlotActive {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.color_or_slot_active = self.color_or_slot; //.as_color_or_slot(program_state);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct Paste {
+    pub slot: YankSlotSpecification,
+}
+impl Action for Paste {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(yank) = program_state.yanks.get(&self.slot.as_char(&program_state)) {
+            program_state
+                .canvas
+                .create_commit(vec![CanvasOperation::Paste(
+                    program_state.cursor_position,
+                    yank.clone(),
+                )]);
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct SetYankActive {
+    pub slot: char,
+}
+impl Action for SetYankActive {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.yank_active = self.slot;
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct MarkSet {
+    pub slot: char,
+}
+impl Action for MarkSet {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state
+            .marks
+            .insert(self.slot, program_state.cursor_position);
+    }
+}
+
 impl_presetable_by_self!(DirectionFree);
 impl_presetable_by_self!(CanvasIterationJump);
 impl_presetable_by_self!(WordBoundaryType);
+impl_presetable_by_self!(bool);
+impl_presetable_by_self!(Ground);
+impl_presetable_by_self!(ColorOrSlotSpecification);
+impl_presetable_by_self!(ColorOrSlot);
+impl_presetable_by_self!(YankSlotSpecification);
+impl_presetable_by_self!(UpdateSelectionOperator);
 
 keymaps! {
     keymap_u32: u32,
-    // keymap_u16: u16,
     character: char,
     motions: MotionEnum,
     directions: DirectionFree,
+    boolean: bool,
+    selection_slot_specification: SelectionSlotSpecification,
+    cell_content_type: CellContentType,
+    continous_region_relative_type: ContinuousRegionRelativeType,
     canvas_iteration_jumps: CanvasIterationJump,
     word_boundary_type: WordBoundaryType,
+    color_or_slots: ColorOrSlot,
+    color_or_slot_specifications: ColorOrSlotSpecification,
+    grounds: Ground,
+    yank_slot_specifications: YankSlotSpecification,
+    update_selection_operators: UpdateSelectionOperator,
 }
 nest! {
     #[derive(Deserialize)]

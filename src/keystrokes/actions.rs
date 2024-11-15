@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::actions::Action;
+use crate::adopt_new_keystroke_system::FindChar;
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::operations::CanvasOperation;
@@ -9,7 +10,6 @@ use crate::command_line::create_command_line_textarea;
 use crate::config::keymaps::keymaps_complete_complete;
 use crate::config::keymaps::KeymapsEntry;
 use crate::config::Config;
-use crate::keystrokes::motions::FindChar;
 use crate::keystrokes::ColorOrSlotPreset;
 use crate::keystrokes::Motion;
 use crate::keystrokes::MotionIncompleteEnum;
