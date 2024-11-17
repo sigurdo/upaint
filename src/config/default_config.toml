@@ -65,18 +65,18 @@ relative = false
 "" = { FixedNumberOfCells = { number_of_cells = 1, jump = "DirectionAsStride" }}
 
 [keymaps.directions]
-"h" = { rows = 0, columns = -1 }
-"j" = { rows = 1, columns = 0 }
-"k" = { rows = -1, columns = 0 }
-"l" = { rows = 0, columns = 1 }
-"y" = { rows = -1, columns = -2 }
-"u" = { rows = -1, columns = -1 }
-"i" = { rows = -1, columns = 1 }
-"o" = { rows = -1, columns = 2 }
-"n" = { rows = 1, columns = -2 }
-"m" = { rows = 1, columns = -1 }
-"," = { rows = 1, columns = 1 }
-"." = { rows = 1, columns = 2 }
+"h" = [0, -1]
+"j" = [1, 0]
+"k" = [-1, 0]
+"l" = [0, 1]
+"y" = [-1, -2]
+"u" = [-1, -1]
+"i" = [-1, 1]
+"o" = [-1, 2]
+"n" = [1, -2]
+"m" = [1, -1]
+"," = [1, 1]
+"." = [1, 2]
 
 [keymaps.grounds]
 "f" = "Foreground"
@@ -117,16 +117,16 @@ relative = false
 # "s" = { Slot = "s" }
 
 [keymaps.color_or_slots]
-"s" = { Slot = "FromKeystrokes" }
-"" = { Color = "FromKeystrokes" }
+# "s" = { Slot = "FromKeystrokes" }
+# "" = { Color = "FromKeystrokes" }
 
 [keymaps.test]
 "h" = { a = "FromKeystrokes" }
 
 [keymaps.color_or_slot_specifications]
 
-[keymaps.canvas_iteration_jump]
-"d" = "Diagonals"
+[keymaps.canvas_iteration_jumps]
+# "d" = "Diagonals"
 "s" = "DirectionAsStride"
 
 [keymaps.update_selection_operators]
@@ -150,3 +150,6 @@ relative = false
 "w" = { NonBlank = "TEXT" }
 # "W" = { NonBlank = {} }
 
+[keymaps.keymap_u32]
+[keymaps.selection_slot_specifications]
+[keymaps.yank_slot_specifications]
