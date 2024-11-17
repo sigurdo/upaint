@@ -46,6 +46,7 @@ use keystrokes_parsing::PresetSources;
 use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use nestify::nest;
+use ratatui::style::Color;
 // use keystrokes_parsing::PresetDerive;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -88,6 +89,7 @@ keymaps! {
     canvas_iteration_jumps: CanvasIterationJump,
     word_boundary_types: WordBoundaryType,
     color_or_slots: ColorOrSlot,
+    colors: Color,
     color_or_slot_specifications: ColorOrSlotSpecification,
     grounds: Ground,
     yank_slot_specifications: YankSlotSpecification,
@@ -116,7 +118,7 @@ impl_presetable_by_self!(WordBoundaryType);
 impl_presetable_by_self!(bool);
 impl_presetable_by_self!(Ground);
 impl_presetable_by_self!(ColorOrSlotSpecification);
-impl_presetable_by_self!(ColorOrSlot);
+impl_presetable_by_self!(Color);
 impl_presetable_by_self!(YankSlotSpecification);
 impl_presetable_by_self!(UpdateSelectionOperator);
 

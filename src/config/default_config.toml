@@ -31,7 +31,10 @@ relative = false
 "Kr" = { Operation = { motion = { Stay = {}}, operator = { Replace = { ch = "h"}}}}
 # "" = { Operation = { operator = { Replace = { ch = "h"}}}}
 # "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
-"" = { MoveCursor = {}}
+"" = [
+    { Operation = {}},
+    { MoveCursor = {}},
+]
 
 [keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground", color = "Active" } }
@@ -84,6 +87,7 @@ relative = false
 
 [keymaps.characters]
 "<C-u>-" = "—"
+"" = "Type"
 
 [keymaps.bools]
 "f" = false
@@ -117,8 +121,11 @@ relative = false
 # "s" = { Slot = "s" }
 
 [keymaps.color_or_slots]
-# "s" = { Slot = "FromKeystrokes" }
-# "" = { Color = "FromKeystrokes" }
+"s" = { Slot = "FromKeystrokes" }
+"" = [
+    { Color = {} },
+    { Slot = "FromKeystrokes" },
+]
 
 [keymaps.test]
 "h" = { a = "FromKeystrokes" }

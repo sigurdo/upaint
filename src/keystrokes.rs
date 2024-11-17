@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -5,6 +6,7 @@ use derive_more::Deref;
 use derive_more::DerefMut;
 use derive_more::From;
 use enum_dispatch::enum_dispatch;
+use keystrokes_parsing::Presetable;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
@@ -23,7 +25,7 @@ use upaint_derive::Preset;
 
 // #[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize)]
 pub type ColorSlot = char;
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
 pub enum ColorOrSlot {
     Slot(ColorSlot),
     #[serde(untagged)]
