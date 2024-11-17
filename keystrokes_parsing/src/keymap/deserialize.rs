@@ -2,12 +2,13 @@ use crate::keymap::Keymap;
 use crate::keystroke::deserialize::ParseKeystrokeSequenceErr;
 use crate::keystroke::KeystrokeIterator;
 use crate::keystroke::KeystrokeSequence;
+use crate::PresetSources;
 use std::collections::HashMap;
 
 pub fn keymap_insert_preserve<'a, T: 'a + Clone>(
     entry: &mut Keymap<T>,
     keystrokes: &mut KeystrokeIterator,
-    value: T,
+    value: PresetSources<T>,
 ) {
     match keystrokes.next() {
         None => {
@@ -26,9 +27,9 @@ pub fn keymap_insert_preserve<'a, T: 'a + Clone>(
     }
 }
 
-impl<T: Clone> TryFrom<HashMap<KeystrokeSequence, T>> for Keymap<T> {
+impl<T: Clone> TryFrom<HashMap<KeystrokeSequence, PresetSources<T>>> for Keymap<T> {
     type Error = ParseKeystrokeSequenceErr;
-    fn try_from(value: HashMap<KeystrokeSequence, T>) -> Result<Self, Self::Error> {
+    fn try_from(value: HashMap<KeystrokeSequence, PresetSources<T>>) -> Result<Self, Self::Error> {
         let mut keymap = Keymap::new();
         for (keystrokes, value) in value {
             keymap_insert_preserve(&mut keymap, &mut keystrokes.iter(), value);

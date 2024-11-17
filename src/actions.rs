@@ -1,7 +1,9 @@
 use crate::ProgramState;
+use enum_dispatch::enum_dispatch;
 
 pub mod session;
 
+#[enum_dispatch]
 pub trait Action: std::fmt::Debug {
     fn execute(&self, program_state: &mut ProgramState);
 }

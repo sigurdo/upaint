@@ -20,7 +20,6 @@ use super::{
     KeybindCompletionError, KeystrokeIterator,
 };
 
-#[enum_dispatch]
 pub trait Operator: Debug {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState);
 }

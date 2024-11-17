@@ -1,3 +1,5 @@
+use crate::from_keystrokes_by_preset_sources;
+use crate::PresetSources;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -11,27 +13,27 @@ use crate::Presetable;
 pub mod deserialize;
 
 #[derive(Deserialize)]
-#[serde(try_from = "HashMap<KeystrokeSequence, T>")]
+#[serde(try_from = "HashMap<KeystrokeSequence, PresetSources<T>>")]
 pub struct Keymap<T: Clone> {
-    pub current: Option<T>,
+    pub current: Option<PresetSources<T>>,
     pub next: HashMap<Keystroke, Keymap<T>>,
 }
-impl<T: Clone> Keymap<T> {
-    pub fn get<'a>(&'a self, keystrokes: KeystrokeSequence) -> Option<&'a T> {
-        self.get_recursive(&mut keystrokes.iter())
-    }
-    fn get_recursive<'a>(&'a self, keystrokes: &mut KeystrokeIterator) -> Option<&'a T> {
-        if let Some(keystroke) = keystrokes.next() {
-            if let Some(keymap_next) = self.next.get(keystroke) {
-                keymap_next.get_recursive(keystrokes)
-            } else {
-                None
-            }
-        } else {
-            self.current.as_ref()
-        }
-    }
-}
+// impl<T: Clone> Keymap<T> {
+//     pub fn get<'a>(&'a self, keystrokes: KeystrokeSequence) -> Option<&'a PresetSources<T>> {
+//         self.get_recursive(&mut keystrokes.iter())
+//     }
+//     fn get_recursive<'a>(&'a self, keystrokes: &mut KeystrokeIterator) -> Option<&'a T> {
+//         if let Some(keystroke) = keystrokes.next() {
+//             if let Some(keymap_next) = self.next.get(keystroke) {
+//                 keymap_next.get_recursive(keystrokes)
+//             } else {
+//                 None
+//             }
+//         } else {
+//             self.current.as_ref()
+//         }
+//     }
+// }
 
 impl<T: Clone> Keymap<T> {
     pub fn new() -> Self {
@@ -69,7 +71,7 @@ pub fn from_keystrokes_by_preset_keymap<P: Clone, Config, C: Presetable<Config, 
         }
     };
     if let Some(current) = keymap.current.clone() {
-        match C::from_keystrokes_by_preset(current, keystrokes, config) {
+        match from_keystrokes_by_preset_sources(current, keystrokes, config) {
             Ok(complete) => return Ok(complete),
             Err(FromKeystrokesError::MissingKeystrokes) => {
                 return Err(FromKeystrokesError::MissingKeystrokes)

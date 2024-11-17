@@ -27,6 +27,7 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::from_keystrokes_by_preset_keymap;
+use keystrokes_parsing::from_keystrokes_by_preset_sources;
 use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
@@ -35,6 +36,7 @@ use keystrokes_parsing::Keymap;
 use keystrokes_parsing::Keystroke;
 use keystrokes_parsing::KeystrokeIterator;
 use keystrokes_parsing::KeystrokeSequence;
+use keystrokes_parsing::PresetSources;
 use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use nestify::nest;
@@ -153,15 +155,6 @@ impl Presetable<Config> for char {
             }
         }
     }
-}
-
-#[derive(Presetable)]
-pub struct ActionA {
-    a: u32,
-}
-// #[derive(Presetable)]
-pub enum ActionEnum {
-    A(ActionA),
 }
 
 macro_rules! keymaps {
@@ -461,8 +454,19 @@ impl Motion for ContinuousRegion {
 }
 
 // ------------------ Operators ---------
+#[enum_dispatch]
 pub trait Operator: Debug {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState);
+}
+#[enum_dispatch(Operator)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(all_required)]
+pub enum OperatorEnum {
+    Colorize(Colorize),
+    Replace(Replace),
+    UpdateSelection(UpdateSelection),
+    Yank(Yank),
+    Cut(Cut),
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -580,6 +584,27 @@ impl Operator for Cut {
 }
 
 // ----------------- Actions ------------
+#[enum_dispatch(Action)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(all_required)]
+pub enum ActionEnum {
+    Undo(Undo),
+    Redo(Redo),
+    Pipette(Pipette),
+    MoveCursor(MoveCursor),
+    Operation(Operation),
+    ModeCommand(ModeCommand),
+    ModeInsert(ModeInsert),
+    ModeColorPicker(ModeColorPicker),
+    ModeVisualRect(ModeVisualRect),
+    HighlightSelection(HighlightSelection),
+    HighlightSelectionClear(HighlightSelectionClear),
+    SetSelectionActive(SetSelectionActive),
+    SetColorOrSlotActive(SetColorOrSlotActive),
+    Paste(Paste),
+    SetYankActive(SetYankActive),
+    MarkSet(MarkSet),
+}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Undo {}
 impl Action for Undo {
@@ -636,12 +661,14 @@ impl Action for MoveCursor {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
-pub struct Operation {}
+pub struct Operation {
+    operator: OperatorEnum,
+    motion: MotionEnum,
+}
 impl Action for Operation {
     fn execute(&self, program_state: &mut ProgramState) {
-        // TODO
-        // let cells = self.motion.cells(program_state);
-        // self.operator.operate(&cells, program_state);
+        let cells = self.motion.cells(program_state);
+        self.operator.operate(&cells, program_state);
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -782,6 +809,7 @@ keymaps! {
     keymap_u32: u32,
     character: char,
     motions: MotionEnum,
+    operators: OperatorEnum,
     directions: DirectionFree,
     boolean: bool,
     selection_slot_specification: SelectionSlotSpecification,
@@ -794,11 +822,18 @@ keymaps! {
     grounds: Ground,
     yank_slot_specifications: YankSlotSpecification,
     update_selection_operators: UpdateSelectionOperator,
+    actions: ActionEnum,
 }
 nest! {
     #[derive(Deserialize)]
     pub struct Config {
-        keymaps: Keymaps,
+        pub keymaps: Keymaps,
+
+        pub test_keymaps:
+            #[derive(Deserialize)]
+            pub struct TestKeymaps {
+                a: PresetSources<char>,
+            }
     }
 }
 
@@ -829,6 +864,26 @@ const CONFIG_TOML: &str = r###"
 "d" = "Diagonals"
 "s" = "DirectionAsStride"
 [keymaps.word_boundary_type]
+[keymaps.operators]
+"c" = { Colorize = { ground = "Foreground", color = "Active" }}
+[keymaps.boolean]
+[keymaps.selection_slot_specification]
+[keymaps.cell_content_type]
+[keymaps.continous_region_relative_type]
+[keymaps.color_or_slots]
+[keymaps.color_or_slot_specifications]
+[keymaps.grounds]
+"f" = "Foreground"
+"b" = "Background"
+[keymaps.yank_slot_specifications]
+[keymaps.update_selection_operators]
+[keymaps.actions]
+"" = [
+    { Operation = {}},
+    { MoveCursor = {}},
+]
+[test_keymaps]
+a = ["k", "a"]
 "###;
 
 #[test]
@@ -849,40 +904,40 @@ pub fn test() {
             )*
         };
     }
-    keymaps_contents!(
-        character["<C-f>"] = CharKeymapEntry::Char('f'),
-        keymap_u32["6G"] = UnsignedIntegerKeymapEntry::Number(65),
-        motions["<C-f>"] = MotionEnumPreset::FindChar(FindCharPreset {
-            direction: PresetStructField::FromKeystrokes,
-            ch: PresetStructField::FromKeystrokes,
-        }),
-        motions["<C-l>"] = MotionEnumPreset::FindChar(FindCharPreset {
-            direction: PresetStructField::Preset(DirectionFree {
-                rows: 0,
-                columns: 1
-            }),
-            ch: PresetStructField::FromKeystrokes,
-        }),
-        motions["<C-h>"] = MotionEnumPreset::FindChar(FindCharPreset {
-            direction: PresetStructField::Preset(DirectionFree {
-                rows: 0,
-                columns: -1
-            }),
-            ch: PresetStructField::Preset(CharKeymapEntry::Char('@')),
-        }),
-        directions["l"] = DirectionFree {
-            rows: 0,
-            columns: 1
-        },
-        // motions["f"] = MotionEnumPreset::FixedNumberOfCells(FixedNumberOfCellsPreset {
-        //     direction: PresetStructField::FromKeystrokes,
-        //     number_of_cells: 1,
-        //     jump: PresetStructField::FromKeystrokes,
-        // }),
-        canvas_iteration_jumps["n"] = CanvasIterationJump::NoJump,
-        canvas_iteration_jumps["d"] = CanvasIterationJump::Diagonals,
-        canvas_iteration_jumps["s"] = CanvasIterationJump::DirectionAsStride,
-    );
+    // keymaps_contents!(
+    //     character["<C-f>"] = CharKeymapEntry::Char('f'),
+    //     keymap_u32["6G"] = UnsignedIntegerKeymapEntry::Number(65),
+    //     motions["<C-f>"] = MotionEnumPreset::FindChar(FindCharPreset {
+    //         direction: PresetStructField::FromKeystrokes,
+    //         ch: PresetStructField::FromKeystrokes,
+    //     }),
+    //     motions["<C-l>"] = MotionEnumPreset::FindChar(FindCharPreset {
+    //         direction: PresetStructField::Preset(DirectionFree {
+    //             rows: 0,
+    //             columns: 1
+    //         }),
+    //         ch: PresetStructField::FromKeystrokes,
+    //     }),
+    //     motions["<C-h>"] = MotionEnumPreset::FindChar(FindCharPreset {
+    //         direction: PresetStructField::Preset(DirectionFree {
+    //             rows: 0,
+    //             columns: -1
+    //         }),
+    //         ch: PresetStructField::Preset(CharKeymapEntry::Char('@')),
+    //     }),
+    //     directions["l"] = DirectionFree {
+    //         rows: 0,
+    //         columns: 1
+    //     },
+    //     // motions["f"] = MotionEnumPreset::FixedNumberOfCells(FixedNumberOfCellsPreset {
+    //     //     direction: PresetStructField::FromKeystrokes,
+    //     //     number_of_cells: 1,
+    //     //     jump: PresetStructField::FromKeystrokes,
+    //     // }),
+    //     canvas_iteration_jumps["n"] = CanvasIterationJump::NoJump,
+    //     canvas_iteration_jumps["d"] = CanvasIterationJump::Diagonals,
+    //     canvas_iteration_jumps["s"] = CanvasIterationJump::DirectionAsStride,
+    // );
     macro_rules! keystroke_parsing {
         ($($keystrokes:expr => $expected:expr,)*) => {
             $({
@@ -949,6 +1004,33 @@ pub fn test() {
                 ch: 'l',
             }
         ),
+        "l" => ActionEnum::MoveCursor(
+            MoveCursor {
+                motion: MotionEnum::FixedNumberOfCells(FixedNumberOfCells {
+                    direction: DirectionFree {
+                        rows: 0,
+                        columns: 1,
+                    },
+                    number_of_cells: 1,
+                    jump: CanvasIterationJump::DirectionAsStride,
+                }
+                        ),
+            }
+        ),
+        "ch" => ActionEnum::Operation(Operation {
+            operator: OperatorEnum::Colorize(Colorize {
+                ground: Ground::Foreground,
+                color: ColorOrSlotSpecification::Active,
+            }),
+            motion: MotionEnum::FixedNumberOfCells(FixedNumberOfCells {
+                    direction: DirectionFree {
+                        rows: 0,
+                        columns: -1,
+                    },
+                    number_of_cells: 1,
+                    jump: CanvasIterationJump::DirectionAsStride,
+            }),
+        }),
     );
     // let motion = MotionEnum::from_keystrokes(
     //     &mut KeystrokeSequence::try_from("<C-f>l".to_string())
