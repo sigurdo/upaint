@@ -11,7 +11,6 @@ pub use keystroke::deserialize::ParseKeystrokeSequenceErr;
 pub use keystroke::Keystroke;
 pub use keystroke::KeystrokeIterator;
 pub use keystroke::KeystrokeSequence;
-pub use keystrokes_parsing_derive::impl_from_keystrokes_by_preset_keymap;
 pub use keystrokes_parsing_derive::FromKeystrokes;
 pub use keystrokes_parsing_derive::GetKeymap;
 pub use keystrokes_parsing_derive::Presetable;

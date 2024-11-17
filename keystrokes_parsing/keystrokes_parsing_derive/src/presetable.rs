@@ -242,26 +242,6 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                     }
 
                 }
-                // Covered by generic impl in lib.rs
-                // impl FromKeystrokes<::#ident_crate::Preset<#ident_preset>, #ident_config> for #ident {
-                //     fn from_keystrokes(
-                //         preset: #ident_preset,
-                //         keystrokes: &mut ::#ident_crate::KeystrokeIterator,
-                //         config: #ident_config,
-                //     ) -> Result<Self, KeybindCompletionError> {
-                //         #ident::from_keystrokes(#ident_preset::from_preset(preset, keystrokes, config)?, keystrokes, config)
-                //     }
-                // }
-                // impl FromKeystrokes<::#ident_crate::Preset<#ident_preset>> for #ident {
-                //     fn from_keystrokes(
-                //         preset: #ident_preset,
-                //         keystrokes: &mut ::#ident_crate::KeystrokeIterator,
-                //         config: #ident_config,
-                //     ) -> Result<Self, KeybindCompletionError> {
-                //         let preset : crate::keystrokes::Preset<#ident_preset> = crate::keystrokes::Preset::FromKeystrokes;
-                //         #ident::from_preset(preset, keystrokes, config)
-                //     }
-                // }
             };
             quote! {
                 #definition_enum
@@ -292,7 +272,6 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                     .reduce(join_by_space),
                 _ => panic!("Struct with unnamed or unit fields are not supported."),
             };
-            // panic!("Kom hit");
             let impl_from_preset = quote! {
                 impl ::#ident_crate::Presetable<#ident_config> for #ident {
                     type Preset = #ident_preset;
