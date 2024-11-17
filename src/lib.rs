@@ -5,28 +5,31 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 pub mod actions;
-pub mod adopt_new_keystroke_system;
+// pub mod adopt_new_keystroke_system;
 pub mod canvas;
 pub mod color_picker;
 pub mod command_line;
 pub mod config;
 pub mod file_formats;
 pub mod keystrokes;
+pub mod motions;
+pub mod operators;
 pub mod rendering;
 pub mod selections;
 pub mod status_bar;
 pub mod user_input;
 pub mod yank_slots;
 
-use crate::adopt_new_keystroke_system::FindChar;
 use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
+use crate::motions::FindChar;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;
 use canvas::raw::CanvasIndex;
 use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
-use keystrokes::{ColorSlot, KeystrokeSequence};
+use keystrokes::ColorSlot;
+use keystrokes_parsing::KeystrokeSequence;
 use selections::Selection;
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]

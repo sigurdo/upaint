@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 
 mod keymap;
 mod keystroke;
@@ -66,7 +67,7 @@ pub enum FromKeystrokesError {
     Invalid,
 }
 
-pub trait GetKeymap<T: Sized + Clone> {
+pub trait GetKeymap<T: Sized + Clone + Debug> {
     fn get_keymap<'a>(&'a self) -> &'a Keymap<T>;
 }
 

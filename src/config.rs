@@ -8,18 +8,8 @@ use toml::de::ValueDeserializer;
 
 use crate::{
     canvas::raw::continuous_region::ContinuousRegionRelativeType,
-    canvas::raw::iter::CanvasIterationJump,
-    canvas::raw::iter::WordBoundaryType,
-    canvas::raw::CellContentType,
-    keystrokes::deserialize::KeystrokeSequenceToml,
-    keystrokes::operators::UpdateSelectionOperator,
-    keystrokes::ColorOrSlotSpecification,
-    keystrokes::{
-        actions::MoveCursorPreset, actions::OperationPreset, motions::FixedNumberOfCellsPreset,
-        ActionIncompleteEnum, ColorOrSlot, ColorOrSlotPreset, MotionIncompleteEnum,
-        OperatorIncompleteEnum,
-    },
-    ErrorCustom, Ground,
+    canvas::raw::iter::CanvasIterationJump, canvas::raw::iter::WordBoundaryType,
+    canvas::raw::CellContentType, ErrorCustom, Ground,
 };
 
 pub mod color_theme;
@@ -27,9 +17,7 @@ pub mod keymaps;
 
 use self::{
     color_theme::{ColorThemePreset, ColorToml, StyleConfig, StyleToml},
-    keymaps::{
-        keymaps_extend_preserve, keymaps_insert_preserve, keymaps_iter, Keymaps, KeymapsEntry,
-    },
+    keymaps::Keymaps,
 };
 
 #[cfg(test)]
@@ -61,7 +49,7 @@ impl TomlValue for bool {
 /// the last field. The pattern is concluded by a closing curly bracket `}`.
 macro_rules! config_struct_definition {
     ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
-        #[derive(Clone, Debug, Deserialize, Serialize)]
+        #[derive(Clone, Debug, Deserialize)]
         pub struct $struct_name_toml {
             $(
                 pub $field: toml_struct_type!($type),
@@ -173,26 +161,15 @@ config_struct_definition!({
         input_mode: (StyleToml => StyleConfig),
         user_feedback: (StyleToml => StyleConfig),
     },
-    keymaps: {
-        (KeymapsToml => KeymapsConfig),
-        actions: (HashMap<KeystrokeSequenceToml, ActionIncompleteEnum> => KeymapsEntry<ActionIncompleteEnum>),
-        operators: (HashMap<KeystrokeSequenceToml, OperatorIncompleteEnum> => KeymapsEntry<OperatorIncompleteEnum>),
-        motions: (HashMap<KeystrokeSequenceToml, MotionIncompleteEnum> => KeymapsEntry<MotionIncompleteEnum>),
-        directions: (HashMap<KeystrokeSequenceToml, DirectionFree> => KeymapsEntry<DirectionFree>),
-        characters: (HashMap<KeystrokeSequenceToml, char> => KeymapsEntry<char>),
-        bools: (HashMap<KeystrokeSequenceToml, bool> => KeymapsEntry<bool>),
-        grounds: (HashMap<KeystrokeSequenceToml, Ground> => KeymapsEntry<Ground>),
-        word_boundary_types: (HashMap<KeystrokeSequenceToml, WordBoundaryType> => KeymapsEntry<WordBoundaryType>),
-        colors: (HashMap<KeystrokeSequenceToml, Color> => KeymapsEntry<Color>),
-        color_or_slots: (HashMap<KeystrokeSequenceToml, ColorOrSlotPreset> => KeymapsEntry<ColorOrSlotPreset>),
-        color_or_slot_specifications: (HashMap<KeystrokeSequenceToml, ColorOrSlotSpecification> => KeymapsEntry<ColorOrSlotSpecification>),
-        canvas_iteration_jump: (HashMap<KeystrokeSequenceToml, CanvasIterationJump> => KeymapsEntry<CanvasIterationJump>),
-        update_selection_operators: (HashMap<KeystrokeSequenceToml, UpdateSelectionOperator> => KeymapsEntry<UpdateSelectionOperator>),
-        cell_content_types: (HashMap<KeystrokeSequenceToml, CellContentType> => KeymapsEntry<CellContentType>),
-        continuous_region_relative_types: (HashMap<KeystrokeSequenceToml, ContinuousRegionRelativeType> => KeymapsEntry<ContinuousRegionRelativeType>),
-        test: (HashMap<KeystrokeSequenceToml, TestPreset> => KeymapsEntry<TestPreset>),
-    },
+    keymaps: (Keymaps),
 });
+
+impl TomlValue for Keymaps {
+    type ConfigValue = Self;
+    fn to_config_value(self) -> Self::ConfigValue {
+        self
+    }
+}
 
 // mod teste {
 //     use crossterm::event::KeyCode;
@@ -286,50 +263,50 @@ config_struct_definition!({
 //     }
 // }
 
-use upaint_derive::Preset;
-#[derive(Clone, Debug, Preset)]
-pub struct Test {
-    a: Color,
-    b: Color,
-}
+// use upaint_derive::Preset;
+// #[derive(Clone, Debug, Preset)]
+// pub struct Test {
+//     a: Color,
+//     b: Color,
+// }
 
-macro_rules! generic_impl_toml_value_for_incomplete_enums(
-    ($($type:ty),*,) => {
-        $(
-            impl TomlValue for HashMap<KeystrokeSequenceToml, $type> {
-                type ConfigValue = KeymapsEntry<$type>;
-                fn to_config_value(self) -> Self::ConfigValue {
-                    let mut result = KeymapsEntry::new();
-                    for (KeystrokeSequenceToml(keystrokes), value) in self {
-                        let mut it = keystrokes.iter();
-                        keymaps_insert_preserve(&mut result, &mut it, value);
-                    }
-                    result
-                }
-            }
-
-        )*
-    }
-);
-
-generic_impl_toml_value_for_incomplete_enums!(
-    ActionIncompleteEnum,
-    OperatorIncompleteEnum,
-    MotionIncompleteEnum,
-    DirectionFree,
-    char,
-    bool,
-    Ground,
-    WordBoundaryType,
-    Color,
-    CanvasIterationJump,
-    UpdateSelectionOperator,
-    CellContentType,
-    ContinuousRegionRelativeType,
-    ColorOrSlotSpecification,
-    ColorOrSlotPreset,
-    TestPreset,
-);
+// macro_rules! generic_impl_toml_value_for_incomplete_enums(
+//     ($($type:ty),*,) => {
+//         $(
+//             impl TomlValue for HashMap<KeystrokeSequenceToml, $type> {
+//                 type ConfigValue = KeymapsEntry<$type>;
+//                 fn to_config_value(self) -> Self::ConfigValue {
+//                     let mut result = KeymapsEntry::new();
+//                     for (KeystrokeSequenceToml(keystrokes), value) in self {
+//                         let mut it = keystrokes.iter();
+//                         keymaps_insert_preserve(&mut result, &mut it, value);
+//                     }
+//                     result
+//                 }
+//             }
+//
+//         )*
+//     }
+// );
+//
+// generic_impl_toml_value_for_incomplete_enums!(
+//     ActionIncompleteEnum,
+//     OperatorIncompleteEnum,
+//     MotionIncompleteEnum,
+//     DirectionFree,
+//     char,
+//     bool,
+//     Ground,
+//     WordBoundaryType,
+//     Color,
+//     CanvasIterationJump,
+//     UpdateSelectionOperator,
+//     CellContentType,
+//     ContinuousRegionRelativeType,
+//     ColorOrSlotSpecification,
+//     ColorOrSlotPreset,
+//     TestPreset,
+// );
 
 impl Default for Config {
     fn default() -> Self {
@@ -377,70 +354,70 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
     Ok(())
 }
 
-fn create_motions_from_directions(config: &mut Config) {
-    keymaps_extend_preserve(
-        &mut config.keymaps.motions,
-        keymaps_iter(&config.keymaps.directions)
-            .map(|(keystrokes, direction_preset)| {
-                (
-                    keystrokes,
-                    MotionIncompleteEnum::FixedNumberOfCells(FixedNumberOfCellsPreset {
-                        direction: Some(*direction_preset),
-                        number_of_cells: Some(1),
-                        jump: Some(CanvasIterationJump::DirectionAsStride),
-                    }),
-                )
-            })
-            .into_iter(),
-    );
-}
-
-fn create_move_actions_from_motions(config: &mut Config) {
-    keymaps_extend_preserve(
-        &mut config.keymaps.actions,
-        keymaps_iter(&config.keymaps.motions)
-            .map(|(keystrokes, motion_preset)| {
-                (
-                    keystrokes,
-                    ActionIncompleteEnum::MoveCursor(MoveCursorPreset {
-                        motion: Some(motion_preset.clone()),
-                    }),
-                )
-            })
-            .into_iter(),
-    );
-}
-
-fn create_operator_actions_from_operators(config: &mut Config) {
-    keymaps_extend_preserve(
-        &mut config.keymaps.actions,
-        keymaps_iter(&config.keymaps.operators)
-            .map(|(keystrokes, operator_preset)| {
-                (
-                    keystrokes,
-                    ActionIncompleteEnum::Operation(OperationPreset {
-                        operator: Some(operator_preset.clone()),
-                        motion: None,
-                    }),
-                )
-            })
-            .into_iter(),
-    );
-}
-
-fn create_continuous_region_relative_types_from_content_types(config: &mut Config) {
-    keymaps_extend_preserve(
-        &mut config.keymaps.continuous_region_relative_types,
-        keymaps_iter(&config.keymaps.cell_content_types)
-            .map(|(keystrokes, content_type)| {
-                (
-                    keystrokes,
-                    ContinuousRegionRelativeType::Same(*content_type),
-                )
-            })
-            .into_iter(),
-    )
-}
+// fn create_motions_from_directions(config: &mut Config) {
+//     keymaps_extend_preserve(
+//         &mut config.keymaps.motions,
+//         keymaps_iter(&config.keymaps.directions)
+//             .map(|(keystrokes, direction_preset)| {
+//                 (
+//                     keystrokes,
+//                     MotionIncompleteEnum::FixedNumberOfCells(FixedNumberOfCellsPreset {
+//                         direction: Some(*direction_preset),
+//                         number_of_cells: Some(1),
+//                         jump: Some(CanvasIterationJump::DirectionAsStride),
+//                     }),
+//                 )
+//             })
+//             .into_iter(),
+//     );
+// }
+//
+// fn create_move_actions_from_motions(config: &mut Config) {
+//     keymaps_extend_preserve(
+//         &mut config.keymaps.actions,
+//         keymaps_iter(&config.keymaps.motions)
+//             .map(|(keystrokes, motion_preset)| {
+//                 (
+//                     keystrokes,
+//                     ActionIncompleteEnum::MoveCursor(MoveCursorPreset {
+//                         motion: Some(motion_preset.clone()),
+//                     }),
+//                 )
+//             })
+//             .into_iter(),
+//     );
+// }
+//
+// fn create_operator_actions_from_operators(config: &mut Config) {
+//     keymaps_extend_preserve(
+//         &mut config.keymaps.actions,
+//         keymaps_iter(&config.keymaps.operators)
+//             .map(|(keystrokes, operator_preset)| {
+//                 (
+//                     keystrokes,
+//                     ActionIncompleteEnum::Operation(OperationPreset {
+//                         operator: Some(operator_preset.clone()),
+//                         motion: None,
+//                     }),
+//                 )
+//             })
+//             .into_iter(),
+//     );
+// }
+//
+// fn create_continuous_region_relative_types_from_content_types(config: &mut Config) {
+//     keymaps_extend_preserve(
+//         &mut config.keymaps.continuous_region_relative_types,
+//         keymaps_iter(&config.keymaps.cell_content_types)
+//             .map(|(keystrokes, content_type)| {
+//                 (
+//                     keystrokes,
+//                     ContinuousRegionRelativeType::Same(*content_type),
+//                 )
+//             })
+//             .into_iter(),
+//     )
+// }
 
 pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
     load_color_preset(&mut toml_table)?;
@@ -449,12 +426,12 @@ pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, Err
         toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
     let mut config = config_toml.to_config_value();
     log::debug!("før: {:#?}", config.keymaps.actions);
-    create_operator_actions_from_operators(&mut config);
+    // create_operator_actions_from_operators(&mut config);
     log::debug!("etter: {:#?}", config.keymaps.actions);
     // log::debug!("etter: {config:#?}");
     // create_motions_from_directions(&mut config);
     // create_move_actions_from_motions(&mut config);
-    create_continuous_region_relative_types_from_content_types(&mut config);
+    // create_continuous_region_relative_types_from_content_types(&mut config);
     // log::debug!("etter: {config:#?}");
     Ok(config)
 }

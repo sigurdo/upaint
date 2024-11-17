@@ -1,4 +1,4 @@
-use crate::keystrokes::{Keystroke, KeystrokeSequence};
+use crate::keystroke::{Keystroke, KeystrokeSequence};
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 

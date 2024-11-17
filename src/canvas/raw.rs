@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 
 use ratatui::style::{Color, Modifier};
 
-use crate::adopt_new_keystroke_system::Config;
+use crate::config::Config;
 use crate::selections::Selection;
 use crate::Ground;
 

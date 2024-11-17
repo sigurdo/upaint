@@ -1,12 +1,13 @@
+use crate::actions::ActionEnum;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
+use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
 
 use crate::{
-    actions::Action,
-    command_line::execute_command,
-    keystrokes::{ColorSlot, FromKeystrokes, KeybindCompletionError, Keystroke, KeystrokeSequence},
-    InputMode, ProgramState, ResultCustom,
+    actions::Action, command_line::execute_command, keystrokes::ColorSlot, InputMode, ProgramState,
+    ResultCustom,
 };
+use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};
 
 mod insert_mode;
 mod visual_rect;
@@ -56,13 +57,13 @@ pub fn handle_user_input_normal_mode(
                 .keystroke_sequence_incomplete
                 .push(Keystroke::from(e));
             let mut it = program_state.keystroke_sequence_incomplete.iter();
-            match <Box<dyn Action>>::from_keystrokes(&mut it, &program_state.config) {
+            match ActionEnum::from_keystrokes(&mut it, &program_state.config) {
                 Ok(action) => {
                     log::debug!("Fant action");
                     action.execute(program_state);
                     program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
                 }
-                Err(KeybindCompletionError::MissingKeystrokes) => {
+                Err(FromKeystrokesError::MissingKeystrokes) => {
                     log::debug!("MissingKeystrokes");
                 }
                 Err(_) => {

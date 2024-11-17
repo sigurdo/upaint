@@ -1,5 +1,5 @@
-use crate::adopt_new_keystroke_system::Config;
 use crate::canvas::raw::CanvasIndex;
+use crate::config::Config;
 use crate::ProgramState;
 use keystrokes_parsing::Presetable;
 use serde::Deserialize;

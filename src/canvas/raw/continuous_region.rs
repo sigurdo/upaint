@@ -1,8 +1,8 @@
 use super::CanvasCell;
 use super::CanvasIndex;
 use super::RawCanvas;
-use crate::adopt_new_keystroke_system::Config;
 use crate::canvas::raw::CellContentType;
+use crate::config::Config;
 use crate::selections::Selection;
 use keystrokes_parsing::Presetable;
 use ratatui::style::Color;

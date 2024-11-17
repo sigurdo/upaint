@@ -2,6 +2,7 @@ use crate::from_keystrokes_by_preset_sources;
 use crate::PresetSources;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use crate::keystroke::Keystroke;
 use crate::keystroke::KeystrokeIterator;
@@ -12,9 +13,9 @@ use crate::Presetable;
 
 pub mod deserialize;
 
-#[derive(Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(try_from = "HashMap<KeystrokeSequence, PresetSources<T>>")]
-pub struct Keymap<T: Clone> {
+pub struct Keymap<T: Clone + Debug> {
     pub current: Option<PresetSources<T>>,
     pub next: HashMap<Keystroke, Keymap<T>>,
 }
@@ -35,7 +36,7 @@ pub struct Keymap<T: Clone> {
 //     }
 // }
 
-impl<T: Clone> Keymap<T> {
+impl<T: Clone + Debug> Keymap<T> {
     pub fn new() -> Self {
         Self {
             current: None,
@@ -44,7 +45,11 @@ impl<T: Clone> Keymap<T> {
     }
 }
 
-pub fn from_keystrokes_by_preset_keymap<P: Clone, Config, C: Presetable<Config, Preset = P>>(
+pub fn from_keystrokes_by_preset_keymap<
+    P: Clone + Debug,
+    Config,
+    C: Presetable<Config, Preset = P>,
+>(
     keymap: &Keymap<P>,
     keystrokes: &mut KeystrokeIterator,
     config: &Config,

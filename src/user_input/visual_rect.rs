@@ -1,17 +1,19 @@
 use crate::{
     canvas::rect::CanvasRect,
     // config::keybindings::deserialize::parse_keystroke_sequence,
-    keystrokes::motions::Motion,
-    keystrokes::operators::Operator,
-    keystrokes::FromKeystrokes,
-    keystrokes::KeybindCompletionError,
-    keystrokes::Keystroke,
-    keystrokes::KeystrokeSequence,
+    motions::Motion,
+    motions::MotionEnum,
+    operators::Operator,
+    operators::OperatorEnum,
     InputMode,
     ProgramState,
     ResultCustom,
 };
 use crossterm::event::{Event, KeyCode, KeyModifiers};
+use keystrokes_parsing::FromKeystrokes;
+use keystrokes_parsing::FromKeystrokesError;
+use keystrokes_parsing::Keystroke;
+use keystrokes_parsing::KeystrokeSequence;
 
 pub fn handle_user_input_visual_rect(
     event: Event,
@@ -47,7 +49,7 @@ pub fn handle_user_input_visual_rect(
             }
 
             let mut it = program_state.keystroke_sequence_incomplete.iter();
-            match <Box<dyn Operator>>::from_keystrokes(&mut it, &program_state.config) {
+            match OperatorEnum::from_keystrokes(&mut it, &program_state.config) {
                 Ok(operator) => {
                     log::debug!("Fant operator");
                     let rect = CanvasRect::from_corners((*index_a, *index_b));
@@ -55,12 +57,12 @@ pub fn handle_user_input_visual_rect(
                     program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
                     program_state.input_mode = InputMode::Normal;
                 }
-                Err(KeybindCompletionError::MissingKeystrokes) => {
+                Err(FromKeystrokesError::MissingKeystrokes) => {
                     log::debug!("Operator MissingKeystrokes");
                 }
                 Err(_) => {
                     let mut it = program_state.keystroke_sequence_incomplete.iter();
-                    match <Box<dyn Motion>>::from_keystrokes(&mut it, &program_state.config) {
+                    match MotionEnum::from_keystrokes(&mut it, &program_state.config) {
                         Ok(motion) => {
                             log::debug!("Fant motion");
                             let cursor_position_new = *motion
@@ -81,7 +83,7 @@ pub fn handle_user_input_visual_rect(
                             program_state.focus_position.1 += away.1;
                             program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
                         }
-                        Err(KeybindCompletionError::MissingKeystrokes) => {
+                        Err(FromKeystrokesError::MissingKeystrokes) => {
                             log::debug!("Motion MissingKeystrokes");
                         }
                         Err(_) => {

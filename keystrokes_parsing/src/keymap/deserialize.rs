@@ -4,8 +4,9 @@ use crate::keystroke::KeystrokeIterator;
 use crate::keystroke::KeystrokeSequence;
 use crate::PresetSources;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
-pub fn keymap_insert_preserve<'a, T: 'a + Clone>(
+pub fn keymap_insert_preserve<'a, T: 'a + Clone + Debug>(
     entry: &mut Keymap<T>,
     keystrokes: &mut KeystrokeIterator,
     value: PresetSources<T>,
@@ -27,7 +28,7 @@ pub fn keymap_insert_preserve<'a, T: 'a + Clone>(
     }
 }
 
-impl<T: Clone> TryFrom<HashMap<KeystrokeSequence, PresetSources<T>>> for Keymap<T> {
+impl<T: Clone + Debug> TryFrom<HashMap<KeystrokeSequence, PresetSources<T>>> for Keymap<T> {
     type Error = ParseKeystrokeSequenceErr;
     fn try_from(value: HashMap<KeystrokeSequence, PresetSources<T>>) -> Result<Self, Self::Error> {
         let mut keymap = Keymap::new();
