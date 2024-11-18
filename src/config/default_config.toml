@@ -123,7 +123,7 @@ relative = false
 [keymaps.color_or_slots]
 "s" = { Slot = "FromKeystrokes" }
 "" = [
-    { Color = {} },
+    { Color = "FromKeystrokes" },
     { Slot = "FromKeystrokes" },
 ]
 
