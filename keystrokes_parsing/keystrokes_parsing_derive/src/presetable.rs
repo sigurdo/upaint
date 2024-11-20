@@ -4,7 +4,7 @@ use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::{
     parse_macro_input, punctuated::Punctuated, token::Comma, Data, DataStruct, DeriveInput, Field,
-    Fields, FieldsNamed, FieldsUnnamed, Type, Variant,
+    Fields, FieldsNamed, FieldsUnnamed, Variant,
 };
 
 use crate::utils::{ident_crate, join_by_comma, join_by_space};

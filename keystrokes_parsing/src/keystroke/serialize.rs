@@ -2,8 +2,6 @@ use crate::keystroke::{Keystroke, KeystrokeSequence};
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 
-// fn stringify_modifiers(modifier: KeyModifiers)
-
 fn stringify_keystroke(keystroke: Keystroke) -> String {
     let mut result = String::new();
     let special = match keystroke.code {

@@ -32,8 +32,8 @@ pub enum OperatorEnum {
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Colorize {
-    ground: Ground,
-    color: ColorOrSlotSpecification,
+    pub ground: Ground,
+    pub color: ColorOrSlotSpecification,
 }
 impl Operator for Colorize {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
@@ -61,7 +61,7 @@ impl Operator for Colorize {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Replace {
-    ch: char,
+    pub ch: char,
 }
 impl Operator for Replace {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
@@ -82,9 +82,9 @@ pub enum UpdateSelectionOperator {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct UpdateSelection {
-    operator: UpdateSelectionOperator,
-    slot: SelectionSlotSpecification,
-    highlight: bool,
+    pub operator: UpdateSelectionOperator,
+    pub slot: SelectionSlotSpecification,
+    pub highlight: bool,
 }
 impl Operator for UpdateSelection {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
@@ -115,8 +115,8 @@ impl Operator for UpdateSelection {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Yank {
-    content_type: CellContentType,
-    slot: YankSlotSpecification,
+    pub content_type: CellContentType,
+    pub slot: YankSlotSpecification,
 }
 impl Operator for Yank {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
@@ -134,8 +134,8 @@ impl Operator for Yank {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Cut {
-    content_type: CellContentType,
-    slot: YankSlotSpecification,
+    pub content_type: CellContentType,
+    pub slot: YankSlotSpecification,
 }
 impl Operator for Cut {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {

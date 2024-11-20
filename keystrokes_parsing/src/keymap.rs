@@ -7,7 +7,6 @@ use std::fmt::Debug;
 use crate::keystroke::Keystroke;
 use crate::keystroke::KeystrokeIterator;
 use crate::keystroke::KeystrokeSequence;
-use crate::FromKeystrokes;
 use crate::FromKeystrokesError;
 use crate::Presetable;
 

@@ -53,11 +53,11 @@ fn default_jump() -> PresetStructField<CanvasIterationJump> {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct FixedNumberOfCells {
-    direction: DirectionFree,
+    pub direction: DirectionFree,
     #[presetable(required, default = "default_number_of_cells")]
-    number_of_cells: u16,
+    pub number_of_cells: u16,
     // #[presetable(default = "default_jump")]
-    jump: CanvasIterationJump,
+    pub jump: CanvasIterationJump,
 }
 impl Motion for FixedNumberOfCells {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
@@ -148,8 +148,8 @@ impl Motion for SelectionMotion {
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct GoToMark {
-    jump: CanvasIterationJump,
-    slot: char,
+    pub jump: CanvasIterationJump,
+    pub slot: char,
 }
 impl Motion for GoToMark {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {

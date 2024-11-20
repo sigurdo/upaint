@@ -45,8 +45,8 @@ pub enum Direction {
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "(i16, i16)")]
 pub struct DirectionFree {
-    rows: i16,
-    columns: i16,
+    pub rows: i16,
+    pub columns: i16,
 }
 #[derive(Debug, Clone, Copy)]
 pub enum DirectionFreeError {

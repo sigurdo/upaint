@@ -4,8 +4,7 @@ use crossterm::event::KeyModifiers;
 use derive_more::Deref;
 use derive_more::DerefMut;
 use derive_more::From;
-use serde::{Deserialize, Serialize};
-use std::fmt::Display;
+use serde::Deserialize;
 
 pub mod deserialize;
 pub mod serialize;

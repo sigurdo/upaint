@@ -97,7 +97,7 @@ impl Action for Pipette {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct MoveCursor {
-    motion: MotionEnum,
+    pub motion: MotionEnum,
 }
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -120,8 +120,8 @@ impl Action for MoveCursor {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Operation {
-    operator: OperatorEnum,
-    motion: MotionEnum,
+    pub operator: OperatorEnum,
+    pub motion: MotionEnum,
 }
 impl Action for Operation {
     fn execute(&self, program_state: &mut ProgramState) {
