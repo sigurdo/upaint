@@ -1,10 +1,12 @@
 use std::fmt::Debug;
 
+mod from_str;
 mod keymap;
 mod keystroke;
 mod preset_sources;
 mod preset_struct_field;
 
+pub use from_str::from_keystrokes_by_from_str;
 pub use keymap::from_keystrokes_by_preset_iterator;
 pub use keymap::from_keystrokes_by_preset_keymap;
 pub use keymap::Keymap;
@@ -16,7 +18,7 @@ pub use keystrokes_parsing_derive::Presetable;
 pub use preset_sources::{from_keystrokes_by_preset_sources, PresetSources};
 pub use preset_struct_field::{from_keystrokes_by_preset_struct_field, PresetStructField};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FromKeystrokesError {
     MissingKeystrokes,
     Invalid,

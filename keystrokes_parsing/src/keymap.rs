@@ -54,9 +54,10 @@ pub fn from_keystrokes_by_preset_keymap<
     config: &Config,
 ) -> Result<C, FromKeystrokesError> {
     let error = {
-        let mut keystrokes_clone = keystrokes.clone();
-        if let Some(keystroke) = keystrokes_clone.next() {
+        if let Some(keystroke) = keystrokes.peek() {
             if let Some(keymap_next) = keymap.next.get(keystroke) {
+                let mut keystrokes_clone = keystrokes.clone();
+                keystrokes_clone.next();
                 match from_keystrokes_by_preset_keymap(keymap_next, &mut keystrokes_clone, config) {
                     Ok(complete) => {
                         *keystrokes = keystrokes_clone;

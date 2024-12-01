@@ -56,7 +56,10 @@ pub fn handle_user_input_normal_mode(
             program_state
                 .keystroke_sequence_incomplete
                 .push(Keystroke::from(e));
-            let mut it = program_state.keystroke_sequence_incomplete.iter();
+            let mut it = program_state
+                .keystroke_sequence_incomplete
+                .iter()
+                .peekable();
             match ActionEnum::from_keystrokes(&mut it, &program_state.config) {
                 Ok(action) => {
                     log::debug!("Fant action");

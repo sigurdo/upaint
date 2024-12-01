@@ -48,7 +48,10 @@ pub fn handle_user_input_visual_rect(
                 return Ok(());
             }
 
-            let mut it = program_state.keystroke_sequence_incomplete.iter();
+            let mut it = program_state
+                .keystroke_sequence_incomplete
+                .iter()
+                .peekable();
             match OperatorEnum::from_keystrokes(&mut it, &program_state.config) {
                 Ok(operator) => {
                     log::debug!("Fant operator");
@@ -61,7 +64,10 @@ pub fn handle_user_input_visual_rect(
                     log::debug!("Operator MissingKeystrokes");
                 }
                 Err(_) => {
-                    let mut it = program_state.keystroke_sequence_incomplete.iter();
+                    let mut it = program_state
+                        .keystroke_sequence_incomplete
+                        .iter()
+                        .peekable();
                     match MotionEnum::from_keystrokes(&mut it, &program_state.config) {
                         Ok(motion) => {
                             log::debug!("Fant motion");

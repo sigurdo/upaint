@@ -74,7 +74,8 @@ pub fn test() {
                 result = <_>::from_keystrokes(
                     &mut KeystrokeSequence::try_from($keystrokes.to_string())
                         .unwrap()
-                        .iter(),
+                        .iter()
+                        .peekable(),
                     &config,
                 )
                 .unwrap();

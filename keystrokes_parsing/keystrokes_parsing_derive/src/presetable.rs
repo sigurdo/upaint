@@ -129,7 +129,6 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
     let DeriveInput {
         ident, data, vis, ..
     } = input;
-    // panic!("required: {:#?}", opts.fields_required);
     let ident_config = Ident::new(
         if let Some(config_type) = opts.config_type {
             config_type
@@ -214,20 +213,15 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                                     }
                                 })
                                 .reduce(join_by_comma).unwrap();
-                            println!("arglist: {arglist}");
-                            println!("resultlist: {resultlist}");
                             let dings = quote! {
                                 #ident_preset::#ident_variant(#arglist) => Ok(#ident::#ident_variant(#resultlist))
                             };
-                            println!("dings: {dings}");
                             dings
                         }
                         _ => panic!("Enum variants with named fields are not supported"),
                     }
                 })
                 .reduce(join_by_comma).unwrap();
-            println!("match_arms: {match_arms}");
-
             let impl_presetable = quote! {
                 impl Presetable<#ident_config> for #ident {
                     type Preset = #ident_preset;
@@ -296,6 +290,6 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         _ => panic!(),
     };
     let result = TokenStream::from(output);
-    println!("result derive Presetable: {result}");
+    // println!("result derive Presetable: {result}");
     result
 }

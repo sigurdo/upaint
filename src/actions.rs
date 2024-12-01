@@ -8,6 +8,7 @@ use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::motions::Motion;
 use crate::motions::MotionEnum;
+use crate::motions::MotionRepeat;
 use crate::operators::Operator;
 use crate::operators::OperatorEnum;
 use crate::yank_slots::YankSlotSpecification;
@@ -97,12 +98,16 @@ impl Action for Pipette {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct MoveCursor {
-    pub motion: MotionEnum,
+    pub motion: MotionRepeat,
 }
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
         let cells = self.motion.cells(program_state);
-        if let MotionEnum::FindChar(ref find_char) = self.motion {
+        if let MotionRepeat {
+            motion: MotionEnum::FindChar(ref find_char),
+            ..
+        } = self.motion
+        {
             program_state.find_char_last = Some(find_char.clone());
         }
         let Some(cursor_to) = cells.last() else {

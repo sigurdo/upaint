@@ -1,3 +1,4 @@
+use crate::config::keymaps::UnsignedIntegerKeymapEntry;
 use crate::config::Config;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -6,6 +7,9 @@ use derive_more::Deref;
 use derive_more::DerefMut;
 use derive_more::From;
 use enum_dispatch::enum_dispatch;
+use keystrokes_parsing::FromKeystrokes;
+use keystrokes_parsing::FromKeystrokesError;
+use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
@@ -59,3 +63,55 @@ impl ColorOrSlotSpecification {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Count(pub u32);
+impl Default for Count {
+    fn default() -> Self {
+        Self(1)
+    }
+}
+// impl FromKeystrokes<Config> for Count {
+//     fn from_keystrokes(
+//         keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+//         keystrokes_parsing::from_keystrokes_by_from_str(keystrokes)
+//         // Ok(Self(keystrokes_parsing::from_keystrokes_by_from_str(
+//         //     keystrokes,
+//         // )?))
+//     }
+// }
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CountPreset(pub UnsignedIntegerKeymapEntry<u32>);
+impl Presetable<Config> for Count {
+    type Preset = CountPreset;
+    fn from_keystrokes_by_preset(
+        preset: Self::Preset,
+        keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+        match u32::from_keystrokes_by_preset(preset.0, keystrokes, config) {
+            Ok(count) => Ok(Count(count)),
+            Err(FromKeystrokesError::Invalid) => Ok(Count(1)),
+            Err(FromKeystrokesError::MissingKeystrokes) => {
+                Err(FromKeystrokesError::MissingKeystrokes)
+            }
+        }
+        // Ok(Count(
+        //     ?, // keystrokes_parsing::from_keystrokes_by_preset_struct_field(
+        //                                                                    //     preset.0, keystrokes, config,
+        //                                                                    // )?,
+        // ))
+    }
+}
+// impl Presetable for Count {
+//     type Preset = u32;
+//     fn from_keystrokes_by_preset(
+//         preset: Self::Preset,
+//         keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+//         config: &Config,
+//     ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+//         keystrokes_parsing::from_keystrokes_by_from_str()
+//     }
+// }

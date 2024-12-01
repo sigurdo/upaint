@@ -33,7 +33,7 @@ impl<T: Clone + Debug> TryFrom<HashMap<KeystrokeSequence, PresetSources<T>>> for
     fn try_from(value: HashMap<KeystrokeSequence, PresetSources<T>>) -> Result<Self, Self::Error> {
         let mut keymap = Keymap::new();
         for (keystrokes, value) in value {
-            keymap_insert_preserve(&mut keymap, &mut keystrokes.iter(), value);
+            keymap_insert_preserve(&mut keymap, &mut keystrokes.iter().peekable(), value);
         }
         Ok(keymap)
     }

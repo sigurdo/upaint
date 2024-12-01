@@ -5,6 +5,7 @@ use derive_more::Deref;
 use derive_more::DerefMut;
 use derive_more::From;
 use serde::Deserialize;
+use std::iter::Peekable;
 
 pub mod deserialize;
 pub mod serialize;
@@ -23,7 +24,7 @@ impl KeystrokeSequence {
         Self(Vec::new())
     }
 }
-pub type KeystrokeIterator<'a> = <&'a [Keystroke] as IntoIterator>::IntoIter;
+pub type KeystrokeIterator<'a> = Peekable<<&'a [Keystroke] as IntoIterator>::IntoIter>;
 
 impl From<KeyEvent> for Keystroke {
     fn from(event: KeyEvent) -> Self {

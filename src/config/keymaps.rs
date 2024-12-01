@@ -6,7 +6,9 @@ use crate::canvas::raw::CellContentType;
 use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
+use crate::keystrokes::Count;
 use crate::motions::MotionEnum;
+use crate::motions::MotionRepeat;
 use crate::operators::OperatorEnum;
 use crate::operators::UpdateSelectionOperator;
 use crate::selections::SelectionSlotSpecification;
@@ -55,6 +57,8 @@ keymaps! {
     keymap_u32: u32,
     characters: char,
     motions: MotionEnum,
+    motion_repeats: MotionRepeat,
+    counts: Count,
     operators: OperatorEnum,
     directions: DirectionFree,
     bools: bool,
@@ -186,7 +190,8 @@ macro_rules! unsigned_integer_impl_presetable {
                     match preset {
                         UnsignedIntegerKeymapEntry::Number(value) => Ok(value),
                         UnsignedIntegerKeymapEntry::TypeDecimal => {
-                            unsigned_integer_from_keystrokes(keystrokes)
+                            // unsigned_integer_from_keystrokes(keystrokes)
+                            keystrokes_parsing::from_keystrokes_by_from_str(keystrokes)
                         }
                     }
                 }

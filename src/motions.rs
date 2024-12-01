@@ -9,6 +9,7 @@ use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
 use crate::config::keymaps::UnsignedIntegerKeymapEntry;
 use crate::config::Config;
+use crate::keystrokes::Count;
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::ProgramState;
@@ -34,6 +35,29 @@ pub enum MotionEnum {
     GoToMark(GoToMark),
     MatchingCells(MatchingCells),
     ContinuousRegion(ContinuousRegion),
+}
+
+fn default_count() -> PresetStructField<UnsignedIntegerKeymapEntry<u32>> {
+    PresetStructField::Preset(1.into())
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct MotionRepeat {
+    // #[presetable(default = "default_count")]
+    pub count: Count,
+    pub motion: MotionEnum,
+}
+impl Motion for MotionRepeat {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let mut program_state_cloned = program_state.clone();
+        let mut indices = vec![];
+        for _ in 0..self.count.0 {
+            indices.extend(&self.motion.cells(&program_state_cloned));
+            if let Some(index_last) = indices.last() {
+                program_state_cloned.cursor_position = *index_last;
+            }
+        }
+        indices
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
