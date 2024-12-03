@@ -130,8 +130,8 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         ident, data, vis, ..
     } = input;
     let ident_config = Ident::new(
-        if let Some(config_type) = opts.config_type {
-            config_type
+        if let Some(ref config_type) = opts.config_type {
+            config_type.clone()
         } else {
             format!("Config")
         }
@@ -139,11 +139,11 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         Span::call_site(),
     );
     let ident_preset = Ident::new(
-        if let Some(preset_type) = opts.preset_type {
+        if let Some(ref preset_type) = opts.preset_type {
             if preset_type == "Self" {
                 return derive_presetable_by_self(ident, ident_config);
             }
-            preset_type
+            preset_type.clone()
         } else {
             format!("{ident}Preset")
         }
@@ -246,24 +246,52 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
             let DataStruct { fields, .. } = data;
             let fields_presetified =
                 presetify_ident_fields(&ident_preset, &fields, opts.all_required);
-            let fields = match fields {
-                Fields::Named(FieldsNamed { brace_token, named }) => named
+            fn create_fields(
+                fields: &Punctuated<Field, Comma>,
+                opts: &Opts,
+            ) -> Option<proc_macro2::TokenStream> {
+                fields
                     .iter()
-                    .map(|field| {
+                    .enumerate()
+                    .map(|(index, field)| {
                         let Field { ty, ident, .. } = field;
-                        let ident = ident.as_ref().expect("her er det noe");
+                        let (ident, ident_colon) = if let Some(ident) = ident.as_ref() {
+                            (quote!{ #ident }, quote! { #ident: })
+                        } else {
+                            
+                            let ident = syn::LitInt::new(format!("{index}").as_str(), Span::call_site());
+                            (quote! { #ident }, quote! {})
+                        };
                         let required = opts.all_required || FieldOpts::from_field_expect(field).required;
                         if required {
                             quote! {
-                                    #ident: #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?,
+                                #ident_colon #ty::from_keystrokes_by_preset(preset.#ident, keystrokes, config)?,
                             }
                         } else {
+                            let ident_crate = crate::utils::ident_crate();
                             quote! {
-                                    #ident: ::#ident_crate::from_keystrokes_by_preset_struct_field(preset.#ident, keystrokes, config)?,
+                                #ident_colon ::#ident_crate::from_keystrokes_by_preset_struct_field(preset.#ident, keystrokes, config)?,
                             }
                         }
                     })
-                    .reduce(join_by_space),
+                    .reduce(join_by_space)
+            }
+            let from_keystrokes_instantiation = match fields {
+                Fields::Named(FieldsNamed {
+                    brace_token,
+                    ref named,
+                }) => {
+                    let fields = create_fields(named, &opts);
+                    quote! { Self { #fields } }
+                }
+                Fields::Unnamed(FieldsUnnamed {
+                    paren_token,
+                    ref unnamed,
+                }) => {
+                    let fields = create_fields(unnamed, &opts);
+                    quote! { Self ( #fields ) }
+                }
+
                 _ => panic!("Struct with unnamed or unit fields are not supported."),
             };
             let impl_from_preset = quote! {
@@ -274,15 +302,18 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                         keystrokes: &mut ::#ident_crate::KeystrokeIterator,
                         config: &#ident_config,
                     ) -> Result<Self, ::#ident_crate::FromKeystrokesError> {
-                        Ok(Self {
-                            #fields
-                        })
+                        Ok( #from_keystrokes_instantiation )
                     }
                 }
             };
+            let semicolon = if let Fields::Unnamed(_) = fields {
+                quote! { ; }
+            } else {
+                quote! {}
+            };
             let result = quote! {
                 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::serde::Serialize, ::serde::Deserialize)]
-                #vis struct #fields_presetified
+                #vis struct #fields_presetified #semicolon
                 #impl_from_preset
             };
             result
@@ -290,6 +321,6 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         _ => panic!(),
     };
     let result = TokenStream::from(output);
-    // println!("result derive Presetable: {result}");
+    println!("result derive Presetable: {result}");
     result
 }

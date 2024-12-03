@@ -65,7 +65,7 @@ relative = false
 "A" = { MatchingCells = {} }
 "i" = { ContinuousRegion = { diagonals_allowed = false } }
 "a" = { ContinuousRegion = { diagonals_allowed = true } }
-"" = { FixedNumberOfCells = { number_of_cells = 1, jump = "DirectionAsStride" }}
+"" = { FixedNumberOfCells = { jump = "DirectionAsStride" }}
 
 [keymaps.motion_repeats]
 "" = { count = "FromKeystrokes", motion = "FromKeystrokes" }

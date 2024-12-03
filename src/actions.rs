@@ -98,16 +98,15 @@ impl Action for Pipette {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct MoveCursor {
-    pub motion: MotionRepeat,
+    pub motion: MotionEnum,
 }
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
         let cells = self.motion.cells(program_state);
-        if let MotionRepeat {
-            motion: MotionEnum::FindChar(ref find_char),
-            ..
-        } = self.motion
-        {
+        // if let MotionRepeat {
+        //     motion: MotionEnum::FindChar(ref find_char),
+        // ..
+        if let MotionEnum::FindChar(ref find_char) = self.motion {
             program_state.find_char_last = Some(find_char.clone());
         }
         let Some(cursor_to) = cells.last() else {

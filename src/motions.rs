@@ -40,13 +40,13 @@ pub enum MotionEnum {
 fn default_count() -> PresetStructField<UnsignedIntegerKeymapEntry<u32>> {
     PresetStructField::Preset(1.into())
 }
-#[derive(Clone, Debug, PartialEq, Presetable)]
-pub struct MotionRepeat {
+#[derive(Clone, Debug, PartialEq)]
+pub struct MotionRepeat<T: Motion> {
     // #[presetable(default = "default_count")]
     pub count: Count,
-    pub motion: MotionEnum,
+    pub motion: T,
 }
-impl Motion for MotionRepeat {
+impl<T: Motion> Motion for MotionRepeat<T> {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let mut program_state_cloned = program_state.clone();
         let mut indices = vec![];
@@ -77,9 +77,9 @@ fn default_jump() -> PresetStructField<CanvasIterationJump> {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct FixedNumberOfCells {
+    pub number_of_cells: Count,
     pub direction: DirectionFree,
-    #[presetable(required, default = "default_number_of_cells")]
-    pub number_of_cells: u16,
+    // #[presetable(required, default = "default_number_of_cells")]
     // #[presetable(default = "default_jump")]
     pub jump: CanvasIterationJump,
 }
@@ -92,7 +92,7 @@ impl Motion for FixedNumberOfCells {
             start,
             self.direction,
             self.jump,
-            StopCondition::NthCell(self.number_of_cells),
+            StopCondition::NthCell(self.number_of_cells.0 as u16),
         );
         it.collect()
     }
