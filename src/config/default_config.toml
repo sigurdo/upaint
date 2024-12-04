@@ -52,12 +52,6 @@ relative = false
 
 [keymaps.motions]
 " " = { Stay = {} }
-"n" = { FixedNumberOfCells = { jump = "Diagonals" } }
-"w" = { WordBoundary = { boundary_type = "START" } }
-"e" = { WordBoundary = { boundary_type = "END" } }
-"f" = { FindChar = {} }
-"," = { FindCharRepeat = { direction_reversed = false } }
-";" = { FindCharRepeat = { direction_reversed = true } }
 "S" = { SelectionMotion = {} }
 "s" = { SelectionMotion = { slot = "Active" } }
 "J" = { GoToMark = { jump = "Diagonals" } }
@@ -65,10 +59,18 @@ relative = false
 "A" = { MatchingCells = {} }
 "i" = { ContinuousRegion = { diagonals_allowed = false } }
 "a" = { ContinuousRegion = { diagonals_allowed = true } }
-"" = { FixedNumberOfCells = { jump = "DirectionAsStride" }}
+"" = { Repeat = {} }
 
 [keymaps.motion_repeats]
 "" = { count = "FromKeystrokes", motion = "FromKeystrokes" }
+
+[keymaps.motions_repeatable]
+"w" = { WordBoundary = { boundary_type = "START" } }
+"e" = { WordBoundary = { boundary_type = "END" } }
+"f" = { FindChar = {} }
+"," = { FindCharRepeat = { direction_reversed = false } }
+";" = { FindCharRepeat = { direction_reversed = true } }
+"" = { FixedNumberOfCells = { jump = "DirectionAsStride" }}
 
 [keymaps.counts]
 "" = "TypeDecimal"

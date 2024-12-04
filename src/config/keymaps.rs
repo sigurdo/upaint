@@ -9,6 +9,7 @@ use crate::keystrokes::ColorOrSlotSpecification;
 use crate::keystrokes::Count;
 use crate::motions::MotionEnum;
 use crate::motions::MotionRepeat;
+use crate::motions::MotionRepeatEnum;
 use crate::operators::OperatorEnum;
 use crate::operators::UpdateSelectionOperator;
 use crate::selections::SelectionSlotSpecification;
@@ -57,7 +58,8 @@ keymaps! {
     keymap_u32: u32,
     characters: char,
     motions: MotionEnum,
-    // motion_repeats: MotionRepeat,
+    motion_repeats: MotionRepeat,
+    motions_repeatable: MotionRepeatEnum,
     // counts: Count,
     operators: OperatorEnum,
     directions: DirectionFree,

@@ -177,7 +177,7 @@ bitflags! {
 #[derive(Clone, Debug)]
 pub enum StopCondition {
     Index(CanvasIndex),
-    NthCell(u16),
+    Always,
     CharacterChange,
     WordBoundary(WordBoundaryType),
     CharacterMatch(char),
@@ -193,9 +193,14 @@ pub enum StopCondition {
 pub struct CanvasIndexIterator<'a> {
     index_it: Peekable<CanvasIndexIteratorInfinite>,
     direction: DirectionFree,
-    to_yield: Option<LinkedList<CanvasIndex>>,
     canvas: &'a RawCanvas,
     stop: StopCondition,
+    // Number of times the stop condition needs to trigger before the iteration is stopped.
+    // Decrements downwards. In the same iteration it is decremented from 1 to 0, iteration is
+    // stopped.
+    stop_count: u32,
+    to_yield: Option<LinkedList<CanvasIndex>>,
+    initial_word_boundary_passed: bool,
 }
 
 impl<'a> CanvasIndexIterator<'a> {
@@ -205,13 +210,16 @@ impl<'a> CanvasIndexIterator<'a> {
         direction: DirectionFree,
         jump: CanvasIterationJump,
         stop: StopCondition,
+        stop_count: u32,
     ) -> Self {
         Self {
             index_it: CanvasIndexIteratorInfinite::new(start, direction, jump).peekable(),
             direction,
-            to_yield: None,
             canvas,
             stop,
+            stop_count,
+            to_yield: None,
+            initial_word_boundary_passed: false,
         }
     }
 }
@@ -222,7 +230,20 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
         match &mut self.to_yield {
             Some(to_yield) => to_yield.pop_front(),
             None => {
+                fn word_end_close(
+                    index: CanvasIndex,
+                    direction: DirectionFree,
+                    canvas: &RawCanvas,
+                ) -> bool {
+                    let (row, column) = index;
+                    let character = canvas.character(index);
+                    character != ' '
+                        && (canvas.character((row + direction.rows.signum(), column)) == ' '
+                            || canvas.character((row, column + direction.columns.signum())) == ' ')
+                }
                 let start_index = self.index_it.next().unwrap();
+                self.initial_word_boundary_passed |=
+                    !word_end_close(start_index, self.direction, self.canvas);
                 let mut to_yield = LinkedList::new();
                 to_yield.push_back(start_index);
                 let mut indices_iterated = to_yield.clone();
@@ -230,10 +251,10 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                     let (row, column) = self.index_it.next().unwrap();
                     let area = self.canvas.area();
                     let stop = match &self.stop {
+                        StopCondition::Always => true,
                         StopCondition::Index((row_stop, column_stop)) => {
                             row == *row_stop && column == *column_stop
                         }
-                        StopCondition::NthCell(n) => indices_iterated.len() + 1 > *n as usize,
                         StopCondition::CharacterChange => {
                             if let Some(prev) = indices_iterated.back() {
                                 let character_prev = self.canvas.character(*prev);
@@ -244,6 +265,8 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                             }
                         }
                         StopCondition::WordBoundary(typ) => {
+                            self.initial_word_boundary_passed |=
+                                !word_end_close((row, column), self.direction, self.canvas);
                             if let Some(prev) = indices_iterated.back() {
                                 let character_prev = self.canvas.character(*prev);
                                 let character = self.canvas.character((row, column));
@@ -251,8 +274,10 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                 let character_next = self.canvas.character(*next);
                                 let word_start = character_prev == ' ' && character != ' ';
                                 let word_end = character != ' ' && character_next == ' ';
-                                (typ.contains(WordBoundaryType::START) && word_start)
-                                    || (typ.contains(WordBoundaryType::END) && word_end)
+                                let is_word_boundary = (typ.contains(WordBoundaryType::START)
+                                    && word_start)
+                                    || (typ.contains(WordBoundaryType::END) && word_end);
+                                is_word_boundary && self.initial_word_boundary_passed
                             } else {
                                 false
                             }
@@ -288,7 +313,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                 }
                             }
                         }
-                        StopCondition::NthCell(_) => false,
+                        StopCondition::Always => false,
                         _ => {
                             self.direction.rows.signum() == (row - area.row).signum()
                                 && !area.includes_index((row, area.column))
@@ -297,10 +322,13 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                                     && !area.includes_index((area.row, column))
                         }
                     };
-                    if stop || search_is_infinite {
-                        if stop {
-                            to_yield.append(&mut indices_iterated);
-                        }
+                    if stop {
+                        to_yield = indices_iterated.clone();
+                    }
+                    if stop && self.stop_count > 0 {
+                        self.stop_count -= 1;
+                    }
+                    if (stop && self.stop_count == 0) || search_is_infinite {
                         break;
                     }
                 }

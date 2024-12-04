@@ -9,6 +9,7 @@ use crate::keystrokes::ColorOrSlotSpecification;
 use crate::motions::Motion;
 use crate::motions::MotionEnum;
 use crate::motions::MotionRepeat;
+use crate::motions::MotionRepeatEnum;
 use crate::operators::Operator;
 use crate::operators::OperatorEnum;
 use crate::yank_slots::YankSlotSpecification;
@@ -106,7 +107,11 @@ impl Action for MoveCursor {
         // if let MotionRepeat {
         //     motion: MotionEnum::FindChar(ref find_char),
         // ..
-        if let MotionEnum::FindChar(ref find_char) = self.motion {
+        if let MotionEnum::Repeat(MotionRepeat {
+            motion: MotionRepeatEnum::FindChar(ref find_char),
+            ..
+        }) = self.motion
+        {
             program_state.find_char_last = Some(find_char.clone());
         }
         let Some(cursor_to) = cells.last() else {

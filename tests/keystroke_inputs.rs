@@ -5,8 +5,11 @@ use upaint::actions::ActionEnum;
 use upaint::canvas::raw::iter::CanvasIterationJump;
 use upaint::config::load_default_config;
 use upaint::keystrokes::ColorOrSlotSpecification;
+use upaint::keystrokes::Count;
 use upaint::motions;
 use upaint::motions::MotionEnum;
+use upaint::motions::MotionRepeat;
+use upaint::motions::MotionRepeatEnum;
 use upaint::operators;
 use upaint::operators::OperatorEnum;
 use upaint::DirectionFree;
@@ -84,43 +87,49 @@ pub fn test() {
         };
     }
     keystroke_parsing!(
-        "k" => MotionEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
-           direction: DirectionFree {
-               rows: -1,
-               columns: 0
-           },
-           number_of_cells: 1,
-           jump: CanvasIterationJump::DirectionAsStride,
+        "k" => MotionEnum::Repeat(MotionRepeat {
+            count: Count(1),
+            motion: MotionRepeatEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
+            direction: DirectionFree {
+                rows: -1,
+                columns: 0
+            },
+            jump: CanvasIterationJump::DirectionAsStride,
+        })}),
+        "o" => MotionEnum::Repeat(MotionRepeat {
+            count: Count(1),
+            motion: MotionRepeatEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
+                direction: DirectionFree {
+                    rows: -1,
+                    columns: 2
+                },
+                jump: CanvasIterationJump::DirectionAsStride,
+            }),
         }),
-        "o" => MotionEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
-           direction: DirectionFree {
-               rows: -1,
-               columns: 2
-           },
-           number_of_cells: 1,
-           jump: CanvasIterationJump::DirectionAsStride,
+        "flx" => MotionEnum::Repeat(MotionRepeat {
+            count: Count(1),
+            motion: MotionRepeatEnum::FindChar(motions::FindChar {
+                direction: DirectionFree {
+                    rows: 0,
+                    columns: 1,
+                },
+                ch: 'x',
+            }),
         }),
-        "flx" => MotionEnum::FindChar(
-           motions::FindChar {
-               direction: DirectionFree {
-                   rows: 0,
-                   columns: 1,
-               },
-               ch: 'x',
-           }
-        ),
         "ch" => ActionEnum::Operation(actions::Operation {
             operator: OperatorEnum::Colorize(operators::Colorize {
                 ground: Ground::Foreground,
                 color: ColorOrSlotSpecification::Active,
             }),
-            motion: MotionEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
-                direction: DirectionFree {
-                    rows: 0,
-                    columns: -1,
-                },
-                number_of_cells: 1,
-                jump: CanvasIterationJump::DirectionAsStride,
+            motion: MotionEnum::Repeat(MotionRepeat {
+                count: Count(1),
+                motion: MotionRepeatEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
+                    direction: DirectionFree {
+                        rows: 0,
+                        columns: -1,
+                    },
+                    jump: CanvasIterationJump::DirectionAsStride,
+                }),
             }),
         }),
     );

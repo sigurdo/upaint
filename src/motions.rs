@@ -27,36 +27,39 @@ pub trait Motion: Debug {
 #[presetable(all_required)]
 pub enum MotionEnum {
     Stay(Stay),
-    FixedNumberOfCells(FixedNumberOfCells),
-    WordBoundary(WordBoundary),
-    FindChar(FindChar),
-    FindCharRepeat(FindCharRepeat),
     SelectionMotion(SelectionMotion),
     GoToMark(GoToMark),
     MatchingCells(MatchingCells),
     ContinuousRegion(ContinuousRegion),
+    Repeat(MotionRepeat),
+}
+
+#[enum_dispatch]
+pub trait MotionRepeatable: Debug {
+    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex>;
+}
+#[enum_dispatch(MotionRepeatable)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(all_required)]
+pub enum MotionRepeatEnum {
+    FixedNumberOfCells(FixedNumberOfCells),
+    WordBoundary(WordBoundary),
+    FindChar(FindChar),
+    FindCharRepeat(FindCharRepeat),
 }
 
 fn default_count() -> PresetStructField<UnsignedIntegerKeymapEntry<u32>> {
     PresetStructField::Preset(1.into())
 }
-#[derive(Clone, Debug, PartialEq)]
-pub struct MotionRepeat<T: Motion> {
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct MotionRepeat {
     // #[presetable(default = "default_count")]
     pub count: Count,
-    pub motion: T,
+    pub motion: MotionRepeatEnum,
 }
-impl<T: Motion> Motion for MotionRepeat<T> {
+impl Motion for MotionRepeat {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
-        let mut program_state_cloned = program_state.clone();
-        let mut indices = vec![];
-        for _ in 0..self.count.0 {
-            indices.extend(&self.motion.cells(&program_state_cloned));
-            if let Some(index_last) = indices.last() {
-                program_state_cloned.cursor_position = *index_last;
-            }
-        }
-        indices
+        self.motion.cells_repeatable(self.count.0, program_state)
     }
 }
 
@@ -77,14 +80,13 @@ fn default_jump() -> PresetStructField<CanvasIterationJump> {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct FixedNumberOfCells {
-    pub number_of_cells: Count,
     pub direction: DirectionFree,
     // #[presetable(required, default = "default_number_of_cells")]
     // #[presetable(default = "default_jump")]
     pub jump: CanvasIterationJump,
 }
-impl Motion for FixedNumberOfCells {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+impl MotionRepeatable for FixedNumberOfCells {
+    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
@@ -92,7 +94,8 @@ impl Motion for FixedNumberOfCells {
             start,
             self.direction,
             self.jump,
-            StopCondition::NthCell(self.number_of_cells.0 as u16),
+            StopCondition::Always,
+            count,
         );
         it.collect()
     }
@@ -103,8 +106,8 @@ pub struct WordBoundary {
     direction: DirectionFree,
     boundary_type: WordBoundaryType,
 }
-impl Motion for WordBoundary {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+impl MotionRepeatable for WordBoundary {
+    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
@@ -113,6 +116,7 @@ impl Motion for WordBoundary {
             self.direction,
             CanvasIterationJump::Diagonals,
             StopCondition::WordBoundary(self.boundary_type),
+            count,
         );
         it.collect()
     }
@@ -123,8 +127,8 @@ pub struct FindChar {
     pub direction: DirectionFree,
     pub ch: char,
 }
-impl Motion for FindChar {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+impl MotionRepeatable for FindChar {
+    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
@@ -133,6 +137,7 @@ impl Motion for FindChar {
             self.direction,
             CanvasIterationJump::Diagonals,
             StopCondition::CharacterMatch(self.ch),
+            count,
         );
         it.collect()
     }
@@ -142,13 +147,13 @@ impl Motion for FindChar {
 pub struct FindCharRepeat {
     pub direction_reversed: bool,
 }
-impl Motion for FindCharRepeat {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+impl MotionRepeatable for FindCharRepeat {
+    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         if let Some(mut find_char) = program_state.find_char_last.clone() {
             if self.direction_reversed {
                 find_char.direction = find_char.direction.reversed();
             }
-            find_char.cells(program_state)
+            find_char.cells_repeatable(count, program_state)
         } else {
             vec![]
         }
@@ -187,6 +192,7 @@ impl Motion for GoToMark {
                 direction,
                 self.jump,
                 StopCondition::Index(*mark),
+                0,
             );
             it.collect()
         } else {
