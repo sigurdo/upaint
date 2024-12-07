@@ -9,7 +9,7 @@ use std::collections::HashSet;
 pub type Selection = HashSet<CanvasIndex>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
-#[presetable(preset_type = "Self")]
+#[presetable(preset_type = "Self", config_type = "ProgramState")]
 pub enum SelectionSlotSpecification {
     Active,
     Specific(char),

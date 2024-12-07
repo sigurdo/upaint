@@ -1,3 +1,4 @@
+use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -14,6 +15,15 @@ pub mod serialize;
 pub struct Keystroke {
     pub code: KeyCode,
     pub modifiers: KeyModifiers,
+}
+
+impl Keystroke {
+    pub fn to_key_event(self) -> KeyEvent {
+        KeyEvent::new(self.code, self.modifiers)
+    }
+    pub fn to_event(self) -> Event {
+        Event::Key(self.to_key_event())
+    }
 }
 
 #[derive(Deref, DerefMut, From, Default, Clone, PartialEq, Eq, Hash, Deserialize)]

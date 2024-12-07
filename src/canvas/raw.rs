@@ -1,3 +1,4 @@
+use crate::ProgramState;
 use bitflags::bitflags;
 use keystrokes_parsing::Presetable;
 use serde::{Deserialize, Serialize};
@@ -30,7 +31,7 @@ pub type CanvasIndex = (i16, i16);
 
 bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Presetable)]
-    #[presetable(preset_type = "Self")]
+    #[presetable(preset_type = "Self", config_type = "ProgramState")]
     pub struct CellContentType: u8 {
         const NONE      = 0b0000_0000;
         const TEXT      = 0b0000_0001;

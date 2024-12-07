@@ -31,6 +31,7 @@ use upaint_derive::Preset;
 // #[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize)]
 pub type ColorSlot = char;
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub enum ColorOrSlot {
     Slot(ColorSlot),
     #[serde(untagged)]
@@ -66,16 +67,17 @@ impl ColorOrSlotSpecification {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Count(pub u32);
 impl Default for Count {
     fn default() -> Self {
         Self(1)
     }
 }
-impl FromKeystrokes<Config> for Count {
+impl FromKeystrokes<ProgramState> for Count {
     fn from_keystrokes(
         keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
-        _config: &Config,
+        _config: &ProgramState,
     ) -> Result<Self, FromKeystrokesError> {
         match from_keystrokes_by_from_str(keystrokes) {
             Ok(value) => Ok(Self(value)),

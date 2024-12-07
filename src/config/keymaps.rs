@@ -18,6 +18,7 @@ use crate::selections::SelectionSlotSpecification;
 use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
+use crate::ProgramState;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 use keystrokes_parsing::from_keystrokes_by_preset_keymap;
@@ -36,17 +37,17 @@ macro_rules! keymaps {
         #[derive(Clone, Debug, Deserialize)]
         pub struct Keymaps {
             $(
-                pub $ident: Keymap<<$type as Presetable<Config>>::Preset>,
+                pub $ident: Keymap<<$type as Presetable<ProgramState>>::Preset>,
             )*
         }
         $(
-            impl FromKeystrokes<Config> for $type {
+            impl FromKeystrokes<ProgramState> for $type {
                 fn from_keystrokes(
                     keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
-                    config: &Config
+                    config: &ProgramState
                 ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
                     from_keystrokes_by_preset_keymap(
-                        &config.keymaps.$ident,
+                        &config.config.keymaps.$ident,
                         keystrokes,
                         config,
                     )
@@ -84,12 +85,12 @@ keymaps! {
 
 macro_rules! impl_presetable_by_self {
     ($type:ty) => {
-        impl Presetable<Config> for $type {
+        impl Presetable<ProgramState> for $type {
             type Preset = Self;
             fn from_keystrokes_by_preset(
                 preset: Self::Preset,
                 _keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
-                _config: &Config,
+                _config: &ProgramState,
             ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
                 Ok(preset)
             }
@@ -113,18 +114,20 @@ pub enum CharKeymapEntry {
     #[serde(untagged)]
     Char(char),
 }
-impl Presetable<Config> for char {
+impl Presetable<ProgramState> for char {
     type Preset = CharKeymapEntry;
     fn from_keystrokes_by_preset(
         preset: Self::Preset,
         keystrokes: &mut KeystrokeIterator,
-        config: &Config,
+        _config: &ProgramState,
     ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
         match preset {
             CharKeymapEntry::Char(value) => Ok(value),
             CharKeymapEntry::Type => {
                 if let Some(keystroke) = keystrokes.next() {
-                    if keystroke.modifiers == KeyModifiers::NONE {
+                    if keystroke.modifiers == KeyModifiers::NONE
+                        || keystroke.modifiers == KeyModifiers::SHIFT
+                    {
                         if let KeyCode::Char(ch) = keystroke.code {
                             Ok(ch)
                         } else {
@@ -186,12 +189,12 @@ fn unsigned_integer_from_keystrokes<T>(
 macro_rules! unsigned_integer_impl_presetable {
     ($($type:ty,)*) => {
         $(
-            impl Presetable<Config> for $type {
+            impl Presetable<ProgramState> for $type {
                 type Preset = UnsignedIntegerKeymapEntry<$type>;
                 fn from_keystrokes_by_preset(
                     preset: UnsignedIntegerKeymapEntry<$type>,
                     keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
-                    _config: &Config,
+                    _config: &ProgramState,
                 ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
                     match preset {
                         UnsignedIntegerKeymapEntry::Number(value) => Ok(value),

@@ -33,8 +33,12 @@ pub fn from_keystrokes_by_preset_sources<P, Config, C: Presetable<Config, Preset
 ) -> Result<C, FromKeystrokesError> {
     let mut error = FromKeystrokesError::Invalid;
     for preset in sources.0 {
-        match C::from_keystrokes_by_preset(preset, keystrokes, config) {
-            Ok(value) => return Ok(value),
+        let mut keystrokes_cloned = keystrokes.clone();
+        match C::from_keystrokes_by_preset(preset, &mut keystrokes_cloned, config) {
+            Ok(value) => {
+                *keystrokes = keystrokes_cloned;
+                return Ok(value);
+            }
             Err(FromKeystrokesError::MissingKeystrokes) => {
                 error = FromKeystrokesError::MissingKeystrokes
             }

@@ -4,6 +4,7 @@ use super::RawCanvas;
 use crate::canvas::raw::CellContentType;
 use crate::config::Config;
 use crate::selections::Selection;
+use crate::ProgramState;
 use keystrokes_parsing::Presetable;
 use ratatui::style::Color;
 use ratatui::style::Modifier;
@@ -151,7 +152,7 @@ impl MatchValue<CanvasCell> for MatchCell {
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
-#[presetable(preset_type = "Self")]
+#[presetable(preset_type = "Self", config_type = "ProgramState")]
 pub enum ContinuousRegionRelativeType {
     Same(CellContentType),
     NonBlank(CellContentType),

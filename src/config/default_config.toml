@@ -23,12 +23,13 @@ relative = false
 "P" = { Paste = {} }
 "p" = { Paste = { slot = "Active" } }
 "r" = { Operation = { motion = { Stay = {}}, operator = { Replace = {}}}}
-"R" = { Operation = { operator = { Replace = {}}}}
+"R" = { OperationMotionFirst = { operator = { Replace = {}}}}
 "m" = { MarkSet = {}}
 "#" = { SetColorOrSlotActive = {} }
 "Kr" = { Operation = { motion = { Stay = {}}, operator = { Replace = { ch = "h"}}}}
 # "" = { Operation = { operator = { Replace = { ch = "h"}}}}
 # "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
+"q" = { MacroRecordingStartStop = {} }
 "" = [
     { Repeat = {}},
     { Operation = {}},
@@ -41,6 +42,7 @@ relative = false
 [keymaps.actions_repeatable]
 "u" = { "Undo" = {} }
 "<C-r>" = { "Redo" = {} }
+"@" = { MacroExecute = {} }
 
 [keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground", color = "Active" } }

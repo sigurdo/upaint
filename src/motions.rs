@@ -24,7 +24,7 @@ pub trait Motion: Debug {
 }
 #[enum_dispatch(Motion)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(all_required)]
+#[presetable(all_required, config_type = "ProgramState")]
 pub enum MotionEnum {
     Stay(Stay),
     SelectionMotion(SelectionMotion),
@@ -40,7 +40,7 @@ pub trait MotionRepeatable: Debug {
 }
 #[enum_dispatch(MotionRepeatable)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(all_required)]
+#[presetable(all_required, config_type = "ProgramState")]
 pub enum MotionRepeatEnum {
     FixedNumberOfCells(FixedNumberOfCells),
     WordBoundary(WordBoundary),
@@ -52,6 +52,7 @@ fn default_count() -> PresetStructField<UnsignedIntegerKeymapEntry<u32>> {
     PresetStructField::Preset(1.into())
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct MotionRepeat {
     // #[presetable(default = "default_count")]
     pub count: Count,
@@ -64,6 +65,7 @@ impl Motion for MotionRepeat {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Stay {}
 impl Motion for Stay {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
@@ -79,6 +81,7 @@ fn default_jump() -> PresetStructField<CanvasIterationJump> {
     PresetStructField::Preset(CanvasIterationJump::DirectionAsStride)
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct FixedNumberOfCells {
     pub direction: DirectionFree,
     // #[presetable(required, default = "default_number_of_cells")]
@@ -102,6 +105,7 @@ impl MotionRepeatable for FixedNumberOfCells {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct WordBoundary {
     direction: DirectionFree,
     boundary_type: WordBoundaryType,
@@ -123,6 +127,7 @@ impl MotionRepeatable for WordBoundary {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct FindChar {
     pub direction: DirectionFree,
     pub ch: char,
@@ -144,6 +149,7 @@ impl MotionRepeatable for FindChar {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct FindCharRepeat {
     pub direction_reversed: bool,
 }
@@ -161,6 +167,7 @@ impl MotionRepeatable for FindCharRepeat {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct SelectionMotion {
     pub slot: SelectionSlotSpecification,
 }
@@ -176,6 +183,7 @@ impl Motion for SelectionMotion {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct GoToMark {
     pub jump: CanvasIterationJump,
     pub slot: char,
@@ -202,6 +210,7 @@ impl Motion for GoToMark {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct MatchingCells {
     pub content_type: CellContentType,
 }
@@ -244,6 +253,7 @@ impl Motion for MatchingCells {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct ContinuousRegion {
     pub relative_type: ContinuousRegionRelativeType,
     pub diagonals_allowed: bool,

@@ -41,6 +41,7 @@ struct VariantOpts {
 
 fn presetify_fields(
     fields: &Punctuated<Field, Comma>,
+    config_type: Ident,
     all_required: bool,
 ) -> proc_macro2::TokenStream {
     let ident_crate = ident_crate();
@@ -52,11 +53,11 @@ fn presetify_fields(
             let required = all_required || opts.required;
             let value = if required {
                 quote! {
-                    <#ty as Presetable<Config>>::Preset
+                    <#ty as Presetable<#config_type>>::Preset
                 }
             } else {
                 quote! {
-                    ::#ident_crate::PresetStructField<<#ty as Presetable<Config>>::Preset>
+                    ::#ident_crate::PresetStructField<<#ty as Presetable<#config_type>>::Preset>
                 }
             };
             if let Some(ident) = ident {
@@ -84,6 +85,7 @@ fn presetify_fields(
 fn presetify_ident_fields(
     ident: &Ident,
     fields: &Fields,
+    config_type: Ident,
     all_required: bool,
 ) -> proc_macro2::TokenStream {
     match fields {
@@ -93,13 +95,13 @@ fn presetify_ident_fields(
             }
         }
         Fields::Unnamed(unnamed) => {
-            let fields = presetify_fields(&unnamed.unnamed, all_required);
+            let fields = presetify_fields(&unnamed.unnamed, config_type, all_required);
             quote! {
                #ident(#fields)
             }
         }
         Fields::Named(named) => {
-            let fields = presetify_fields(&named.named, all_required);
+            let fields = presetify_fields(&named.named, config_type, all_required);
             quote! {
                 #ident { #fields }
             }
@@ -158,7 +160,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 .iter()
                 .map(|variant| {
                     let Variant { ident, fields, .. } = variant;
-                    presetify_ident_fields(ident, fields, opts.all_required)
+                    presetify_ident_fields(ident, fields, ident_config.clone(), opts.all_required)
                 })
                 .reduce(join_by_comma);
 
@@ -245,7 +247,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         Data::Struct(data) => {
             let DataStruct { fields, .. } = data;
             let fields_presetified =
-                presetify_ident_fields(&ident_preset, &fields, opts.all_required);
+                presetify_ident_fields(&ident_preset, &fields, ident_config.clone(), opts.all_required);
             fn create_fields(
                 fields: &Punctuated<Field, Comma>,
                 opts: &Opts,

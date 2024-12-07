@@ -60,7 +60,7 @@ pub fn handle_user_input_normal_mode(
                 .keystroke_sequence_incomplete
                 .iter()
                 .peekable();
-            match ActionEnum::from_keystrokes(&mut it, &program_state.config) {
+            match ActionEnum::from_keystrokes(&mut it, &program_state) {
                 Ok(action) => {
                     log::debug!("Fant action");
                     action.execute(program_state);
@@ -119,6 +119,28 @@ fn handle_user_input_color_picker(
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
 pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    // Ignore all release events
+    if let Event::Key(e) = event {
+        if e.kind == KeyEventKind::Release {
+            return Ok(());
+        }
+    }
+
+    if let Event::Key(e) = event {
+        log::debug!(
+            "handle_user_input {}, {}",
+            program_state.a,
+            Keystroke::from(e)
+        );
+        program_state.a += 1;
+    }
+
+    if let Some(recording) = &mut program_state.macro_recording {
+        if let Event::Key(e) = event {
+            recording.keystrokes.push(Keystroke::from(e));
+        }
+    }
+
     if let Event::Key(e) = event {
         match e {
             KeyEvent {
@@ -137,13 +159,6 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
                 return Ok(());
             }
             _ => (),
-        }
-    }
-
-    // Ignore all release events
-    if let Event::Key(e) = event {
-        if e.kind == KeyEventKind::Release {
-            return Ok(());
         }
     }
 

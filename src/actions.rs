@@ -7,19 +7,31 @@ use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::keystrokes::Count;
+use crate::macros::Macro;
+use crate::macros::MacroRecording;
 use crate::motions::Motion;
 use crate::motions::MotionEnum;
 use crate::motions::MotionRepeat;
 use crate::motions::MotionRepeatEnum;
 use crate::operators::Operator;
 use crate::operators::OperatorEnum;
+use crate::user_input::handle_user_input;
 use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
+use crate::ErrorCustom;
 use crate::Ground;
 use crate::InputMode;
 use crate::ProgramState;
+use crossterm::event::Event;
+use crossterm::event::KeyEvent;
 use enum_dispatch::enum_dispatch;
+use keystrokes_parsing::from_keystrokes_by_preset_struct_field;
+use keystrokes_parsing::FromKeystrokes;
+use keystrokes_parsing::FromKeystrokesError;
+use keystrokes_parsing::KeystrokeSequence;
+use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
+use serde::Deserialize;
 use std::fmt::Debug;
 
 pub mod session;
@@ -47,11 +59,12 @@ where
 
 #[enum_dispatch(Action)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(all_required)]
+#[presetable(all_required, config_type = "ProgramState")]
 pub enum ActionEnum {
     Pipette(Pipette),
     MoveCursor(MoveCursor),
     Operation(Operation),
+    OperationMotionFirst(OperationMotionFirst),
     ModeCommand(ModeCommand),
     ModeInsert(ModeInsert),
     ModeColorPicker(ModeColorPicker),
@@ -64,16 +77,19 @@ pub enum ActionEnum {
     SetYankActive(SetYankActive),
     MarkSet(MarkSet),
     Repeat(ActionRepeat),
+    MacroRecordingStartStop(MacroRecordingStartStop),
 }
 
 #[enum_dispatch(Action)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(all_required)]
+#[presetable(all_required, config_type = "ProgramState")]
 pub enum ActionRepeatableEnum {
     Undo(Undo),
     Redo(Redo),
+    MacroExecute(MacroExecute),
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct ActionRepeat {
     count: Count,
     action: ActionRepeatableEnum,
@@ -86,6 +102,7 @@ impl Action for ActionRepeat {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Undo {}
 impl Action for Undo {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -93,6 +110,7 @@ impl Action for Undo {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Redo {}
 impl Action for Redo {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -100,6 +118,7 @@ impl Action for Redo {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Pipette {
     pub ground: Ground,
     pub slot: ColorOrSlotSpecification,
@@ -118,6 +137,7 @@ impl Action for Pipette {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct MoveCursor {
     pub motion: MotionEnum,
 }
@@ -148,6 +168,7 @@ impl Action for MoveCursor {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Operation {
     pub operator: OperatorEnum,
     pub motion: MotionEnum,
@@ -159,6 +180,19 @@ impl Action for Operation {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct OperationMotionFirst {
+    pub motion: MotionEnum,
+    pub operator: OperatorEnum,
+}
+impl Action for OperationMotionFirst {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let cells = self.motion.cells(program_state);
+        self.operator.operate(&cells, program_state);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct ModeCommand {}
 impl Action for ModeCommand {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -168,6 +202,7 @@ impl Action for ModeCommand {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct ModeInsert {
     pub jump: CanvasIterationJump,
     pub direction: DirectionFree,
@@ -186,6 +221,7 @@ impl Action for ModeInsert {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct ModeColorPicker {
     pub slot: ColorOrSlotSpecification,
 }
@@ -200,6 +236,7 @@ impl Action for ModeColorPicker {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct ModeVisualRect {}
 impl Action for ModeVisualRect {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -208,6 +245,7 @@ impl Action for ModeVisualRect {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct HighlightSelection {
     pub slot: char,
 }
@@ -217,6 +255,7 @@ impl Action for HighlightSelection {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct HighlightSelectionClear {}
 impl Action for HighlightSelectionClear {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -224,6 +263,7 @@ impl Action for HighlightSelectionClear {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct SetSelectionActive {
     pub slot: char,
     pub highlight: bool,
@@ -237,6 +277,7 @@ impl Action for SetSelectionActive {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct SetColorOrSlotActive {
     pub color_or_slot: ColorOrSlot,
 }
@@ -246,6 +287,7 @@ impl Action for SetColorOrSlotActive {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Paste {
     pub slot: YankSlotSpecification,
 }
@@ -262,6 +304,7 @@ impl Action for Paste {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct SetYankActive {
     pub slot: char,
 }
@@ -271,6 +314,7 @@ impl Action for SetYankActive {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct MarkSet {
     pub slot: char,
 }
@@ -279,5 +323,75 @@ impl Action for MarkSet {
         program_state
             .marks
             .insert(self.slot, program_state.cursor_position);
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct MacroRecordingStartStop {
+    start_or_stop: MacroRecordingStartStopType,
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub enum MacroRecordingStartStopType {
+    Start(char),
+    Stop,
+}
+impl FromKeystrokes<ProgramState> for MacroRecordingStartStopType {
+    fn from_keystrokes(
+        keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+        program_state: &ProgramState,
+    ) -> Result<Self, FromKeystrokesError> {
+        if program_state.macro_recording.is_none() {
+            Ok(Self::Start(char::from_keystrokes(
+                keystrokes,
+                program_state,
+            )?))
+        } else {
+            Ok(Self::Stop)
+        }
+    }
+}
+impl Action for MacroRecordingStartStop {
+    fn execute(&self, program_state: &mut ProgramState) {
+        match self.start_or_stop {
+            MacroRecordingStartStopType::Start(ch) => {
+                program_state.macro_recording = Some(MacroRecording::new(ch))
+            }
+            MacroRecordingStartStopType::Stop => {
+                if let Some(mut recording) = program_state.macro_recording.take() {
+                    for _keystroke in program_state.keystroke_sequence_incomplete.clone().iter() {
+                        recording.keystrokes.pop();
+                    }
+                    program_state.macros.insert(
+                        recording.slot,
+                        Macro {
+                            keystrokes: recording.keystrokes,
+                        },
+                    );
+                }
+            }
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct MacroExecute {
+    slot: char,
+}
+impl Action for MacroExecute {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(macroo) = program_state.macros.get(&self.slot) {
+            program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+            for keystroke in macroo.keystrokes.clone().iter() {
+                let result = handle_user_input(keystroke.to_event(), program_state);
+                if let Err(error) = result {
+                    panic!(
+                        "Error occured while handling user input from macro invocation: {}",
+                        error
+                    );
+                }
+            }
+        }
     }
 }

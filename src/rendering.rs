@@ -136,12 +136,16 @@ pub fn draw_frame(
                 command_line_chunk,
             );
         } else {
-            let input_mode = match program_state.input_mode {
+            let mut input_mode = match program_state.input_mode {
                 InputMode::Insert(_) => "-- INSERT --",
                 InputMode::ColorPicker(_) => "-- COLOR PICKER --",
                 InputMode::VisualRect(_) => "-- VISUAL RECT --",
                 _ => "",
-            };
+            }
+            .to_string();
+            if let Some(recording) = &program_state.macro_recording {
+                input_mode.push_str(format!("recording @{}", recording.slot).as_str());
+            }
             let input_mode = Paragraph::new(vec![Line::from(vec![Span::raw(input_mode)])])
                 .style(program_state.config.color_theme.input_mode.into());
             f.render_widget(input_mode, command_line_chunk);

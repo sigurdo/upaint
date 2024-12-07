@@ -12,6 +12,7 @@ pub mod command_line;
 pub mod config;
 pub mod file_formats;
 pub mod keystrokes;
+pub mod macros;
 pub mod motions;
 pub mod operators;
 pub mod rendering;
@@ -30,6 +31,8 @@ use canvas::{rect::CanvasRect, Canvas};
 use color_picker::ColorPicker;
 use keystrokes::ColorSlot;
 use keystrokes_parsing::KeystrokeSequence;
+use macros::Macro;
+use macros::MacroRecording;
 use selections::Selection;
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
@@ -137,7 +140,7 @@ pub enum InputMode {
 }
 
 #[derive(Default, Clone)]
-pub struct ProgramState<'a> {
+pub struct ProgramState {
     pub a: u64,
     pub input_mode: InputMode,
     pub cursor_position: (i16, i16),                  // (row, column)
@@ -156,7 +159,7 @@ pub struct ProgramState<'a> {
     pub color_or_slot_active: ColorOrSlot,
     pub find_char_last: Option<FindChar>,
     pub chosen_background_color: Option<Color>,
-    pub command_line: TextArea<'a>,
+    pub command_line: TextArea<'static>,
     pub color_picker: ColorPicker,
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
@@ -164,6 +167,8 @@ pub struct ProgramState<'a> {
     pub exit: bool,
     pub config: Config,
     pub keystroke_sequence_incomplete: KeystrokeSequence,
+    pub macros: HashMap<char, Macro>,
+    pub macro_recording: Option<MacroRecording>,
 }
 
 use std::{

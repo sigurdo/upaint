@@ -14,6 +14,7 @@ use upaint::operators;
 use upaint::operators::OperatorEnum;
 use upaint::DirectionFree;
 use upaint::Ground;
+use upaint::ProgramState;
 
 #[test]
 pub fn test() {
@@ -74,12 +75,14 @@ pub fn test() {
                 // Assign expected value to result variable to enable type inference in next statement.
                 #[allow(unused_assignments)]
                 let mut result = $expected;
+                let mut program_state = ProgramState::default();
+                program_state.config = config.clone();
                 result = <_>::from_keystrokes(
                     &mut KeystrokeSequence::try_from($keystrokes.to_string())
                         .unwrap()
                         .iter()
                         .peekable(),
-                    &config,
+                    &program_state,
                 )
                 .unwrap();
                 assert_eq!(result, $expected,);

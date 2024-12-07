@@ -11,11 +11,11 @@ use crate::keystrokes::ColorOrSlot;
 use crate::ProgramState;
 
 pub struct StatusBar<'a> {
-    pub program_state: &'a ProgramState<'a>,
+    pub program_state: &'a ProgramState,
 }
 
-impl<'a> From<&'a ProgramState<'a>> for StatusBar<'a> {
-    fn from(program_state: &'a ProgramState<'a>) -> Self {
+impl<'a> From<&'a ProgramState> for StatusBar<'a> {
+    fn from(program_state: &'a ProgramState) -> Self {
         Self {
             program_state: program_state,
         }

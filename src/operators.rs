@@ -21,7 +21,7 @@ pub trait Operator: Debug {
 }
 #[enum_dispatch(Operator)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(all_required)]
+#[presetable(all_required, config_type = "ProgramState")]
 pub enum OperatorEnum {
     Colorize(Colorize),
     Replace(Replace),
@@ -31,6 +31,7 @@ pub enum OperatorEnum {
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Colorize {
     pub ground: Ground,
     pub color: ColorOrSlotSpecification,
@@ -60,6 +61,7 @@ impl Operator for Colorize {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Replace {
     pub ch: char,
 }
@@ -81,6 +83,7 @@ pub enum UpdateSelectionOperator {
     // Invert,
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct UpdateSelection {
     pub operator: UpdateSelectionOperator,
     pub slot: SelectionSlotSpecification,
@@ -114,6 +117,7 @@ impl Operator for UpdateSelection {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Yank {
     pub content_type: CellContentType,
     pub slot: YankSlotSpecification,
@@ -133,6 +137,7 @@ impl Operator for Yank {
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub struct Cut {
     pub content_type: CellContentType,
     pub slot: YankSlotSpecification,

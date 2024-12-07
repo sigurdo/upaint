@@ -52,8 +52,15 @@ pub fn handle_user_input_visual_rect(
                 .keystroke_sequence_incomplete
                 .iter()
                 .peekable();
-            match OperatorEnum::from_keystrokes(&mut it, &program_state.config) {
+            match OperatorEnum::from_keystrokes(&mut it, &program_state) {
                 Ok(operator) => {
+                    let InputMode::VisualRect((ref mut index_a, ref mut index_b)) =
+                        program_state.input_mode
+                    else {
+                        panic!(
+                            "handle_user_input_visual_rect called without being in VisualRect mode"
+                        );
+                    };
                     log::debug!("Fant operator");
                     let rect = CanvasRect::from_corners((*index_a, *index_b));
                     operator.operate(&rect.indices_contained(), program_state);
@@ -68,7 +75,7 @@ pub fn handle_user_input_visual_rect(
                         .keystroke_sequence_incomplete
                         .iter()
                         .peekable();
-                    match MotionEnum::from_keystrokes(&mut it, &program_state.config) {
+                    match MotionEnum::from_keystrokes(&mut it, &program_state) {
                         Ok(motion) => {
                             log::debug!("Fant motion");
                             let cursor_position_new = *motion
