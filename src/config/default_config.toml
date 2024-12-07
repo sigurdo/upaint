@@ -12,8 +12,6 @@ enable = true
 relative = false
 
 [keymaps.actions]
-"u" = { "Undo" = {} }
-"<C-r>" = { "Redo" = {} }
 ":" = { "ModeCommand" = {} }
 "i" = { "ModeInsert" = { jump = "Diagonals" } }
 "gc" = { "ModeColorPicker" = { slot = "Active" } }
@@ -32,9 +30,17 @@ relative = false
 # "" = { Operation = { operator = { Replace = { ch = "h"}}}}
 # "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
 "" = [
+    { Repeat = {}},
     { Operation = {}},
     { MoveCursor = {}},
 ]
+
+[keymaps.action_repeats]
+"" = { count = "FromKeystrokes", action = "FromKeystrokes" }
+
+[keymaps.actions_repeatable]
+"u" = { "Undo" = {} }
+"<C-r>" = { "Redo" = {} }
 
 [keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground", color = "Active" } }

@@ -1,4 +1,6 @@
 use crate::actions::ActionEnum;
+use crate::actions::ActionRepeat;
+use crate::actions::ActionRepeatableEnum;
 use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::WordBoundaryType;
@@ -76,6 +78,8 @@ keymaps! {
     yank_slot_specifications: YankSlotSpecification,
     update_selection_operators: UpdateSelectionOperator,
     actions: ActionEnum,
+    action_repeats: ActionRepeat,
+    actions_repeatable: ActionRepeatableEnum,
 }
 
 macro_rules! impl_presetable_by_self {

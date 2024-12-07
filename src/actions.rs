@@ -6,6 +6,7 @@ use crate::command_line::create_command_line_textarea;
 use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
+use crate::keystrokes::Count;
 use crate::motions::Motion;
 use crate::motions::MotionEnum;
 use crate::motions::MotionRepeat;
@@ -48,8 +49,6 @@ where
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required)]
 pub enum ActionEnum {
-    Undo(Undo),
-    Redo(Redo),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
     Operation(Operation),
@@ -64,6 +63,27 @@ pub enum ActionEnum {
     Paste(Paste),
     SetYankActive(SetYankActive),
     MarkSet(MarkSet),
+    Repeat(ActionRepeat),
+}
+
+#[enum_dispatch(Action)]
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(all_required)]
+pub enum ActionRepeatableEnum {
+    Undo(Undo),
+    Redo(Redo),
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+pub struct ActionRepeat {
+    count: Count,
+    action: ActionRepeatableEnum,
+}
+impl Action for ActionRepeat {
+    fn execute(&self, program_state: &mut ProgramState) {
+        for _ in 0..(self.count.0) {
+            self.action.execute(program_state);
+        }
+    }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 pub struct Undo {}
