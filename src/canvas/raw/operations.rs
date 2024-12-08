@@ -1,3 +1,4 @@
+use crate::Ground;
 use ratatui::style::{Color, Modifier};
 
 use crate::canvas::raw::CanvasIndex;
@@ -16,6 +17,15 @@ pub enum CanvasModification {
     SetModifiers(CanvasIndex, Modifier),
     SetCell(CanvasIndex, CanvasCell),
     Paste(CanvasIndex, CanvasYank),
+}
+
+impl CanvasModification {
+    pub fn set_color(index: CanvasIndex, ground: Ground, color: Color) -> Self {
+        match ground {
+            Ground::Foreground => Self::SetFgColor(index, color),
+            Ground::Background => Self::SetBgColor(index, color),
+        }
+    }
 }
 
 impl Canvas {

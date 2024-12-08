@@ -1,6 +1,9 @@
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::CanvasModification;
+use crate::color_picker::target::ColorPickerTarget;
+use crate::color_picker::target::ColorPickerTargetEnum;
+use crate::color_picker::target::ColorPickerTargetMotion;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
 use crate::config::Config;
@@ -221,16 +224,15 @@ impl Action for ModeInsert {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ModeColorPicker {
-    pub slot: ColorOrSlotSpecification,
+    pub target: ColorPickerTargetEnum,
 }
 impl Action for ModeColorPicker {
     fn execute(&self, program_state: &mut ProgramState) {
-        if let ColorOrSlot::Slot(ch) = self.slot.as_color_or_slot(&program_state) {
-            let title = ch.to_string();
-            let initial_color = program_state.color_slots.get(&ch);
-            program_state.color_picker = ColorPicker::new(title, initial_color.copied());
-            program_state.input_mode = InputMode::ColorPicker(ch);
-        }
+        let initial_color = self.target.get_color(program_state);
+        // TODO: Generere en fornuftig tittel
+        let title = "".to_string();
+        program_state.color_picker = ColorPicker::new(title, Some(initial_color));
+        program_state.input_mode = InputMode::ColorPicker(self.target.clone());
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]

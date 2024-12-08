@@ -1,4 +1,6 @@
 use crate::actions::ActionEnum;
+use crate::color_picker::target::ColorPickerTarget;
+use crate::ColorPickerTargetEnum;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
 use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
@@ -90,25 +92,31 @@ pub fn handle_user_input_normal_mode(
 fn handle_user_input_color_picker(
     event: Event,
     program_state: &mut ProgramState,
-    slot: ColorSlot,
+    target: &ColorPickerTargetEnum,
 ) -> ResultCustom<()> {
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Enter => {
-                program_state
-                    .color_slots
-                    .insert(slot, program_state.color_picker.get_color());
+                target.set_color(program_state.color_picker.get_color(), program_state);
+                program_state.canvas.commit_staged();
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Delete | KeyCode::Backspace => {
-                program_state.color_slots.remove(&slot);
+                // TODO:
+                // program_state.color_slots.remove(&slot);
+                target.set_color(program_state.color_picker.get_color(), program_state);
+                program_state.canvas.clear_staged();
                 program_state.input_mode = InputMode::Normal;
             }
             KeyCode::Char('r') => {
-                program_state.color_slots.insert(slot, Color::Reset);
+                target.set_color(Color::Reset, program_state);
+                program_state.canvas.commit_staged();
                 program_state.input_mode = InputMode::Normal;
             }
-            _ => program_state.color_picker.input(event),
+            _ => {
+                program_state.color_picker.input(event);
+                target.set_color(program_state.color_picker.get_color(), program_state);
+            }
         },
         _ => (),
     }
@@ -118,11 +126,33 @@ fn handle_user_input_color_picker(
 /// Handles user input
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
-pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
     // Ignore all release events
     if let Event::Key(e) = event {
         if e.kind == KeyEventKind::Release {
             return Ok(());
+        }
+    }
+
+    if let Event::Key(e) = &mut event {
+        match e {
+            KeyEvent {
+                code: KeyCode::Char('m'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                e.code = KeyCode::Enter;
+                e.modifiers = KeyModifiers::NONE;
+            }
+            KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => {
+                e.code = KeyCode::Backspace;
+                e.modifiers = KeyModifiers::NONE;
+            }
+            _ => (),
         }
     }
 
@@ -168,6 +198,9 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
         InputMode::Command => handle_user_input_command_mode(event, program_state),
         InputMode::Insert(_) => handle_user_input_insert_mode(event, program_state),
         InputMode::VisualRect(_) => handle_user_input_visual_rect(event, program_state),
-        InputMode::ColorPicker(slot) => handle_user_input_color_picker(event, program_state, slot),
+        InputMode::ColorPicker(ref target) => {
+            let target = target.clone();
+            handle_user_input_color_picker(event, program_state, &target)
+        }
     }
 }

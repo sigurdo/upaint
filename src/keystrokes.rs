@@ -1,3 +1,4 @@
+use crate::color_picker::target::ColorPickerTarget;
 use crate::config::keymaps::UnsignedIntegerKeymapEntry;
 use crate::config::Config;
 use crossterm::event::KeyCode;
@@ -51,7 +52,8 @@ impl Default for ColorOrSlot {
         Self::Slot('a')
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub enum ColorOrSlotSpecification {
     Active,
     #[serde(untagged)]
@@ -63,6 +65,21 @@ impl ColorOrSlotSpecification {
             Self::Active => program_state.color_or_slot_active,
             Self::Specific(color_or_slot) => *color_or_slot,
         }
+    }
+}
+impl ColorPickerTarget for ColorOrSlotSpecification {
+    fn set_color(&self, color: Color, program_state: &mut ProgramState) {
+        match self.as_color_or_slot(program_state) {
+            ColorOrSlot::Slot(slot) => {
+                program_state.color_slots.insert(slot, color);
+            }
+            ColorOrSlot::Color(_) => (),
+        }
+    }
+    fn get_color(&self, program_state: &ProgramState) -> Color {
+        self.as_color_or_slot(program_state)
+            .as_color(program_state)
+            .unwrap_or_default()
     }
 }
 

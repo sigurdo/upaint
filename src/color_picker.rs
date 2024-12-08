@@ -8,6 +8,10 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Widget},
 };
 
+pub mod target;
+use target::ColorPickerTarget;
+use target::ColorPickerTargetEnum;
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 enum ColorPickerColor {
@@ -45,7 +49,7 @@ impl ColorPicker {
         let h = h as f64;
         let v = v / 255.0;
         Self {
-            title: title,
+            title,
             color: ColorPickerColor::Hsv(h, s, v),
             active_slider: 1,
         }

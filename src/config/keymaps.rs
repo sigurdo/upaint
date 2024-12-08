@@ -5,6 +5,8 @@ use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
+use crate::color_picker::target::ColorPickerTargetEnum;
+use crate::color_picker::target::ColorPickerTargetMotion;
 use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
@@ -15,6 +17,7 @@ use crate::motions::MotionRepeatEnum;
 use crate::operators::OperatorEnum;
 use crate::operators::UpdateSelectionOperator;
 use crate::selections::SelectionSlotSpecification;
+use crate::selections::SelectionSpecification;
 use crate::yank_slots::YankSlotSpecification;
 use crate::DirectionFree;
 use crate::Ground;
@@ -68,6 +71,7 @@ keymaps! {
     directions: DirectionFree,
     bools: bool,
     selection_slot_specifications: SelectionSlotSpecification,
+    selection_specifications: SelectionSpecification,
     cell_content_types: CellContentType,
     continuous_region_relative_types: ContinuousRegionRelativeType,
     canvas_iteration_jumps: CanvasIterationJump,
@@ -75,12 +79,15 @@ keymaps! {
     color_or_slots: ColorOrSlot,
     colors: Color,
     color_or_slot_specifications: ColorOrSlotSpecification,
+    color_picker_target_motions: ColorPickerTargetMotion,
+    color_picker_targets: ColorPickerTargetEnum,
     grounds: Ground,
     yank_slot_specifications: YankSlotSpecification,
     update_selection_operators: UpdateSelectionOperator,
     actions: ActionEnum,
     action_repeats: ActionRepeat,
     actions_repeatable: ActionRepeatableEnum,
+
 }
 
 macro_rules! impl_presetable_by_self {
@@ -103,7 +110,6 @@ impl_presetable_by_self!(CanvasIterationJump);
 impl_presetable_by_self!(WordBoundaryType);
 impl_presetable_by_self!(bool);
 impl_presetable_by_self!(Ground);
-impl_presetable_by_self!(ColorOrSlotSpecification);
 impl_presetable_by_self!(Color);
 impl_presetable_by_self!(YankSlotSpecification);
 impl_presetable_by_self!(UpdateSelectionOperator);

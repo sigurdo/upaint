@@ -28,6 +28,7 @@ use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;
 use canvas::raw::CanvasIndex;
 use canvas::{rect::CanvasRect, VersionControlledCanvas};
+use color_picker::target::ColorPickerTargetEnum;
 use color_picker::ColorPicker;
 use keystrokes::ColorSlot;
 use keystrokes_parsing::KeystrokeSequence;
@@ -129,14 +130,14 @@ pub enum Ground {
     Background,
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub enum InputMode {
     #[default]
     Normal,
     Insert(CanvasIndexIteratorInfinite),
     VisualRect((CanvasIndex, CanvasIndex)),
     Command,
-    ColorPicker(ColorSlot),
+    ColorPicker(ColorPickerTargetEnum),
 }
 
 #[derive(Default, Clone)]

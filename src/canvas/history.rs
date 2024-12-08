@@ -85,6 +85,11 @@ impl VersionControlledCanvas {
         self.staging_area.push(modification);
     }
 
+    pub fn clear_staged(&mut self) {
+        self.staging_area = Vec::new();
+        self.rebuild();
+    }
+
     /// Creates a commit from modifications in staging area
     pub fn commit_staged(&mut self) {
         if self.staging_area.len() > 0 {

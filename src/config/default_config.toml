@@ -147,6 +147,18 @@ relative = false
 "h" = { a = "FromKeystrokes" }
 
 [keymaps.color_or_slot_specifications]
+"" = { Specific = "FromKeystrokes" }
+
+[keymaps.color_picker_target_motions]
+"" = { ground = "Foreground" }
+
+[keymaps.color_picker_targets]
+"f" = { Motion = { ground = "Foreground" }}
+"b" = { Motion = { ground = "Background" }}
+" " = { ColorOrSlot = "Active" }
+"" = [
+    { ColorOrSlot = "FromKeystrokes" }
+]
 
 [keymaps.canvas_iteration_jumps]
 # "d" = "Diagonals"
@@ -175,4 +187,10 @@ relative = false
 
 [keymaps.keymap_u32]
 [keymaps.selection_slot_specifications]
+[keymaps.selection_specifications]
+"s" = { Slot = "FromKeystrokes" }
+"" = [
+    { Motion = "FromKeystrokes" },
+]
+
 [keymaps.yank_slot_specifications]
