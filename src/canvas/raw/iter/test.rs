@@ -63,7 +63,7 @@ fn test_canvas_index_iterator_infinite() {
 #[test]
 fn test_canvas_index_iterator() {
     use super::{
-        CanvasIndexIterator, CanvasIterationJump, RawCanvas, StopCondition, WordBoundaryType,
+        Canvas, CanvasIndexIterator, CanvasIterationJump, StopCondition, WordBoundaryType,
     };
     use crate::{Direction, DirectionFree};
     #[rustfmt::skip]
@@ -98,7 +98,7 @@ fn test_canvas_index_iterator() {
         ("0  34 678   abcd", (0, 9), DirectionFree::from(Direction::Left), StopCondition::WordBoundary(WordBoundaryType::START), 2, (0, 4)),
     ];
     for (txt, start, direction, stop, stop_count, end) in tests {
-        let mut canvas = RawCanvas::from_txt(txt.to_string()).unwrap();
+        let mut canvas = Canvas::from_txt(txt.to_string()).unwrap();
         let it = CanvasIndexIterator::new(
             &mut canvas,
             start,

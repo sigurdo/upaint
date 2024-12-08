@@ -2,10 +2,10 @@ use ratatui::style::Color;
 use ratatui::style::Modifier;
 use std::collections::BTreeMap;
 
+use crate::canvas::raw::Canvas;
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::canvas::raw::RawCanvas;
 
 // A piece of art yanked from a Canvas
 #[derive(Clone, Debug)]
@@ -14,7 +14,7 @@ pub struct CanvasYank {
     pub content_type: CellContentType,
 }
 
-impl RawCanvas {
+impl Canvas {
     pub fn yank(
         &self,
         indices: impl IntoIterator<Item = CanvasIndex>,

@@ -1,6 +1,6 @@
+use super::Canvas;
 use super::CanvasCell;
 use super::CanvasIndex;
-use super::RawCanvas;
 use crate::canvas::raw::CellContentType;
 use crate::config::Config;
 use crate::selections::Selection;
@@ -188,13 +188,13 @@ impl From<(&CanvasCell, ContinuousRegionRelativeType)> for MatchCell {
 // }
 
 pub fn find_continuous_region(
-    canvas: &RawCanvas,
+    canvas: &Canvas,
     start: CanvasIndex,
     match_cell: impl MatchValue<CanvasCell>,
     diagonals_allowed: bool,
 ) -> Selection {
     fn recurse(
-        canvas: &RawCanvas,
+        canvas: &Canvas,
         index: CanvasIndex,
         match_cell: &impl MatchValue<CanvasCell>,
         diagonals_allowed: bool,

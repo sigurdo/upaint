@@ -9,12 +9,12 @@ use ratatui::style::{Color, Modifier};
 
 use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
 
-use super::{CanvasCell, CanvasIndex, RawCanvas};
+use super::{Canvas, CanvasCell, CanvasIndex};
 
 #[cfg(test)]
 mod test;
 
-impl RawCanvas {
+impl Canvas {
     pub fn to_ansi(&self, reset_sgr_effects_at_start: bool) -> ResultCustom<String> {
         fn reset_all_sgr_effects(result: &mut String) -> ResultCustom<()> {
             ResetColor.write_ansi(result)?;
@@ -155,7 +155,7 @@ impl From<TxtExportError> for ErrorCustom {
     }
 }
 
-impl RawCanvas {
+impl Canvas {
     pub fn export_txt_preserve(&self) -> Result<String, TxtExportError> {
         for (index, cell) in self.cells.iter() {
             if cell.has_sgr_effects() {
@@ -179,7 +179,7 @@ impl RawCanvas {
     }
 }
 
-impl RawCanvas {
+impl Canvas {
     pub fn export(&self, format: FileFormat) -> ResultCustom<String> {
         match format {
             FileFormat::Ansi => self.export_ansi(),

@@ -23,8 +23,8 @@ use std::{
 };
 
 use upaint::{
-    canvas::Canvas, command_line::create_command_line_textarea, rendering::draw_frame,
-    user_input::handle_user_input, ProgramState, ResultCustom,
+    canvas::VersionControlledCanvas, command_line::create_command_line_textarea,
+    rendering::draw_frame, user_input::handle_user_input, ProgramState, ResultCustom,
 };
 
 #[derive(Parser, Debug)]
@@ -111,7 +111,7 @@ fn application(
     } else {
         "".to_string()
     };
-    program_state.canvas = Canvas::from_ansi(ansi_to_load)?;
+    program_state.canvas = VersionControlledCanvas::from_ansi(ansi_to_load)?;
     program_state.last_saved_revision = program_state.canvas.get_current_revision();
     program_state.config = upaint::config::load_config()?;
     // log::debug!("{:#?}", program_state.config);

@@ -1,4 +1,4 @@
-use super::RawCanvas;
+use super::Canvas;
 
 const RESET_ALL: &str = "\u{1b}[0m";
 const RESET_FG: &str = "\u{1b}[39m";
@@ -38,7 +38,7 @@ mod import_export {
     use super::*;
 
     fn assert_preserved(input: &str) {
-        let output = RawCanvas::from_ansi(input.to_string())
+        let output = Canvas::from_ansi(input.to_string())
             .unwrap()
             .export_ansi()
             .unwrap();
@@ -116,7 +116,7 @@ mod import_export {
     fn converts_basic_colors_to_indexed() {
         let input = format!("{RESET_ALL}\u{1b}[31ma{RESET_ALL}\n");
         let expected = format!("{RESET_ALL}{}a{RESET_ALL}\n", FG_INDEXED(1));
-        let output = RawCanvas::from_ansi(input).unwrap().export_ansi().unwrap();
+        let output = Canvas::from_ansi(input).unwrap().export_ansi().unwrap();
         assert_eq!(output, expected);
     }
 
@@ -124,7 +124,7 @@ mod import_export {
     fn discards_empty_spaces() {
         let input = "       \n\n    \n".to_string();
         let expected = "\n";
-        let output = RawCanvas::from_ansi(input)
+        let output = Canvas::from_ansi(input)
             .unwrap()
             .export_txt_preserve()
             .unwrap();
@@ -135,7 +135,7 @@ mod import_export {
     fn discards_empty_spaces_with_characters_between() {
         let input = "       \n\n  a  \n".to_string();
         let expected = "a\n";
-        let output = RawCanvas::from_ansi(input)
+        let output = Canvas::from_ansi(input)
             .unwrap()
             .export_txt_preserve()
             .unwrap();

@@ -96,12 +96,12 @@ impl Default for CanvasCell {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct RawCanvas {
+pub struct Canvas {
     area: CanvasRect,
     cells: BTreeMap<CanvasIndex, CanvasCell>,
 }
 
-impl<'a> RawCanvas {
+impl<'a> Canvas {
     // Internal interface
 
     fn get_mut(&'a mut self, index: &CanvasIndex) -> &'a mut CanvasCell {

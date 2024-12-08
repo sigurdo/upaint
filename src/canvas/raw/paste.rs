@@ -1,11 +1,10 @@
-
+use crate::canvas::raw::Canvas;
 use crate::canvas::raw::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::canvas::raw::RawCanvas;
 
 use super::yank::CanvasYank;
 
-impl RawCanvas {
+impl Canvas {
     pub fn paste(&mut self, yank: &CanvasYank, origo: CanvasIndex) {
         for (index_yank, cell_yank) in &yank.cells {
             let index = (origo.0 + index_yank.0, origo.1 + index_yank.1);

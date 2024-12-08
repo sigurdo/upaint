@@ -1,27 +1,29 @@
 use std::collections::LinkedList;
+use std::mem;
 
 use crate::{config::Config, file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::raw::{
-    ansi_import::AnsiImportError, operations::CanvasOperation, rendering::CanvasWidget, RawCanvas,
+    ansi_import::AnsiImportError, operations::CanvasModification, rendering::CanvasWidget, Canvas,
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct CanvasCommit {
     revision: u64,
-    operations: Vec<CanvasOperation>,
+    modifications: Vec<CanvasModification>,
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct UndoRedoCanvas {
-    initial: RawCanvas,
-    current: RawCanvas,
+pub struct VersionControlledCanvas {
+    initial: Canvas,
+    current: Canvas,
     commits: LinkedList<CanvasCommit>,
     commits_unapplied: LinkedList<CanvasCommit>,
+    staging_area: Vec<CanvasModification>,
     revision_counter: u64,
 }
 
-impl UndoRedoCanvas {
+impl VersionControlledCanvas {
     pub fn delete_history(&mut self) -> &mut Self {
         self.initial = self.current.clone();
         self.commits = LinkedList::new();
@@ -30,9 +32,9 @@ impl UndoRedoCanvas {
         self
     }
 
-    fn apply_commit(&mut self, commit: &CanvasCommit) {
-        for operation in &commit.operations {
-            self.current.apply_operation(operation);
+    fn apply_modifications(&mut self, modifications: &Vec<CanvasModification>) {
+        for modification in modifications {
+            self.current.apply_operation(modification);
         }
     }
 
@@ -40,32 +42,55 @@ impl UndoRedoCanvas {
     fn rebuild(&mut self) {
         self.current = self.initial.clone();
         for commit in self.commits.clone() {
-            self.apply_commit(&commit);
+            self.apply_modifications(&commit.modifications);
         }
     }
 
-    pub fn create_commit(&mut self, operations: Vec<CanvasOperation>) -> &mut Self {
+    /// Creates a commit from the provided modifications, but doesn't apply it, as it is assumed
+    /// that the modifications are already applied to the current canvas.
+    fn create_applied_commit(&mut self, modifications: Vec<CanvasModification>) {
         self.revision_counter += 1;
         let commit = CanvasCommit {
             revision: self.revision_counter,
-            operations: operations,
+            modifications,
         };
-        self.apply_commit(&commit);
         self.commits.push_back(commit);
         self.commits_unapplied = LinkedList::new();
+    }
+
+    /// Creates and applies a new commit from provided modifications.
+    /// Modifications in staging area will be committed first if any.
+    pub fn create_commit(&mut self, modifications: Vec<CanvasModification>) -> &mut Self {
+        self.commit_staged();
+        self.apply_modifications(&modifications);
+        self.create_applied_commit(modifications);
         self
     }
 
     /// Panics if no latest commit exists in canvas
-    pub fn amend(&mut self, operations: Vec<CanvasOperation>) -> &mut Self {
+    pub fn amend(&mut self, operations: Vec<CanvasModification>) -> &mut Self {
         let Some(commit_latest) = self.commits.iter_mut().next_back() else {
             panic!("No commits exist in UndoRedoCanvas.amend()")
         };
         for operation in operations {
             self.current.apply_operation(&operation);
-            commit_latest.operations.push(operation);
+            commit_latest.modifications.push(operation);
         }
         self
+    }
+
+    /// Adds a modification to the staging area
+    pub fn stage(&mut self, modification: CanvasModification) {
+        self.current.apply_operation(&modification);
+        self.staging_area.push(modification);
+    }
+
+    /// Creates a commit from modifications in staging area
+    pub fn commit_staged(&mut self) {
+        if self.staging_area.len() > 0 {
+            let staged = mem::replace(&mut self.staging_area, Vec::new());
+            self.create_applied_commit(staged);
+        }
     }
 
     pub fn undo(&mut self) {
@@ -77,7 +102,7 @@ impl UndoRedoCanvas {
 
     pub fn redo(&mut self) {
         if let Some(next_commit) = self.commits_unapplied.pop_front() {
-            self.apply_commit(&next_commit);
+            self.apply_modifications(&next_commit.modifications);
             self.commits.push_back(next_commit);
         }
     }
@@ -102,7 +127,7 @@ impl UndoRedoCanvas {
     where
         Self: Sized,
     {
-        match RawCanvas::from_ansi(ansi) {
+        match Canvas::from_ansi(ansi) {
             Ok(canvas) => {
                 let mut result = Self::default();
                 result.initial = canvas.clone();
@@ -143,7 +168,7 @@ impl UndoRedoCanvas {
         CanvasWidget::from_canvas(&self.current, config)
     }
 
-    pub fn raw(&self) -> &RawCanvas {
+    pub fn raw(&self) -> &Canvas {
         &self.current
     }
 }

@@ -1,7 +1,7 @@
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
-use crate::canvas::CanvasOperation;
+use crate::canvas::CanvasModification;
 use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
@@ -51,9 +51,9 @@ impl Operator for Colorize {
         };
         for index in cell_indices {
             let op = if self.ground == Ground::Foreground {
-                CanvasOperation::SetFgColor(*index, color)
+                CanvasModification::SetFgColor(*index, color)
             } else {
-                CanvasOperation::SetBgColor(*index, color)
+                CanvasModification::SetBgColor(*index, color)
             };
             canvas_operations.push(op);
         }
@@ -69,7 +69,7 @@ impl Operator for Replace {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
         let mut canvas_operations = Vec::new();
         for index in cell_indices {
-            canvas_operations.push(CanvasOperation::SetCharacter(*index, self.ch));
+            canvas_operations.push(CanvasModification::SetCharacter(*index, self.ch));
         }
         program_state.canvas.create_commit(canvas_operations);
     }
@@ -151,7 +151,7 @@ impl Operator for Cut {
         .operate(cell_indices, program_state);
         let mut canvas_operations = Vec::new();
         for index in cell_indices {
-            canvas_operations.push(CanvasOperation::SetCell(*index, CanvasCell::default()));
+            canvas_operations.push(CanvasModification::SetCell(*index, CanvasCell::default()));
         }
         program_state.canvas.create_commit(canvas_operations);
     }

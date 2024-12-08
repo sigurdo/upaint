@@ -1,6 +1,4 @@
-use crate::{
-    canvas::CanvasOperation, InputMode, ProgramState, ResultCustom,
-};
+use crate::{canvas::CanvasModification, InputMode, ProgramState, ResultCustom};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 // pub fn handle_user_input_choose_insert_direction_mode(
@@ -54,21 +52,19 @@ pub fn handle_user_input_insert_mode(
                     .away_index(program_state.cursor_position);
                 program_state.focus_position.0 += away.0;
                 program_state.focus_position.1 += away.1;
-                let operations = vec![CanvasOperation::SetCharacter(
+                program_state.canvas.stage(CanvasModification::SetCharacter(
                     program_state.cursor_position,
                     ' ',
-                )];
-                program_state.canvas.amend(operations);
+                ));
             }
             KeyEvent {
                 code: KeyCode::Char(character),
                 ..
             } => {
-                let operations = vec![CanvasOperation::SetCharacter(
+                program_state.canvas.stage(CanvasModification::SetCharacter(
                     program_state.cursor_position,
                     character,
-                )];
-                program_state.canvas.amend(operations);
+                ));
                 // I think this is obsolete
                 program_state.cursor_position_previous = Some(program_state.cursor_position);
                 program_state.cursor_position = canvas_it.go_forward();

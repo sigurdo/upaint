@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 
-use super::{CanvasIndex, RawCanvas};
+use super::{Canvas, CanvasIndex};
 use crate::DirectionFree;
 
 #[cfg(test)]
@@ -193,7 +193,7 @@ pub enum StopCondition {
 pub struct CanvasIndexIterator<'a> {
     index_it: Peekable<CanvasIndexIteratorInfinite>,
     direction: DirectionFree,
-    canvas: &'a RawCanvas,
+    canvas: &'a Canvas,
     stop: StopCondition,
     // Number of times the stop condition needs to trigger before the iteration is stopped.
     // Decrements downwards. In the same iteration it is decremented from 1 to 0, iteration is
@@ -205,7 +205,7 @@ pub struct CanvasIndexIterator<'a> {
 
 impl<'a> CanvasIndexIterator<'a> {
     pub fn new(
-        canvas: &'a RawCanvas,
+        canvas: &'a Canvas,
         start: CanvasIndex,
         direction: DirectionFree,
         jump: CanvasIterationJump,
@@ -233,7 +233,7 @@ impl<'a> Iterator for CanvasIndexIterator<'a> {
                 fn word_end_close(
                     index: CanvasIndex,
                     direction: DirectionFree,
-                    canvas: &RawCanvas,
+                    canvas: &Canvas,
                 ) -> bool {
                     let (row, column) = index;
                     let character = canvas.character(index);

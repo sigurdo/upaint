@@ -1,4 +1,4 @@
-use upaint::{canvas::Canvas, file_formats::FileFormat};
+use upaint::{canvas::VersionControlledCanvas, file_formats::FileFormat};
 
 fn _test() -> Option<u64> {
     Some(65)
@@ -12,7 +12,7 @@ fn main() {
     //     // println!("character: {}", character);
     // }
     println!("{}", contents);
-    let canvas = Canvas::from_ansi(contents).unwrap();
+    let canvas = VersionControlledCanvas::from_ansi(contents).unwrap();
     println!("{}", canvas.export(FileFormat::Ansi).unwrap());
     std::process::exit(0);
 }

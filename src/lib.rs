@@ -27,7 +27,7 @@ use crate::motions::FindChar;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
 use canvas::raw::yank::CanvasYank;
 use canvas::raw::CanvasIndex;
-use canvas::{rect::CanvasRect, Canvas};
+use canvas::{rect::CanvasRect, VersionControlledCanvas};
 use color_picker::ColorPicker;
 use keystrokes::ColorSlot;
 use keystrokes_parsing::KeystrokeSequence;
@@ -147,7 +147,7 @@ pub struct ProgramState {
     pub cursor_position_previous: Option<(i16, i16)>, // (row, column)
     pub focus_position: (i16, i16),                   // (row, column)
     pub canvas_visible: CanvasRect,
-    pub canvas: Canvas,
+    pub canvas: VersionControlledCanvas,
     pub chosen_color: Option<Color>,
     pub color_slots: HashMap<ColorSlot, Color>,
     pub selections: HashMap<char, Selection>,

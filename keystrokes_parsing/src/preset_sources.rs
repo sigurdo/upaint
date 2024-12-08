@@ -40,7 +40,9 @@ pub fn from_keystrokes_by_preset_sources<P, Config, C: Presetable<Config, Preset
                 return Ok(value);
             }
             Err(FromKeystrokesError::MissingKeystrokes) => {
-                error = FromKeystrokesError::MissingKeystrokes
+                error = FromKeystrokesError::MissingKeystrokes;
+                *keystrokes = keystrokes_cloned;
+                return Err(error);
             }
             Err(FromKeystrokesError::Invalid) => (),
         }

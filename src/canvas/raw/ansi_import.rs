@@ -4,7 +4,7 @@ use ratatui::style::{Color, Modifier};
 
 use crate::canvas::raw::CanvasIndex;
 
-use super::RawCanvas;
+use super::Canvas;
 
 #[cfg(test)]
 mod test;
@@ -24,7 +24,7 @@ impl Display for AnsiImportError {
     }
 }
 
-impl RawCanvas {
+impl Canvas {
     pub fn from_ansi_or_txt(
         ansi: String,
         allow_sgr_sequences: bool,
@@ -244,7 +244,7 @@ pub enum TxtImportError {
     IllegalCharacter(CanvasIndex),
 }
 
-impl RawCanvas {
+impl Canvas {
     pub fn from_txt(txt: String) -> Result<Self, TxtImportError> {
         match Self::from_ansi_or_txt(txt, false) {
             Ok(imported) => Ok(imported),

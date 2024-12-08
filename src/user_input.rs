@@ -153,6 +153,7 @@ pub fn handle_user_input(event: Event, program_state: &mut ProgramState) -> Resu
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
+                program_state.canvas.commit_staged();
                 program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
                 program_state.input_mode = InputMode::Normal;
                 program_state.user_feedback = None;

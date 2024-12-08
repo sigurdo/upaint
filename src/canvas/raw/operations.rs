@@ -3,11 +3,11 @@ use ratatui::style::{Color, Modifier};
 use crate::canvas::raw::CanvasIndex;
 
 use super::yank::CanvasYank;
+use super::Canvas;
 use super::CanvasCell;
-use super::RawCanvas;
 
 #[derive(Debug, Clone)]
-pub enum CanvasOperation {
+pub enum CanvasModification {
     SetCharacter(CanvasIndex, char),
     SetFgColor(CanvasIndex, Color),
     SetBgColor(CanvasIndex, Color),
@@ -18,31 +18,31 @@ pub enum CanvasOperation {
     Paste(CanvasIndex, CanvasYank),
 }
 
-impl RawCanvas {
-    pub fn apply_operation(&mut self, operation: &CanvasOperation) {
+impl Canvas {
+    pub fn apply_operation(&mut self, operation: &CanvasModification) {
         match operation {
-            CanvasOperation::SetCharacter(index, character) => {
+            CanvasModification::SetCharacter(index, character) => {
                 self.set_character(*index, *character);
             }
-            CanvasOperation::SetFgColor(index, color) => {
+            CanvasModification::SetFgColor(index, color) => {
                 self.set_fg(*index, *color);
             }
-            CanvasOperation::SetBgColor(index, color) => {
+            CanvasModification::SetBgColor(index, color) => {
                 self.set_bg(*index, *color);
             }
-            CanvasOperation::AddModifier(index, modifier) => {
+            CanvasModification::AddModifier(index, modifier) => {
                 self.add_modifier(*index, *modifier);
             }
-            CanvasOperation::RemoveModifier(index, modifier) => {
+            CanvasModification::RemoveModifier(index, modifier) => {
                 self.remove_modifier(*index, *modifier);
             }
-            CanvasOperation::SetModifiers(index, modifiers) => {
+            CanvasModification::SetModifiers(index, modifiers) => {
                 self.set_modifiers(*index, *modifiers);
             }
-            CanvasOperation::SetCell(index, cell) => {
+            CanvasModification::SetCell(index, cell) => {
                 self.set_cell(*index, cell.clone());
             }
-            CanvasOperation::Paste(index, yank) => {
+            CanvasModification::Paste(index, yank) => {
                 self.paste(yank, *index);
             }
         }

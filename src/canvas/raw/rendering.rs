@@ -12,10 +12,10 @@ use crate::{
     Ground,
 };
 
-use super::RawCanvas;
+use super::Canvas;
 
 pub struct CanvasWidget<'a> {
-    pub canvas: &'a RawCanvas,
+    pub canvas: &'a Canvas,
     pub focus: CanvasIndex,
     pub cursor: Option<CanvasIndex>,
     pub visual_rect: Option<(CanvasIndex, CanvasIndex)>,
@@ -24,7 +24,7 @@ pub struct CanvasWidget<'a> {
 }
 
 impl<'a> CanvasWidget<'a> {
-    pub fn from_canvas(canvas: &'a RawCanvas, config: &'a Config) -> Self {
+    pub fn from_canvas(canvas: &'a Canvas, config: &'a Config) -> Self {
         CanvasWidget {
             canvas: canvas,
             focus: canvas.area().center(),

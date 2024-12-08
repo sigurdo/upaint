@@ -1,11 +1,11 @@
 use ratatui::style::{Color, Modifier};
 
-use crate::canvas::raw::{ansi_import::TxtImportError, CanvasCell, RawCanvas};
+use crate::canvas::raw::{ansi_import::TxtImportError, Canvas, CanvasCell};
 
 #[test]
 fn basic() {
     let ansi = "ab\nc".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 3);
 
@@ -57,7 +57,7 @@ fn basic() {
 #[test]
 fn indents() {
     let ansi = "    a\n  b".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 2);
 
@@ -95,7 +95,7 @@ fn indents() {
 #[test]
 fn fg() {
     let ansi = "\u{1b}[31ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -119,7 +119,7 @@ fn fg() {
 #[test]
 fn bg() {
     let ansi = "\u{1b}[41ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -143,7 +143,7 @@ fn bg() {
 #[test]
 fn modifiers() {
     let ansi = "\u{1b}[1m\u{1b}[3m\u{1b}[4ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -166,7 +166,7 @@ fn modifiers() {
 #[test]
 fn reset() {
     let ansi = "\u{1b}[31m\u{1b}[41m\u{1b}[1m\u{1b}[3m\u{1b}[4ma\u{1b}[0mb".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 2);
 
@@ -202,7 +202,7 @@ fn reset() {
 #[test]
 fn reset_fg() {
     let ansi = "\u{1b}[31m\u{1b}[41m\u{1b}[1ma\u{1b}[39mb".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 2);
 
@@ -238,7 +238,7 @@ fn reset_fg() {
 #[test]
 fn reset_bg() {
     let ansi = "\u{1b}[31m\u{1b}[41m\u{1b}[1ma\u{1b}[49mb".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 2);
 
@@ -274,14 +274,14 @@ fn reset_bg() {
 #[test]
 fn no_underline_color() {
     let ansi = "\u{1b}[58;2;1ma".to_string();
-    let result = RawCanvas::from_ansi(ansi);
+    let result = Canvas::from_ansi(ansi);
     assert!(result.is_err());
 }
 
 #[test]
 fn fg_indexed() {
     let ansi = "\u{1b}[38;5;123ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -304,7 +304,7 @@ fn fg_indexed() {
 #[test]
 fn fg_rgb() {
     let ansi = "\u{1b}[38;2;1;12;123ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -327,7 +327,7 @@ fn fg_rgb() {
 #[test]
 fn bg_indexed() {
     let ansi = "\u{1b}[48;5;123ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -350,7 +350,7 @@ fn bg_indexed() {
 #[test]
 fn bg_rgb() {
     let ansi = "\u{1b}[48;2;1;12;123ma".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 1);
 
@@ -373,7 +373,7 @@ fn bg_rgb() {
 #[test]
 fn txt() {
     let txt = "a   b\n  c\n".to_string();
-    let canvas = RawCanvas::from_txt(txt).unwrap();
+    let canvas = Canvas::from_txt(txt).unwrap();
 
     assert_eq!(canvas.cells.len(), 3);
 
@@ -387,7 +387,7 @@ fn txt() {
 #[test]
 fn txt_with_sgr() {
     let txt = "a   \u{1b}[38;5;20mb\n  c\n".to_string();
-    let result = RawCanvas::from_txt(txt);
+    let result = Canvas::from_txt(txt);
 
     assert_eq!(
         result.unwrap_err(),
@@ -399,7 +399,7 @@ fn txt_with_sgr() {
 fn empty_sgr_sequence() {
     // Test that `ESC [ m` is treated as `ESC [ 0 m`
     let ansi = "\u{1b}[31ma\u{1b}[mb".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 2);
 
@@ -436,7 +436,7 @@ fn empty_sgr_sequence() {
 fn multiple_attributes() {
     // Test that multiple attributes can be set at the same time
     let ansi = "\u{1b}[31;1;42ma\u{1b}[0;38;5;93mb\u{1b}[;42mc".to_string();
-    let canvas = RawCanvas::from_ansi(ansi).unwrap();
+    let canvas = Canvas::from_ansi(ansi).unwrap();
 
     assert_eq!(canvas.cells.len(), 3);
 

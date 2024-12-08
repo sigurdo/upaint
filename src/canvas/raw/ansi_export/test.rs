@@ -1,8 +1,8 @@
 use ratatui::style::{Color, Modifier};
 
 use crate::canvas::{
-    raw::{ansi_export::TxtExportError, CanvasCell, RawCanvas},
-    CanvasOperation,
+    raw::{ansi_export::TxtExportError, Canvas, CanvasCell},
+    CanvasModification,
 };
 
 const RESET_ALL: &str = "\u{1b}[0m";
@@ -41,9 +41,9 @@ const CROSSED_OUT: &str = "\u{1b}[9m";
 
 #[test]
 fn basic() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}ab\n"));
@@ -51,9 +51,9 @@ fn basic() {
 
 #[test]
 fn rows() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, 0), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, 0), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}a\nb\n"));
@@ -61,9 +61,9 @@ fn rows() {
 
 #[test]
 fn spacing() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 3), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 3), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}a  b\n"));
@@ -71,9 +71,9 @@ fn spacing() {
 
 #[test]
 fn indents() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, 2), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, 2), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}a\n b\n"));
@@ -81,9 +81,9 @@ fn indents() {
 
 #[test]
 fn negative_indices() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((-1, 1), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, -2), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((-1, 1), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, -2), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}   a\n\nb\n"));
@@ -91,9 +91,9 @@ fn negative_indices() {
 
 #[test]
 fn fg() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Red));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Red));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}{}a{RESET_ALL}\n", FG_INDEXED(1)));
@@ -101,9 +101,9 @@ fn fg() {
 
 #[test]
 fn bg() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetBgColor((0, 0), Color::Red));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetBgColor((0, 0), Color::Red));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}{}a{RESET_ALL}\n", BG_INDEXED(1)));
@@ -111,9 +111,9 @@ fn bg() {
 
 #[test]
 fn fg_indexed() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Indexed(65)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Indexed(65)));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}{}a{RESET_ALL}\n", FG_INDEXED(65)));
@@ -121,9 +121,9 @@ fn fg_indexed() {
 
 #[test]
 fn bg_indexed() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetBgColor((0, 0), Color::Indexed(65)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetBgColor((0, 0), Color::Indexed(65)));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}{}a{RESET_ALL}\n", BG_INDEXED(65)));
@@ -131,9 +131,12 @@ fn bg_indexed() {
 
 #[test]
 fn fg_rgb() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Rgb(65, 42, 0)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor(
+        (0, 0),
+        Color::Rgb(65, 42, 0),
+    ));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(
@@ -144,9 +147,12 @@ fn fg_rgb() {
 
 #[test]
 fn bg_rgb() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetBgColor((0, 0), Color::Rgb(65, 42, 0)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetBgColor(
+        (0, 0),
+        Color::Rgb(65, 42, 0),
+    ));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(
@@ -157,9 +163,9 @@ fn bg_rgb() {
 
 #[test]
 fn modifiers() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetModifiers(
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetModifiers(
         (0, 0),
         Modifier::BOLD | Modifier::CROSSED_OUT,
     ));
@@ -173,11 +179,11 @@ fn modifiers() {
 
 #[test]
 fn fg_changed() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Rgb(1, 2, 3)));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 1), Color::Rgb(3, 2, 1)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Rgb(1, 2, 3)));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 1), Color::Rgb(3, 2, 1)));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(
@@ -192,10 +198,10 @@ fn fg_changed() {
 
 #[test]
 fn fg_reset() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Rgb(1, 2, 3)));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Rgb(1, 2, 3)));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(
@@ -206,11 +212,11 @@ fn fg_reset() {
 
 #[test]
 fn modifiers_changed() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetModifiers((0, 0), Modifier::BOLD));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetModifiers((0, 1), Modifier::ITALIC));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetModifiers((0, 0), Modifier::BOLD));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
+    canvas.apply_operation(&CanvasModification::SetModifiers((0, 1), Modifier::ITALIC));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(
@@ -221,10 +227,10 @@ fn modifiers_changed() {
 
 #[test]
 fn modifiers_reset() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetModifiers((0, 0), Modifier::DIM));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetModifiers((0, 0), Modifier::DIM));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
     let ansi = canvas.export_ansi().unwrap();
 
     assert_eq!(ansi, format!("{RESET_ALL}{DIM}a{RESET_ALL}b\n"));
@@ -232,13 +238,16 @@ fn modifiers_reset() {
 
 #[test]
 fn modifiers_and_colors_changed() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Rgb(2, 4, 8)));
-    canvas.apply_operation(&CanvasOperation::SetModifiers((0, 0), Modifier::ITALIC));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetBgColor((0, 1), Color::Rgb(1, 1, 1)));
-    canvas.apply_operation(&CanvasOperation::SetModifiers((0, 1), Modifier::UNDERLINED));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Rgb(2, 4, 8)));
+    canvas.apply_operation(&CanvasModification::SetModifiers((0, 0), Modifier::ITALIC));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
+    canvas.apply_operation(&CanvasModification::SetBgColor((0, 1), Color::Rgb(1, 1, 1)));
+    canvas.apply_operation(&CanvasModification::SetModifiers(
+        (0, 1),
+        Modifier::UNDERLINED,
+    ));
 
     let ansi = canvas.export_ansi().unwrap();
 
@@ -254,11 +263,11 @@ fn modifiers_and_colors_changed() {
 
 #[test]
 fn fg_changed_with_spacing() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Rgb(2, 4, 8)));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 4), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 4), Color::Rgb(1, 1, 1)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Rgb(2, 4, 8)));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 4), 'b'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 4), Color::Rgb(1, 1, 1)));
 
     let ansi = canvas.export_ansi().unwrap();
 
@@ -275,11 +284,11 @@ fn fg_changed_with_spacing() {
 /// Since all attributes should be reset anyways for spacing
 #[test]
 fn fg_unchanged_with_spacing() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 0), Color::Rgb(2, 4, 8)));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 4), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((0, 4), Color::Rgb(2, 4, 8)));
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 0), Color::Rgb(2, 4, 8)));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 4), 'b'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((0, 4), Color::Rgb(2, 4, 8)));
 
     let ansi = canvas.export_ansi().unwrap();
 
@@ -296,7 +305,7 @@ fn fg_unchanged_with_spacing() {
 /// Empty cells should not be ignored, this is the responsibility of a cleanup function
 #[test]
 fn empty_cell() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
     *canvas.get_mut(&(-1, -3)) = CanvasCell::default();
 
     let ansi = canvas.export_ansi().unwrap();
@@ -307,10 +316,10 @@ fn empty_cell() {
 /// Empty cells should not be ignored, this is the responsibility of a cleanup function
 #[test]
 fn empty_and_filled_cells() {
-    let mut canvas = RawCanvas::from_ansi("".to_string()).unwrap();
+    let mut canvas = Canvas::from_ansi("".to_string()).unwrap();
     *canvas.get_mut(&(0, 3)) = CanvasCell::default();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((2, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetBgColor((2, 0), Color::Rgb(2, 2, 2)));
+    canvas.apply_operation(&CanvasModification::SetCharacter((2, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetBgColor((2, 0), Color::Rgb(2, 2, 2)));
     *canvas.get_mut(&(2, 8)) = CanvasCell::default();
 
     let ansi = canvas.export_ansi().unwrap();
@@ -326,9 +335,9 @@ fn empty_and_filled_cells() {
 
 #[test]
 fn txt_preserve_basic() {
-    let mut canvas = RawCanvas::from_txt("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 0), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 1), 'b'));
+    let mut canvas = Canvas::from_txt("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 0), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 1), 'b'));
     let txt = canvas.export_txt_preserve().unwrap();
 
     assert_eq!(txt, format!("ab\n"));
@@ -336,10 +345,10 @@ fn txt_preserve_basic() {
 
 #[test]
 fn txt_preserve_complex() {
-    let mut canvas = RawCanvas::from_txt("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 3), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, 0), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, 3), 'c'));
+    let mut canvas = Canvas::from_txt("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 3), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, 0), 'b'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, 3), 'c'));
     let ansi = canvas.export_txt_preserve().unwrap();
 
     assert_eq!(ansi, format!("   a\nb  c\n"));
@@ -347,10 +356,10 @@ fn txt_preserve_complex() {
 
 #[test]
 fn txt_preserve_returns_error() {
-    let mut canvas = RawCanvas::from_txt("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 3), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, 0), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((1, 0), Color::Rgb(4, 8, 4)));
+    let mut canvas = Canvas::from_txt("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 3), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, 0), 'b'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((1, 0), Color::Rgb(4, 8, 4)));
     let result = canvas.export_txt_preserve();
 
     let Err(TxtExportError::CellHasSgrEffects(index)) = result else {
@@ -361,10 +370,10 @@ fn txt_preserve_returns_error() {
 
 #[test]
 fn txt_decolorize() {
-    let mut canvas = RawCanvas::from_txt("".to_string()).unwrap();
-    canvas.apply_operation(&CanvasOperation::SetCharacter((0, 3), 'a'));
-    canvas.apply_operation(&CanvasOperation::SetCharacter((1, 0), 'b'));
-    canvas.apply_operation(&CanvasOperation::SetFgColor((1, 0), Color::Rgb(4, 8, 4)));
+    let mut canvas = Canvas::from_txt("".to_string()).unwrap();
+    canvas.apply_operation(&CanvasModification::SetCharacter((0, 3), 'a'));
+    canvas.apply_operation(&CanvasModification::SetCharacter((1, 0), 'b'));
+    canvas.apply_operation(&CanvasModification::SetFgColor((1, 0), Color::Rgb(4, 8, 4)));
     let txt = canvas.export_txt_decolorize().unwrap();
 
     assert_eq!(txt, format!("   a\nb\n"));

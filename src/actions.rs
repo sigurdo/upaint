@@ -1,6 +1,6 @@
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
-use crate::canvas::CanvasOperation;
+use crate::canvas::CanvasModification;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
 use crate::config::Config;
@@ -216,8 +216,6 @@ impl Action for ModeInsert {
         );
         canvas_it.go_forward();
         program_state.input_mode = InputMode::Insert(canvas_it);
-        // Create empty commit for amending to
-        program_state.canvas.create_commit(vec![]);
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -296,7 +294,7 @@ impl Action for Paste {
         if let Some(yank) = program_state.yanks.get(&self.slot.as_char(&program_state)) {
             program_state
                 .canvas
-                .create_commit(vec![CanvasOperation::Paste(
+                .create_commit(vec![CanvasModification::Paste(
                     program_state.cursor_position,
                     yank.clone(),
                 )]);
