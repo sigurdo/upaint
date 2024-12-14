@@ -38,132 +38,54 @@ impl TomlValue for bool {
     }
 }
 
-/// Macro for generating a nested config struct with it's corresponding TOML struct.
-/// Input pattern starts with an opening curly bracket `{`, followed by the names
-/// to use for the two generated structs on the format `(NameToml => NameConfig),`.
-/// Now, a listing of all the fields follow on the format `field_name: type`.
-/// Type can be either a set of pre-defined types `(TypeToml => TypeConfig)`,
-/// a single pre-defined type to use in both structs `(Type)`, or it can start with
-/// another opening curly bracket `{` and introduce a recursive invocation of the
-/// primary pattern.
-/// Each field must be separated by a comma, and a trailing comma must be left after
-/// the last field. The pattern is concluded by a closing curly bracket `}`.
-macro_rules! config_struct_definition {
-    ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
-        #[derive(Clone, Debug, Deserialize)]
-        pub struct $struct_name_toml {
-            $(
-                pub $field: toml_struct_type!($type),
-            )*
-        }
-
-        #[derive(Clone, Debug)]
-        pub struct $struct_name {
-            $(
-                pub $field: config_struct_type!($type),
-            )*
-        }
-
-        impl TomlValue for $struct_name_toml {
-            type ConfigValue = $struct_name;
-
-            fn to_config_value(self) -> Self::ConfigValue {
-                Self::ConfigValue {
-                    $(
-                        $field: self.$field.to_config_value(),
-                    )*
-                }
-            }
-        }
-
-        $(
-            config_struct_definition!($type);
-        )*
-    };
-    (($other_type_toml:ty => $other_type:ty)) => {
-
-    };
-    (($same_type:ty)) => {
-
-    };
-}
-
-macro_rules! config_struct_type {
-    ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
-        $struct_name
-    };
-    (($other_type_toml:ty => $other_type:ty)) => {
-        $other_type
-    };
-    (($same_type:ty)) => {
-        $same_type
-    };
-}
-
-macro_rules! toml_struct_type {
-    ({ ($struct_name_toml:ident => $struct_name:ident), $( $field:ident: $type:tt ),*, }) => {
-        $struct_name_toml
-    };
-    (($other_type_toml:ty => $other_type:ty)) => {
-        $other_type_toml
-    };
-    (($same_type:ty)) => {
-        $same_type
-    };
-}
-
-config_struct_definition!({
-    (ConfigToml => Config),
-    numbers: {
-        (ConfigNumbersToml => ConfigNumbers),
-        row: {
-            (ConfigNumbersRowToml => ConfigNumbersRow),
-            enable: (bool),
-            relative: (bool),
-        },
-        column: {
-            (ConfigNumbersColumnToml => ConfigNumbersColumn),
-            enable: (bool),
-            relative: (bool),
-        },
-    },
-    color_theme_preset: (ColorThemePreset),
-    color_theme: {
-        (ColorThemeToml => ColorTheme),
-        canvas: {
-            (ColorThemeCanvasToml => ColorThemeCanvas),
-            default_style: (StyleToml => StyleConfig),
-            standard_colors: {
-                (ColorThemeCanvasStandardColorsToml => ColorThemeCanvasStandardColors),
-                black: (ColorToml => Color),
-                red: (ColorToml => Color),
-                green: (ColorToml => Color),
-                yellow: (ColorToml => Color),
-                blue: (ColorToml => Color),
-                magenta: (ColorToml => Color),
-                cyan: (ColorToml => Color),
-                white: (ColorToml => Color),
-                bright_black: (ColorToml => Color),
-                bright_red: (ColorToml => Color),
-                bright_green: (ColorToml => Color),
-                bright_yellow: (ColorToml => Color),
-                bright_blue: (ColorToml => Color),
-                bright_magenta: (ColorToml => Color),
-                bright_cyan: (ColorToml => Color),
-                bright_white: (ColorToml => Color),
+nest! {
+    #[derive(Clone, Debug, Deserialize)]
+    pub struct Config {
+        pub numbers: #[derive(Clone, Debug, Deserialize)] pub struct ConfigNumbers {
+            pub row: #[derive(Clone, Debug, Deserialize)] pub struct ConfigNumbersRow {
+                pub enable: bool,
+                pub relative: bool,
             },
-            visual_mode_highlight_bg: (ColorToml => Color),
-            selection_highlight_bg: (ColorToml => Color),
+            pub column: #[derive(Clone, Debug, Deserialize)] pub struct ConfigNumbersColumn {
+                pub enable: bool,
+                pub relative: bool,
+            }
         },
-        row_numbers: (StyleToml => StyleConfig),
-        column_numbers: (StyleToml => StyleConfig),
-        status_bar: (StyleToml => StyleConfig),
-        command_line: (StyleToml => StyleConfig),
-        input_mode: (StyleToml => StyleConfig),
-        user_feedback: (StyleToml => StyleConfig),
-    },
-    keymaps: (Keymaps),
-});
+        pub color_theme_preset: ColorThemePreset,
+        pub color_theme: #[derive(Clone, Debug, Deserialize)] pub struct ColorTheme {
+            pub canvas: #[derive(Clone, Debug, Deserialize)] pub struct ColorThemeCanvas {
+                pub default_style: StyleConfig,
+                pub standard_colors: #[derive(Clone, Debug, Deserialize)] pub struct ColorThemeCanvasStandardColors {
+                    pub black: ColorToml,
+                    pub red: ColorToml,
+                    pub green: ColorToml,
+                    pub yellow: ColorToml,
+                    pub blue: ColorToml,
+                    pub magenta: ColorToml,
+                    pub cyan: ColorToml,
+                    pub white: ColorToml,
+                    pub bright_black: ColorToml,
+                    pub bright_red: ColorToml,
+                    pub bright_green: ColorToml,
+                    pub bright_yellow: ColorToml,
+                    pub bright_blue: ColorToml,
+                    pub bright_magenta: ColorToml,
+                    pub bright_cyan: ColorToml,
+                    pub bright_white: ColorToml,
+                },
+                pub visual_mode_highlight_bg: ColorToml,
+                pub selection_highlight_bg: ColorToml,
+            },
+            pub row_numbers: StyleConfig,
+            pub column_numbers: StyleConfig,
+            pub status_bar: StyleConfig,
+            pub command_line: StyleConfig,
+            pub input_mode: StyleConfig,
+            pub user_feedback: StyleConfig,
+        },
+        pub keymaps: Keymaps,
+    }
+}
 
 impl TomlValue for Keymaps {
     type ConfigValue = Self;
@@ -171,143 +93,6 @@ impl TomlValue for Keymaps {
         self
     }
 }
-
-// mod teste {
-//     use crossterm::event::KeyCode;
-//     use crossterm::event::KeyModifiers;
-//     use keystrokes_parsing::impl_from_keystrokes_by_preset_keymap;
-//     use keystrokes_parsing::FromKeystrokes;
-//     use keystrokes_parsing::GetKeymap;
-//     use keystrokes_parsing::Keymap;
-//     use keystrokes_parsing::Keystroke;
-//     use keystrokes_parsing::Presetable;
-//     // use keystrokes_parsing::PresetDerive;
-//     use serde::{Deserialize, Serialize};
-//
-//     #[derive(Debug, Clone, Deserialize, Serialize)]
-//     pub enum U32KeymapEntry {
-//         TypeDecimal,
-//         #[serde(untagged)]
-//         U32(u32),
-//     }
-//     impl Presetable<Config> for u32 {
-//         type Preset = U32KeymapEntry;
-//         fn from_keystrokes_by_preset(
-//             preset: U32KeymapEntry,
-//             _keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
-//             _config: &Config,
-//         ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
-//             match preset {
-//                 U32KeymapEntry::U32(value) => Ok(value),
-//                 U32KeymapEntry::TypeDecimal => panic!("Not implemented"),
-//             }
-//         }
-//     }
-//     #[derive(Presetable)]
-//     pub struct ActionA {
-//         a: u32,
-//     }
-//     #[derive(Presetable)]
-//     pub enum ActionEnum {
-//         A(ActionA),
-//     }
-//     #[derive(GetKeymap)]
-//     pub struct Config {
-//         #[preset_for(u32)]
-//         keymap_u32: Keymap<U32KeymapEntry>,
-//         #[preset_for(ActionA)]
-//         keymap_action_a: Keymap<ActionAPreset>,
-//         #[preset_for(ActionEnum)]
-//         keymap_action: Keymap<ActionEnumPreset>,
-//     }
-//     #[test]
-//     fn test() {
-//         let config = Config {
-//             keymap_u32: Keymap::new(),
-//             keymap_action_a: Keymap::new(),
-//             keymap_action: Keymap::new(),
-//         };
-//         let res = U32KeymapEntry::get_keymap(&config);
-//         let a = vec![Keystroke {
-//             code: KeyCode::Up,
-//             modifiers: KeyModifiers::NONE,
-//         }];
-//         let action_a = ActionEnum::from_keystrokes(&mut a.iter(), &config);
-//
-//         let config_toml = r###"
-//         "abc" = { a = 65 }
-//         "###;
-//         let keymap: Keymap<ActionAPreset> = toml::from_str(config_toml).unwrap();
-//
-//         dbg!(keymap
-//             .next
-//             .get(&Keystroke {
-//                 modifiers: KeyModifiers::NONE,
-//                 code: KeyCode::Char('a'),
-//             })
-//             .unwrap()
-//             .next
-//             .get(&Keystroke {
-//                 modifiers: KeyModifiers::NONE,
-//                 code: KeyCode::Char('b'),
-//             })
-//             .unwrap()
-//             .next
-//             .get(&Keystroke {
-//                 modifiers: KeyModifiers::NONE,
-//                 code: KeyCode::Char('c'),
-//             })
-//             .unwrap()
-//             .current
-//             .clone()
-//             .unwrap());
-//     }
-// }
-
-// use upaint_derive::Preset;
-// #[derive(Clone, Debug, Preset)]
-// pub struct Test {
-//     a: Color,
-//     b: Color,
-// }
-
-// macro_rules! generic_impl_toml_value_for_incomplete_enums(
-//     ($($type:ty),*,) => {
-//         $(
-//             impl TomlValue for HashMap<KeystrokeSequenceToml, $type> {
-//                 type ConfigValue = KeymapsEntry<$type>;
-//                 fn to_config_value(self) -> Self::ConfigValue {
-//                     let mut result = KeymapsEntry::new();
-//                     for (KeystrokeSequenceToml(keystrokes), value) in self {
-//                         let mut it = keystrokes.iter();
-//                         keymaps_insert_preserve(&mut result, &mut it, value);
-//                     }
-//                     result
-//                 }
-//             }
-//
-//         )*
-//     }
-// );
-//
-// generic_impl_toml_value_for_incomplete_enums!(
-//     ActionIncompleteEnum,
-//     OperatorIncompleteEnum,
-//     MotionIncompleteEnum,
-//     DirectionFree,
-//     char,
-//     bool,
-//     Ground,
-//     WordBoundaryType,
-//     Color,
-//     CanvasIterationJump,
-//     UpdateSelectionOperator,
-//     CellContentType,
-//     ContinuousRegionRelativeType,
-//     ColorOrSlotSpecification,
-//     ColorOrSlotPreset,
-//     TestPreset,
-// );
 
 impl Default for Config {
     fn default() -> Self {
@@ -355,85 +140,9 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
     Ok(())
 }
 
-// fn create_motions_from_directions(config: &mut Config) {
-//     keymaps_extend_preserve(
-//         &mut config.keymaps.motions,
-//         keymaps_iter(&config.keymaps.directions)
-//             .map(|(keystrokes, direction_preset)| {
-//                 (
-//                     keystrokes,
-//                     MotionIncompleteEnum::FixedNumberOfCells(FixedNumberOfCellsPreset {
-//                         direction: Some(*direction_preset),
-//                         number_of_cells: Some(1),
-//                         jump: Some(CanvasIterationJump::DirectionAsStride),
-//                     }),
-//                 )
-//             })
-//             .into_iter(),
-//     );
-// }
-//
-// fn create_move_actions_from_motions(config: &mut Config) {
-//     keymaps_extend_preserve(
-//         &mut config.keymaps.actions,
-//         keymaps_iter(&config.keymaps.motions)
-//             .map(|(keystrokes, motion_preset)| {
-//                 (
-//                     keystrokes,
-//                     ActionIncompleteEnum::MoveCursor(MoveCursorPreset {
-//                         motion: Some(motion_preset.clone()),
-//                     }),
-//                 )
-//             })
-//             .into_iter(),
-//     );
-// }
-//
-// fn create_operator_actions_from_operators(config: &mut Config) {
-//     keymaps_extend_preserve(
-//         &mut config.keymaps.actions,
-//         keymaps_iter(&config.keymaps.operators)
-//             .map(|(keystrokes, operator_preset)| {
-//                 (
-//                     keystrokes,
-//                     ActionIncompleteEnum::Operation(OperationPreset {
-//                         operator: Some(operator_preset.clone()),
-//                         motion: None,
-//                     }),
-//                 )
-//             })
-//             .into_iter(),
-//     );
-// }
-//
-// fn create_continuous_region_relative_types_from_content_types(config: &mut Config) {
-//     keymaps_extend_preserve(
-//         &mut config.keymaps.continuous_region_relative_types,
-//         keymaps_iter(&config.keymaps.cell_content_types)
-//             .map(|(keystrokes, content_type)| {
-//                 (
-//                     keystrokes,
-//                     ContinuousRegionRelativeType::Same(*content_type),
-//                 )
-//             })
-//             .into_iter(),
-//     )
-// }
-
 pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
     load_color_preset(&mut toml_table)?;
-    // log::debug!("{toml_table:#?}");
-    let config_toml: ConfigToml =
-        toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
-    let mut config = config_toml.to_config_value();
-    log::debug!("før: {:#?}", config.keymaps.actions);
-    // create_operator_actions_from_operators(&mut config);
-    log::debug!("etter: {:#?}", config.keymaps.actions);
-    // log::debug!("etter: {config:#?}");
-    // create_motions_from_directions(&mut config);
-    // create_move_actions_from_motions(&mut config);
-    // create_continuous_region_relative_types_from_content_types(&mut config);
-    // log::debug!("etter: {config:#?}");
+    let config: Config = toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
     Ok(config)
 }
 

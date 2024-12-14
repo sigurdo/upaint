@@ -52,13 +52,23 @@ enum StringOrU8 {
     U8(u8),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(try_from = "StringOrU8")]
 pub struct ColorToml(Color);
 impl TomlValue for ColorToml {
     type ConfigValue = Color;
     fn to_config_value(self) -> Self::ConfigValue {
+        self.to_ratatui_color()
+    }
+}
+impl ColorToml {
+    pub fn to_ratatui_color(self) -> Color {
         self.0
+    }
+}
+impl From<ColorToml> for Color {
+    fn from(value: ColorToml) -> Self {
+        value.to_ratatui_color()
     }
 }
 impl TryFrom<StringOrU8> for ColorToml {
@@ -123,6 +133,16 @@ pub struct StyleConfig {
     pub fg: Color,
     pub bg: Color,
     pub modifiers: Modifier,
+}
+
+impl<'de> Deserialize<'de> for StyleConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let style_toml = StyleToml::deserialize(deserializer)?;
+        Ok(style_toml.to_config_value())
+    }
 }
 
 impl StyleConfig {

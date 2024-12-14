@@ -102,22 +102,24 @@ fn apply_color_theme_to_color(
                 color => apply_color_theme_to_color(color, color_theme, Ground::Background),
             },
         },
-        Color::Black | Color::Indexed(0) => color_theme.standard_colors.black,
-        Color::Red | Color::Indexed(1) => color_theme.standard_colors.red,
-        Color::Green | Color::Indexed(2) => color_theme.standard_colors.green,
-        Color::Yellow | Color::Indexed(3) => color_theme.standard_colors.yellow,
-        Color::Blue | Color::Indexed(4) => color_theme.standard_colors.blue,
-        Color::Magenta | Color::Indexed(5) => color_theme.standard_colors.magenta,
-        Color::Cyan | Color::Indexed(6) => color_theme.standard_colors.cyan,
-        Color::Gray | Color::Indexed(7) => color_theme.standard_colors.white,
-        Color::DarkGray | Color::Indexed(8) => color_theme.standard_colors.bright_black,
-        Color::LightRed | Color::Indexed(9) => color_theme.standard_colors.bright_red,
-        Color::LightGreen | Color::Indexed(10) => color_theme.standard_colors.bright_green,
-        Color::LightYellow | Color::Indexed(11) => color_theme.standard_colors.bright_yellow,
-        Color::LightBlue | Color::Indexed(12) => color_theme.standard_colors.bright_blue,
-        Color::LightMagenta | Color::Indexed(13) => color_theme.standard_colors.bright_magenta,
-        Color::LightCyan | Color::Indexed(14) => color_theme.standard_colors.bright_cyan,
-        Color::White | Color::Indexed(15) => color_theme.standard_colors.bright_white,
+        Color::Black | Color::Indexed(0) => color_theme.standard_colors.black.into(),
+        Color::Red | Color::Indexed(1) => color_theme.standard_colors.red.into(),
+        Color::Green | Color::Indexed(2) => color_theme.standard_colors.green.into(),
+        Color::Yellow | Color::Indexed(3) => color_theme.standard_colors.yellow.into(),
+        Color::Blue | Color::Indexed(4) => color_theme.standard_colors.blue.into(),
+        Color::Magenta | Color::Indexed(5) => color_theme.standard_colors.magenta.into(),
+        Color::Cyan | Color::Indexed(6) => color_theme.standard_colors.cyan.into(),
+        Color::Gray | Color::Indexed(7) => color_theme.standard_colors.white.into(),
+        Color::DarkGray | Color::Indexed(8) => color_theme.standard_colors.bright_black.into(),
+        Color::LightRed | Color::Indexed(9) => color_theme.standard_colors.bright_red.into(),
+        Color::LightGreen | Color::Indexed(10) => color_theme.standard_colors.bright_green.into(),
+        Color::LightYellow | Color::Indexed(11) => color_theme.standard_colors.bright_yellow.into(),
+        Color::LightBlue | Color::Indexed(12) => color_theme.standard_colors.bright_blue.into(),
+        Color::LightMagenta | Color::Indexed(13) => {
+            color_theme.standard_colors.bright_magenta.into()
+        }
+        Color::LightCyan | Color::Indexed(14) => color_theme.standard_colors.bright_cyan.into(),
+        Color::White | Color::Indexed(15) => color_theme.standard_colors.bright_white.into(),
         _ => color,
     }
 }
@@ -335,7 +337,8 @@ impl Widget for CanvasWidget<'_> {
                                 .config
                                 .color_theme
                                 .canvas
-                                .selection_highlight_bg),
+                                .selection_highlight_bg
+                                .into()),
                         );
                     }
                 }
@@ -347,7 +350,8 @@ impl Widget for CanvasWidget<'_> {
                                 .config
                                 .color_theme
                                 .canvas
-                                .visual_mode_highlight_bg),
+                                .visual_mode_highlight_bg
+                                .into()),
                         );
                     }
                 }

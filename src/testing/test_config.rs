@@ -3,7 +3,6 @@ use config::Config;
 // use serde::Serialize;
 use crossterm::event::{KeyCode, KeyModifiers};
 use serde::{Deserialize, Serialize};
-use upaint::config::ConfigToml as ConfigFile;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SpecialAction {
@@ -99,7 +98,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let config: ConfigFile = config.try_deserialize().unwrap();
-
-    dbg!(config);
+    // let config: ConfigFile = config.try_deserialize().unwrap();
+    //
+    // dbg!(config);
 }
