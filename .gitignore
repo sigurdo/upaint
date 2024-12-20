@@ -2,4 +2,7 @@ target
 todo.md
 *.log
 *.ansi
+*.svg
+*.data
+*.data.old
 

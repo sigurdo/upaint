@@ -384,7 +384,17 @@ impl Action for MacroExecute {
         if let Some(macroo) = program_state.macros.get(&self.slot) {
             program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
             for keystroke in macroo.keystrokes.clone().iter() {
+                log::debug!(
+                    "MacroExecute @{:#?}, kaller handle_user_input({:#?})",
+                    self.slot,
+                    keystroke
+                );
+                // If a macro is executed within a macro recording, the keys from the executed macro
+                // should not be recorded. This is accomplished by temporarily taking the ongoing
+                // recording out of the program state.
+                let recording = program_state.macro_recording.take();
                 let result = handle_user_input(keystroke.to_event(), program_state);
+                program_state.macro_recording = recording;
                 if let Err(error) = result {
                     panic!(
                         "Error occured while handling user input from macro invocation: {}",

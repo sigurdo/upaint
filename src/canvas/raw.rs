@@ -3,6 +3,7 @@ use bitflags::bitflags;
 use keystrokes_parsing::Presetable;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use ratatui::style::{Color, Modifier};
 
@@ -14,6 +15,7 @@ use super::rect::CanvasRect;
 
 pub mod ansi_export;
 pub mod ansi_import;
+pub mod cell_map;
 pub mod continuous_region;
 pub mod iter;
 pub mod operations;
@@ -21,6 +23,7 @@ pub mod paste;
 pub mod rendering;
 pub mod yank;
 
+use cell_map::CellMap;
 use continuous_region::MatchValue;
 
 #[cfg(test)]
@@ -98,18 +101,21 @@ impl Default for CanvasCell {
 #[derive(Debug, Default, Clone)]
 pub struct Canvas {
     area: CanvasRect,
-    cells: BTreeMap<CanvasIndex, CanvasCell>,
+    // cells: HashMap<CanvasIndex, CanvasCell>,
+    cells: CellMap,
 }
 
 impl<'a> Canvas {
     // Internal interface
 
     fn get_mut(&'a mut self, index: &CanvasIndex) -> &'a mut CanvasCell {
-        if !self.cells.contains_key(&index) {
-            self.cells.insert(*index, CanvasCell::default());
-            self.area.include_index(*index);
-        }
-        self.cells.get_mut(index).unwrap()
+        self.area.include_index(*index);
+        self.cells.entry(*index).or_default()
+        // if !self.cells.contains_key(&index) {
+        //     self.cells.insert(*index, CanvasCell::default());
+        //     self.area.include_index(*index);
+        // }
+        // self.cells.get_mut(index).unwrap()
     }
 
     fn _set(&mut self, index: CanvasIndex, cell: CanvasCell) {

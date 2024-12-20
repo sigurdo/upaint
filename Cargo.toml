@@ -69,3 +69,7 @@ path = "src/testing/test_macros.rs"
 # [[bin]]
 # name = "test_adopt_new_keystroke_system"
 # path = "src/testing/test_adopt_new_keystroke_system.rs"
+
+[[bin]]
+name = "test_cell_maps"
+path = "src/testing/test_cell_maps.rs"
