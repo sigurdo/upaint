@@ -1,6 +1,8 @@
 use std::collections::LinkedList;
 use std::mem;
 
+use crate::canvas::raw::operations::CanvasDiff;
+use crate::canvas::raw::operations::CanvasDiffBuilder;
 use crate::{config::Config, file_formats::FileFormat, ErrorCustom, ResultCustom};
 
 use super::raw::{
@@ -10,7 +12,7 @@ use super::raw::{
 #[derive(Debug, Default, Clone)]
 pub struct CanvasCommit {
     revision: u64,
-    modifications: Vec<CanvasModification>,
+    diff: CanvasDiff,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,7 +21,7 @@ pub struct VersionControlledCanvas {
     current: Canvas,
     commits: LinkedList<CanvasCommit>,
     commits_unapplied: LinkedList<CanvasCommit>,
-    staging_area: Vec<CanvasModification>,
+    staging_area: CanvasDiffBuilder,
     revision_counter: u64,
 }
 
@@ -32,27 +34,13 @@ impl VersionControlledCanvas {
         self
     }
 
-    fn apply_modifications(&mut self, modifications: &Vec<CanvasModification>) {
-        for modification in modifications {
-            self.current.apply_operation(modification);
-        }
-    }
-
-    /// Rebuilds `self.cells` from `self.cells_initial` by applying all commits in `self.commits`
-    fn rebuild(&mut self) {
-        self.current = self.initial.clone();
-        for commit in self.commits.clone() {
-            self.apply_modifications(&commit.modifications);
-        }
-    }
-
     /// Creates a commit from the provided modifications, but doesn't apply it, as it is assumed
     /// that the modifications are already applied to the current canvas.
-    fn create_applied_commit(&mut self, modifications: Vec<CanvasModification>) {
+    fn create_applied_commit(&mut self, diff: CanvasDiff) {
         self.revision_counter += 1;
         let commit = CanvasCommit {
             revision: self.revision_counter,
-            modifications,
+            diff,
         };
         self.commits.push_back(commit);
         self.commits_unapplied = LinkedList::new();
@@ -62,52 +50,45 @@ impl VersionControlledCanvas {
     /// Modifications in staging area will be committed first if any.
     pub fn create_commit(&mut self, modifications: Vec<CanvasModification>) -> &mut Self {
         self.commit_staged();
-        self.apply_modifications(&modifications);
-        self.create_applied_commit(modifications);
-        self
-    }
-
-    /// Panics if no latest commit exists in canvas
-    pub fn amend(&mut self, operations: Vec<CanvasModification>) -> &mut Self {
-        let Some(commit_latest) = self.commits.iter_mut().next_back() else {
-            panic!("No commits exist in UndoRedoCanvas.amend()")
-        };
-        for operation in operations {
-            self.current.apply_operation(&operation);
-            commit_latest.modifications.push(operation);
-        }
+        let mut diff =
+            CanvasDiffBuilder::from_modifications(modifications, &self.current).serialize();
+        self.current.apply_diff(&mut diff);
+        self.create_applied_commit(diff);
         self
     }
 
     /// Adds a modification to the staging area
     pub fn stage(&mut self, modification: CanvasModification) {
-        self.current.apply_operation(&modification);
-        self.staging_area.push(modification);
+        let mut diff = CanvasDiffBuilder::from_modifications(vec![modification], &self.current);
+        self.current.apply_diff_builder(&mut diff);
+        // overwrite must be false, because the staging area contains the reversing diffs, which
+        // must be preserved to revert to the original state.
+        self.staging_area.add_diff(diff, false);
     }
 
     pub fn clear_staged(&mut self) {
-        self.staging_area = Vec::new();
-        self.rebuild();
+        self.current.apply_diff_builder(&mut self.staging_area);
+        self.staging_area = CanvasDiffBuilder::default();
     }
 
     /// Creates a commit from modifications in staging area
     pub fn commit_staged(&mut self) {
-        if self.staging_area.len() > 0 {
-            let staged = mem::replace(&mut self.staging_area, Vec::new());
+        if !self.staging_area.entries.is_empty() {
+            let staged = mem::take(&mut self.staging_area).serialize();
             self.create_applied_commit(staged);
         }
     }
 
     pub fn undo(&mut self) {
-        if let Some(last_commit) = self.commits.pop_back() {
+        if let Some(mut last_commit) = self.commits.pop_back() {
+            self.current.apply_diff(&mut last_commit.diff);
             self.commits_unapplied.push_front(last_commit);
-            self.rebuild();
         }
     }
 
     pub fn redo(&mut self) {
-        if let Some(next_commit) = self.commits_unapplied.pop_front() {
-            self.apply_modifications(&next_commit.modifications);
+        if let Some(mut next_commit) = self.commits_unapplied.pop_front() {
+            self.current.apply_diff(&mut next_commit.diff);
             self.commits.push_back(next_commit);
         }
     }
@@ -169,7 +150,7 @@ impl VersionControlledCanvas {
         }
     }
 
-    pub fn widget<'a>(&'a self, config: &'a Config) -> CanvasWidget {
+    pub fn widget<'a>(&'a self, config: &'a Config) -> CanvasWidget<'a> {
         CanvasWidget::from_canvas(&self.current, config)
     }
 
