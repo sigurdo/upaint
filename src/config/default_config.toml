@@ -11,6 +11,19 @@ relative = false
 enable = true
 relative = false
 
+[character_mirrors.x]
+"/" = "\\"
+"<" = ">"
+"(" = ")"
+"[" ="]"
+"{" = "}"
+[character_mirrors.y]
+"/" = "\\"
+"." = "'"
+"," = "\""
+"_" = "¨"
+
+
 [keymaps.actions]
 ":" = { "ModeCommand" = {} }
 "i" = { "ModeInsert" = { jump = "Diagonals" } }
@@ -30,6 +43,7 @@ relative = false
 # "" = { Operation = { operator = { Replace = { ch = "h"}}}}
 # "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
 "q" = { MacroRecordingStartStop = {} }
+"gm" = { MirrorYank = { slot = "Active" }}
 "" = [
     { Repeat = {}},
     { Operation = {}},
@@ -100,6 +114,14 @@ relative = false
 [keymaps.grounds]
 "f" = "Foreground"
 "b" = "Background"
+
+[keymaps.axes]
+"x" = "X"
+"y" = "Y"
+
+[keymaps.rotation_directions]
+"k" = "Clockwise"
+"j" = "Counterclockwise"
 
 [keymaps.characters]
 "<C-u>-" = "—"

@@ -19,9 +19,11 @@ use crate::operators::UpdateSelectionOperator;
 use crate::selections::SelectionSlotSpecification;
 use crate::selections::SelectionSpecification;
 use crate::yank_slots::YankSlotSpecification;
+use crate::Axis;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
+use crate::RotationDirection;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 use keystrokes_parsing::from_keystrokes_by_preset_keymap;
@@ -82,6 +84,8 @@ keymaps! {
     color_picker_target_motions: ColorPickerTargetMotion,
     color_picker_targets: ColorPickerTargetEnum,
     grounds: Ground,
+    axes: Axis,
+    rotation_directions: RotationDirection,
     yank_slot_specifications: YankSlotSpecification,
     update_selection_operators: UpdateSelectionOperator,
     actions: ActionEnum,
@@ -110,6 +114,8 @@ impl_presetable_by_self!(CanvasIterationJump);
 impl_presetable_by_self!(WordBoundaryType);
 impl_presetable_by_self!(bool);
 impl_presetable_by_self!(Ground);
+impl_presetable_by_self!(Axis);
+impl_presetable_by_self!(RotationDirection);
 impl_presetable_by_self!(Color);
 impl_presetable_by_self!(YankSlotSpecification);
 impl_presetable_by_self!(UpdateSelectionOperator);

@@ -1,5 +1,6 @@
 use crate::canvas::raw::iter::CanvasIndexIteratorInfinite;
 use crate::canvas::raw::iter::CanvasIterationJump;
+use crate::canvas::raw::transform::mirror_cells;
 use crate::canvas::CanvasModification;
 use crate::color_picker::target::ColorPickerTarget;
 use crate::color_picker::target::ColorPickerTargetEnum;
@@ -20,6 +21,7 @@ use crate::operators::Operator;
 use crate::operators::OperatorEnum;
 use crate::user_input::handle_user_input;
 use crate::yank_slots::YankSlotSpecification;
+use crate::Axis;
 use crate::DirectionFree;
 use crate::ErrorCustom;
 use crate::Ground;
@@ -78,6 +80,7 @@ pub enum ActionEnum {
     SetColorOrSlotActive(SetColorOrSlotActive),
     Paste(Paste),
     SetYankActive(SetYankActive),
+    MirrorYank(MirrorYank),
     MarkSet(MarkSet),
     Repeat(ActionRepeat),
     MacroRecordingStartStop(MacroRecordingStartStop),
@@ -311,6 +314,27 @@ pub struct SetYankActive {
 impl Action for SetYankActive {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.yank_active = self.slot;
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct MirrorYank {
+    slot: YankSlotSpecification,
+    axis: Axis,
+}
+impl Action for MirrorYank {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(yank) = program_state
+            .yanks
+            .get_mut(&self.slot.as_char(&program_state))
+        {
+            let swaps = if self.axis == Axis::X {
+                &program_state.config.character_mirrors.x
+            } else {
+                &program_state.config.character_mirrors.y
+            };
+            mirror_cells(&mut yank.cells, self.axis, 0, swaps);
+        }
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]

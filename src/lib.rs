@@ -140,6 +140,20 @@ pub enum InputMode {
     ColorPicker(ColorPickerTargetEnum),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Default, Deserialize, Serialize)]
+pub enum Axis {
+    #[default]
+    X,
+    Y,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Default, Deserialize, Serialize)]
+pub enum RotationDirection {
+    #[default]
+    Clockwise,
+    Counterclockwise,
+}
+
 #[derive(Default, Clone)]
 pub struct ProgramState {
     pub a: u64,

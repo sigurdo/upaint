@@ -1,3 +1,4 @@
+use crate::canvas::raw::transform::CharacterSwapMap;
 use crate::DirectionFree;
 use nestify::nest;
 use std::collections::HashMap;
@@ -84,6 +85,10 @@ nest! {
             pub user_feedback: StyleConfig,
         },
         pub keymaps: Keymaps,
+        pub character_mirrors: #[derive(Clone, Debug, Deserialize)] pub struct ConfigCharacterMirrors {
+            pub x: CharacterSwapMap,
+            pub y: CharacterSwapMap,
+        },
     }
 }
 

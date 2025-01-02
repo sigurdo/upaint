@@ -21,6 +21,7 @@ pub mod iter;
 pub mod operations;
 pub mod paste;
 pub mod rendering;
+pub mod transform;
 pub mod yank;
 
 use cell_map::CellMap;

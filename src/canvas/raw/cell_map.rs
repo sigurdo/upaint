@@ -6,3 +6,5 @@ mod btree_map;
 mod hash_map;
 
 pub use btree_map::CellMap;
+
+pub use btree_map::BTreeCellMap;

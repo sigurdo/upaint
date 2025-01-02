@@ -10,8 +10,10 @@ type Entry<'a> = HashMapEntry<'a, CanvasIndex, CanvasCell>;
 type Iter<'a> = HashMapIter<'a, CanvasIndex, CanvasCell>;
 type IterMut<'a> = HashMapIterMut<'a, CanvasIndex, CanvasCell>;
 
+pub type BTreeCellMap = BTreeMap<CanvasIndex, CanvasCell>;
+
 #[derive(Clone, Debug, Default, IntoIterator)]
-pub struct CellMap(BTreeMap<CanvasIndex, CanvasCell>);
+pub struct CellMap(BTreeCellMap);
 
 impl<'a> CellMap {
     pub fn get(&'a self, index: &CanvasIndex) -> Option<&'a CanvasCell> {
