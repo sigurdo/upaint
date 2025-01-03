@@ -24,7 +24,6 @@
 /// in practice, as the terminal emulator might not have a proper way to encode it and distinguish
 /// it from other keys.
 use crossterm::event::{KeyCode, KeyModifiers};
-use serde::Deserialize;
 use std::collections::LinkedList;
 use std::fmt::Display;
 

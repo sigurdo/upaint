@@ -184,13 +184,13 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                             #ident_preset::#ident_variant => Ok(#ident::#ident_variant)
                         },
                         Fields::Unnamed(FieldsUnnamed {
-                            paren_token,
+                            paren_token: _,
                             unnamed,
                         }) => {
                             let ident_args: Vec<Ident> = unnamed
                                 .iter()
                                 .enumerate()
-                                .map(|(index, field)| {
+                                .map(|(index, _field)| {
                                     Ident::new(format!("arg_{index}").as_str(), Span::call_site())
                                 })
                                 .collect();
@@ -280,14 +280,14 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
             }
             let from_keystrokes_instantiation = match fields {
                 Fields::Named(FieldsNamed {
-                    brace_token,
+                    brace_token: _,
                     ref named,
                 }) => {
                     let fields = create_fields(named, &opts);
                     quote! { Self { #fields } }
                 }
                 Fields::Unnamed(FieldsUnnamed {
-                    paren_token,
+                    paren_token: _,
                     ref unnamed,
                 }) => {
                     let fields = create_fields(unnamed, &opts);
@@ -323,6 +323,6 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
         _ => panic!(),
     };
     let result = TokenStream::from(output);
-    println!("result derive Presetable: {result}");
+    // println!("result derive Presetable: {result}");
     result
 }

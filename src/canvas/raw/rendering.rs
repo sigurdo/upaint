@@ -26,7 +26,7 @@ pub struct CanvasWidget<'a> {
 impl<'a> CanvasWidget<'a> {
     pub fn from_canvas(canvas: &'a Canvas, config: &'a Config) -> Self {
         CanvasWidget {
-            canvas: canvas,
+            canvas,
             focus: canvas.area().center(),
             cursor: None,
             visual_rect: None,
@@ -149,7 +149,7 @@ impl Widget for RowNumbersWidget<'_> {
         for y in area.top()..area.bottom() {
             let area = Rect {
                 x: area.x,
-                y: y,
+                y,
                 width: area.width,
                 height: 1,
             };
@@ -285,7 +285,7 @@ impl Widget for CanvasWidget<'_> {
             None
         };
         RowNumbersWidget {
-            row_number_cursor: row_number_cursor,
+            row_number_cursor,
             row_to_y_translation,
             config: self.config,
         }
@@ -359,10 +359,12 @@ impl Widget for CanvasWidget<'_> {
         }
 
         if let Some((row, column)) = self.cursor {
-            let target = buffer.get_mut(
-                (column + column_to_x_translation) as u16,
-                (row + row_to_y_translation) as u16,
-            );
+            let target = buffer
+                .cell_mut((
+                    (column + column_to_x_translation) as u16,
+                    (row + row_to_y_translation) as u16,
+                ))
+                .unwrap();
             target.modifier.toggle(Modifier::REVERSED);
         }
     }

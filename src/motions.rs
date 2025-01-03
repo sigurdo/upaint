@@ -47,13 +47,9 @@ pub enum MotionRepeatEnum {
     FindCharRepeat(FindCharRepeat),
 }
 
-fn default_count() -> PresetStructField<UnsignedIntegerKeymapEntry<u32>> {
-    PresetStructField::Preset(1.into())
-}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct MotionRepeat {
-    // #[presetable(default = "default_count")]
     pub count: Count,
     pub motion: MotionRepeatEnum,
 }
@@ -73,18 +69,10 @@ impl Motion for Stay {
     }
 }
 
-fn default_number_of_cells() -> UnsignedIntegerKeymapEntry<u16> {
-    1.into()
-}
-fn default_jump() -> PresetStructField<CanvasIterationJump> {
-    PresetStructField::Preset(CanvasIterationJump::DirectionAsStride)
-}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct FixedNumberOfCells {
     pub direction: DirectionFree,
-    // #[presetable(required, default = "default_number_of_cells")]
-    // #[presetable(default = "default_jump")]
     pub jump: CanvasIterationJump,
 }
 impl MotionRepeatable for FixedNumberOfCells {

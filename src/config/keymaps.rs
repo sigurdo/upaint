@@ -191,11 +191,6 @@ pub enum UnsignedIntegerKeymapEntry<T> {
     #[serde(untagged)]
     Number(T),
 }
-fn unsigned_integer_from_keystrokes<T>(
-    keystrokes: &mut KeystrokeIterator,
-) -> Result<T, FromKeystrokesError> {
-    panic!("Not implemented")
-}
 macro_rules! unsigned_integer_impl_presetable {
     ($($type:ty,)*) => {
         $(

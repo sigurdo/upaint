@@ -9,7 +9,6 @@ use ratatui::{
 };
 
 pub mod target;
-use target::ColorPickerTarget;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -188,7 +187,9 @@ impl Widget for ColorPickerWidget {
         };
         for x in preview_area.left()..preview_area.right() {
             for y in preview_area.top()..preview_area.bottom() {
-                buf.get_mut(x, y).set_bg(self.picker.get_color());
+                buf.cell_mut((x, y))
+                    .unwrap()
+                    .set_bg(self.picker.get_color());
             }
         }
 
@@ -202,7 +203,7 @@ impl Widget for ColorPickerWidget {
         for x in hue_slider_area.left()..hue_slider_area.right() {
             let h = ((x - hue_slider_area.left()) as f64 / sliders_width as f64) * 360.0;
             let (r, g, b) = hsv_to_rgb(h, s, v);
-            buf.get_mut(x, hue_slider_area.y)
+            buf.cell_mut((x, hue_slider_area.y)).unwrap()
                 .set_fg(Color::Rgb(r, g, b))
                 // .set_bg(Color::Rgb(r, g, b))
                 .set_char('━')
@@ -212,7 +213,8 @@ impl Widget for ColorPickerWidget {
         }
         let hue_slide_cursor_x =
             hue_slider_area.left() + (((h / 360.0) * sliders_width as f64) as u16);
-        buf.get_mut(hue_slide_cursor_x, hue_slider_area.y)
+        buf.cell_mut((hue_slide_cursor_x, hue_slider_area.y))
+            .unwrap()
             .set_char('|')
             .set_fg(Color::Reset)
             .set_bg(Color::Reset)
@@ -227,14 +229,16 @@ impl Widget for ColorPickerWidget {
         for x in saturation_slider_area.left()..saturation_slider_area.right() {
             let s = ((x - saturation_slider_area.left()) as f64 / sliders_width as f64) * 1.0;
             let (r, g, b) = hsv_to_rgb(h, s, v);
-            buf.get_mut(x, saturation_slider_area.y)
+            buf.cell_mut((x, saturation_slider_area.y))
+                .unwrap()
                 .set_fg(Color::Rgb(r, g, b))
                 .set_char('━')
                 .set_style(Style::new().add_modifier(Modifier::BOLD));
         }
         let saturation_slide_cursor_x =
             saturation_slider_area.left() + (((s / 1.0) * (sliders_width - 1) as f64) as u16);
-        buf.get_mut(saturation_slide_cursor_x, saturation_slider_area.y)
+        buf.cell_mut((saturation_slide_cursor_x, saturation_slider_area.y))
+            .unwrap()
             .set_char('|')
             .set_fg(Color::Reset)
             .set_bg(Color::Reset)
@@ -249,14 +253,16 @@ impl Widget for ColorPickerWidget {
         for x in value_slider_area.left()..value_slider_area.right() {
             let v = ((x - value_slider_area.left()) as f64 / sliders_width as f64) * 1.0;
             let (r, g, b) = hsv_to_rgb(h, s, v);
-            buf.get_mut(x, value_slider_area.y)
+            buf.cell_mut((x, value_slider_area.y))
+                .unwrap()
                 .set_fg(Color::Rgb(r, g, b))
                 .set_char('━')
                 .set_style(Style::new().add_modifier(Modifier::BOLD));
         }
         let value_slide_cursor_x =
             value_slider_area.left() + (((v / 1.0) * (sliders_width - 1) as f64) as u16);
-        buf.get_mut(value_slide_cursor_x, value_slider_area.y)
+        buf.cell_mut((value_slide_cursor_x, value_slider_area.y))
+            .unwrap()
             .set_char('|')
             .set_fg(Color::Reset)
             .set_bg(Color::Reset)
@@ -268,7 +274,8 @@ impl Widget for ColorPickerWidget {
             3 => (value_slide_cursor_x, value_slider_area.y),
             _ => return,
         };
-        buf.get_mut(x, y)
+        buf.cell_mut((x, y))
+            .unwrap()
             .set_style(Style::new().add_modifier(Modifier::REVERSED));
 
         // let slide_cursor_x = hue_slider_area.left() + (((h / 360.0) * sliders_width as f64) as u16);

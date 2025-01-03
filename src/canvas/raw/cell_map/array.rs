@@ -142,7 +142,7 @@ impl<'a> Iterator for Iter<'a> {
         if self.done {
             return None;
         }
-        let index = self.index_next;
+        let _index = self.index_next;
         self.index_next.0 = self.index_next.0.wrapping_add(1);
         if self.index_next.0 == i16::MIN {
             self.index_next.1.wrapping_add(1);
