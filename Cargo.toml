@@ -9,15 +9,10 @@ default-run = "upaint"
 [dependencies]
 ratatui = { version = "0.29.0", features = ["all-widgets", "serde", "unstable-rendered-line-info"] }
 tui-textarea = "0.7.0"
-anyhow = "1.0.75"
 crossterm = { version = "0.28.1", features = ["serde"] }
 clap = { version= "4.4.2", features = ["derive"] }
-# config = "0.13.3"
-config = { git = "https://github.com/sigurdo/config-rs.git" }
 serde = { version = "1.0.188", features = ["derive"] }
-# toml = "0.8.0"
 toml = { git = "https://github.com/sigurdo/toml-rs.git" }
-serde_json = "1.0.117"
 hsv = "0.1.1"
 prisma = "0.1.1"
 angular-units = "0.2.4"
@@ -25,12 +20,9 @@ unicode-width = "0.1.11"
 dirs = "5.0.1"
 log = "0.4.20"
 nalgebra = "0.32.5"
-lending-iterator = "0.1.7"
 bitflags = "2.5.0"
 enum_dispatch = "0.3.13"
 derive_more = { version = "1.0.0", features = ["full"] }
-as-any = "0.3.1"
-# upaint_derive = { version = "0.1.0", path = "upaint_derive" }
 keystrokes_parsing = { path = "keystrokes_parsing" }
 nestify = "0.3.3"
 notify = { version = "6.1.1", features = ["serde"] }
