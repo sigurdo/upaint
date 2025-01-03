@@ -64,29 +64,30 @@ pub fn draw_frame(
             .split(sidebar_chunk)[1];
 
         // WIP: New message popup system
-        // Requires updating ratatui to support Paragraph.line_count()
-        // let (message_popup_widget, message_popup_height) =
-        //     if let Some(message) = program_state.new_messages.front() {
-        //         let mut message = message.clone();
-        //         message.push_str("\n\nPress any key to close this message.");
-        //         let message_popup = Paragraph::new(message);
-        //         let lines = message_popup.line_count(chunks[0].width);
-        //         (Some(message_popup), u16::from)
-        //     } else {
-        //         (None, 0)
-        //     };
+        let (message_popup_widget, message_popup_height) =
+            if let Some(message) = program_state.new_messages.front() {
+                let mut message = message.clone();
+                message.push_str("\n\nPress any key to close this message.");
+                let message_popup = Paragraph::new(message);
+                let lines = message_popup.line_count(chunks[0].width);
+                (Some(message_popup), lines as u16)
+            } else {
+                (None, 0)
+            };
         let chunks = Layout::default()
             .direction(ratatui::prelude::Direction::Vertical)
             .constraints(
                 [
                     Constraint::Min(1),                    // Canvas
+                    Constraint::Max(message_popup_height), // Message popup
                     Constraint::Max(user_feedback_height), // User feedback
                 ]
                 .as_ref(),
             )
             .split(chunks[0]);
         let canvas_chunk = chunks[0];
-        let user_feedback_chunk = chunks[1];
+        let message_popup_chunk = chunks[1];
+        let user_feedback_chunk = chunks[2];
         let block = Block::default();
         let inner_area = block.inner(canvas_chunk);
         f.render_widget(block, canvas_chunk);
@@ -134,8 +135,12 @@ pub fn draw_frame(
         };
         let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(user_feedback)])])
             .wrap(Wrap { trim: false })
-            .style(program_state.config.color_theme.user_feedback.into());
+            .style(program_state.config.color_theme.user_feedback);
         f.render_widget(user_feedback_widget, user_feedback_chunk);
+
+        if let Some(widget) = message_popup_widget {
+            f.render_widget(widget, message_popup_chunk);
+        }
 
         let status_bar = StatusBar::from(&(*program_state));
         f.render_widget(status_bar, status_bar_chunk);
@@ -160,7 +165,7 @@ pub fn draw_frame(
                 input_mode.push_str(format!("recording @{}", recording.slot).as_str());
             }
             let input_mode = Paragraph::new(vec![Line::from(vec![Span::raw(input_mode)])])
-                .style(program_state.config.color_theme.input_mode.into());
+                .style(program_state.config.color_theme.input_mode);
             f.render_widget(input_mode, command_line_chunk);
         }
 

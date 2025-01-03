@@ -201,7 +201,9 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
     // Accept any keystroke to close a message popup
     if let Event::Key(_e) = event {
         if let Some(_message) = program_state.new_messages.pop_front() {
-            return Ok(());
+            if program_state.config.message_popup_suppress_keystroke {
+                return Ok(());
+            }
         }
     }
 

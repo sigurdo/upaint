@@ -1,9 +1,9 @@
 use ratatui::style::Color;
-use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::fmt::Display;
+use tui_textarea::TextArea;
 
 pub mod actions;
 // pub mod adopt_new_keystroke_system;

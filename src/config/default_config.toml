@@ -5,6 +5,9 @@ color_theme_preset = "Basic"
 # This options itself does not support hot reloading.
 autoreload_config = true
 
+# Can be disabled so keystroke used to close message popup is also passed through as normal
+message_popup_suppress_keystroke = true
+
 # Row numbers
 [numbers.row]
 enable = true

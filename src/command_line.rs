@@ -2,7 +2,7 @@ use ratatui::prelude::{Buffer, Constraint, Direction, Layout, Rect};
 use ratatui::style::Style;
 
 use ratatui::widgets::Widget;
-use ratatui_textarea::{CursorMove, TextArea};
+use tui_textarea::{CursorMove, TextArea};
 
 use crate::actions::session::{ForceQuit, LossySave, LossySaveAs, Quit, Save, SaveAs, SaveQuit};
 use crate::actions::{Action, FallibleAction};
@@ -54,15 +54,15 @@ impl<'a> Widget for CommandLineWidget<'a> {
                 .constraints([Constraint::Max(1), Constraint::Min(1)].as_ref())
                 .split(area);
 
-            let colon_cell = buf.get_mut(chunks[0].x, chunks[0].y);
-            colon_cell.symbol = ":".to_string();
+            let colon_cell = buf.cell_mut((chunks[0].x, chunks[0].y)).unwrap();
+            colon_cell.set_symbol(":");
             colon_cell.set_style(self.textarea.style());
 
-            self.textarea.widget().render(chunks[1], buf);
+            self.textarea.render(chunks[1], buf);
         } else {
             for i in area.left()..area.right() {
-                let cell = buf.get_mut(i, area.y);
-                cell.symbol = " ".to_string();
+                let cell = buf.cell_mut((i, area.y)).unwrap();
+                cell.set_symbol(" ");
                 cell.set_style(self.textarea.style());
             }
         }

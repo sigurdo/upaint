@@ -177,7 +177,7 @@ impl Widget for RowNumbersWidget<'_> {
             };
             let style = self.config.color_theme.row_numbers;
             ratatui::widgets::Paragraph::new(vec![Line::from(text)])
-                .style(style.into())
+                .style(style)
                 .render(area, buffer);
         }
     }
@@ -220,7 +220,7 @@ impl Widget for ColumnNumbersWidget<'_> {
                 };
                 let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)])
-                    .style(style.into())
+                    .style(style)
                     .render(area, buffer);
             }
         } else {
@@ -252,7 +252,7 @@ impl Widget for ColumnNumbersWidget<'_> {
                 };
                 let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)])
-                    .style(style.into())
+                    .style(style)
                     .render(area, buffer);
             }
             if let Some(column_cursor) = self.column_number_cursor {
@@ -268,7 +268,7 @@ impl Widget for ColumnNumbersWidget<'_> {
                 };
                 let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)])
-                    .style(style.into())
+                    .style(style)
                     .render(area, buffer);
             }
         }
@@ -312,11 +312,11 @@ impl Widget for CanvasWidget<'_> {
                 let row = y as i16 - row_to_y_translation;
                 let column = x as i16 - column_to_x_translation;
 
-                let target = buffer.get_mut(x, y);
+                let target = buffer.cell_mut((x, y)).unwrap();
                 let color_theme = &self.config.color_theme.canvas;
 
                 if let Some(cell) = self.canvas.cells.get(&(row, column)) {
-                    target.symbol = String::from(cell.character);
+                    target.set_symbol(String::from(cell.character).as_str());
                     target.set_style(apply_color_theme(
                         Style::default()
                             .fg(cell.fg)

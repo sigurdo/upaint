@@ -91,6 +91,7 @@ nest! {
             pub y: CharacterSwapMap,
         },
         pub autoreload_config: bool,
+        pub message_popup_suppress_keystroke: bool,
     }
 }
 

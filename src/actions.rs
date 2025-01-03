@@ -59,7 +59,12 @@ where
     T: FallibleAction,
 {
     fn execute(&self, program_state: &mut ProgramState) {
-        self.try_execute(program_state);
+        match self.try_execute(program_state) {
+            Ok(()) => (),
+            Err(err) => {
+                program_state.new_messages.push_back(err);
+            }
+        };
     }
 }
 
@@ -86,6 +91,10 @@ pub enum ActionEnum {
     Repeat(ActionRepeat),
     MacroRecordingStartStop(MacroRecordingStartStop),
     Quit(session::Quit),
+    ForceQuit(session::ForceQuit),
+    Save(session::Save),
+    LossySave(session::LossySave),
+    SaveQuit(session::SaveQuit),
     ReloadConfig(ReloadConfig),
 }
 

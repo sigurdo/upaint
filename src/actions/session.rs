@@ -20,7 +20,8 @@ impl FallibleAction for Quit {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState", preset_type = "Self")]
 pub struct ForceQuit {}
 impl Action for ForceQuit {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -28,7 +29,8 @@ impl Action for ForceQuit {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState", preset_type = "Self")]
 pub struct Save {}
 impl FallibleAction for Save {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
@@ -46,7 +48,8 @@ impl FallibleAction for Save {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState", preset_type = "Self")]
 pub struct LossySave {}
 impl FallibleAction for LossySave {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
@@ -98,7 +101,8 @@ impl FallibleAction for LossySaveAs {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState", preset_type = "Self")]
 pub struct SaveQuit {}
 impl FallibleAction for SaveQuit {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {

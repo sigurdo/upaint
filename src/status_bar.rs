@@ -57,12 +57,12 @@ impl<'a> Widget for StatusBar<'a> {
         );
         let base_style = self.program_state.config.color_theme.status_bar;
         let open_file =
-            Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])]).style(base_style.into());
+            Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])]).style(base_style);
 
         let input_sequence = Paragraph::new(vec![Line::from(vec![Span::raw(
             self.program_state.keystroke_sequence_incomplete.to_string(),
         )])])
-        .style(base_style.into());
+        .style(base_style);
 
         let yank_active = Paragraph::new(vec![Line::from(vec![
             Span::styled("y", Style::new().add_modifier(Modifier::BOLD)),
@@ -71,7 +71,7 @@ impl<'a> Widget for StatusBar<'a> {
                 format!("{yank_active}")
             }),
         ])])
-        .style(base_style.into());
+        .style(base_style);
 
         let selection_active = Paragraph::new(vec![Line::from(vec![
             Span::styled(" s", Style::new().add_modifier(Modifier::BOLD)),
@@ -80,7 +80,7 @@ impl<'a> Widget for StatusBar<'a> {
                 format!("{selection_active}")
             }),
         ])])
-        .style(base_style.into());
+        .style(base_style);
 
         let color_or_slot_active = Paragraph::new(vec![Line::from(vec![
             Span::styled(" c", Style::new().add_modifier(Modifier::BOLD)),
@@ -105,14 +105,14 @@ impl<'a> Widget for StatusBar<'a> {
             ),
             // Span::raw(")"),
         ])])
-        .style(base_style.into());
+        .style(base_style);
 
         let cursor_index = format!(
             " │ {},{}",
             self.program_state.cursor_position.0, self.program_state.cursor_position.1
         );
-        let cursor_index = Paragraph::new(vec![Line::from(vec![Span::raw(cursor_index)])])
-            .style(base_style.into());
+        let cursor_index =
+            Paragraph::new(vec![Line::from(vec![Span::raw(cursor_index)])]).style(base_style);
 
         open_file.render(chunks[0], buf);
         input_sequence.render(chunks[1], buf);
