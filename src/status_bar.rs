@@ -1,6 +1,5 @@
 use ratatui::{
     prelude::{Constraint, Layout},
-    style::Color,
     style::Modifier,
     style::Style,
     text::{Line, Span},

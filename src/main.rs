@@ -1,9 +1,7 @@
-use std::path::Path;
 use upaint::config::load_config;
 use upaint::config::load_default_config;
 use upaint::config::local_config_dir_path;
 use upaint::config::ErrorLoadConfig;
-use upaint::ErrorCustom;
 
 use clap::Parser;
 use crossterm::{
@@ -19,7 +17,7 @@ use log::Log;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io::Read;
 use std::{
-    io::{self, BufRead, IsTerminal, Write},
+    io::{self, IsTerminal, Write},
     path::PathBuf,
     sync::{
         mpsc::{self},

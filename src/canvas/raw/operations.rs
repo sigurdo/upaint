@@ -1,7 +1,6 @@
 use crate::canvas::raw::CellContentType;
 use crate::Ground;
 use derive_more::IntoIterator;
-use ratatui::style::Style;
 use ratatui::style::{Color, Modifier};
 use std::collections::BTreeMap;
 use std::mem::ManuallyDrop;

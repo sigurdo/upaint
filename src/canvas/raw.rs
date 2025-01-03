@@ -2,12 +2,9 @@ use crate::ProgramState;
 use bitflags::bitflags;
 use keystrokes_parsing::Presetable;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::collections::HashMap;
 
 use ratatui::style::{Color, Modifier};
 
-use crate::config::Config;
 use crate::selections::Selection;
 use crate::Ground;
 

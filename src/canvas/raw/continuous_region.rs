@@ -2,7 +2,6 @@ use super::Canvas;
 use super::CanvasCell;
 use super::CanvasIndex;
 use crate::canvas::raw::CellContentType;
-use crate::config::Config;
 use crate::selections::Selection;
 use crate::ProgramState;
 use keystrokes_parsing::Presetable;

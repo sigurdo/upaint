@@ -6,7 +6,7 @@ use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
 
 use crate::{
-    actions::Action, command_line::execute_command, keystrokes::ColorSlot, InputMode, ProgramState,
+    actions::Action, command_line::execute_command, InputMode, ProgramState,
     ResultCustom,
 };
 use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};

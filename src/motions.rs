@@ -8,7 +8,6 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
 use crate::config::keymaps::UnsignedIntegerKeymapEntry;
-use crate::config::Config;
 use crate::keystrokes::Count;
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;

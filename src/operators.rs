@@ -2,7 +2,6 @@ use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
 use crate::canvas::CanvasModification;
-use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::selections::Selection;

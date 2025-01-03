@@ -1,5 +1,3 @@
-use crate::canvas::raw::CanvasCell;
-use crate::canvas::raw::CanvasIndex;
 
 mod array;
 mod btree_map;

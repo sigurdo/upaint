@@ -1,16 +1,11 @@
 use crate::canvas::raw::cell_map::BTreeCellMap;
-use crate::canvas::raw::Canvas;
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
 use crate::Axis;
 use crate::RotationDirection;
-use derive_more::Constructor;
-use ratatui::style::Color;
-use ratatui::style::Modifier;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::mem;
 
 fn cell_map_insert_option(
     cells: &mut BTreeCellMap,

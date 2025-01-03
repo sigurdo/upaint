@@ -1,33 +1,12 @@
 use crate::color_picker::target::ColorPickerTarget;
-use crate::config::keymaps::UnsignedIntegerKeymapEntry;
-use crate::config::Config;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEvent;
-use crossterm::event::KeyModifiers;
-use derive_more::Deref;
-use derive_more::DerefMut;
-use derive_more::From;
-use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::from_keystrokes_by_from_str;
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
-use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
-use std::marker::PhantomData;
 
-use crate::actions::Action;
-use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
-use crate::canvas::raw::iter::CanvasIterationJump;
-use crate::canvas::raw::iter::WordBoundaryType;
-use crate::canvas::raw::CellContentType;
-use crate::selections::SelectionSlotSpecification;
-use crate::yank_slots::YankSlotSpecification;
-use crate::DirectionFree;
-use crate::Ground;
 use crate::ProgramState;
-use upaint_derive::Preset;
 
 // #[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize)]
 pub type ColorSlot = char;

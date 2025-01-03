@@ -1,29 +1,20 @@
 use crate::canvas::raw::transform::CharacterSwapMap;
-use crate::DirectionFree;
 use derive_more::Display;
 use derive_more::From;
-use derive_more::FromStr;
 use derive_more::Into;
 use nestify::nest;
-use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crossterm::event::KeyCode;
-use ratatui::style::Color;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use toml::de::ValueDeserializer;
 
-use crate::{
-    canvas::raw::continuous_region::ContinuousRegionRelativeType,
-    canvas::raw::iter::CanvasIterationJump, canvas::raw::iter::WordBoundaryType,
-    canvas::raw::CellContentType, ErrorCustom, Ground,
-};
+use crate::ErrorCustom;
 
 pub mod color_theme;
 pub mod keymaps;
 
 use self::{
-    color_theme::{ColorThemePreset, ColorToml, StyleConfig, StyleToml},
+    color_theme::{ColorThemePreset, ColorToml, StyleConfig},
     keymaps::Keymaps,
 };
 

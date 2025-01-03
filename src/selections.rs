@@ -1,5 +1,4 @@
 use crate::canvas::raw::CanvasIndex;
-use crate::config::Config;
 use crate::motions::Motion;
 use crate::motions::MotionEnum;
 use crate::ProgramState;

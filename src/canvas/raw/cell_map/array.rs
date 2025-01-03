@@ -1,10 +1,7 @@
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CanvasIndex;
 use derive_more::IntoIterator;
-use std::collections::btree_map::Entry as HashMapEntry;
-use std::collections::btree_map::Iter as HashMapIter;
 use std::collections::btree_map::IterMut as HashMapIterMut;
-use std::collections::BTreeMap;
 
 // type Entry<'a> = HashMapEntry<'a, CanvasIndex, CanvasCell>;
 // type Iter<'a> = HashMapIter<'a, CanvasIndex, CanvasCell>;

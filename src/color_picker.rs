@@ -10,7 +10,6 @@ use ratatui::{
 
 pub mod target;
 use target::ColorPickerTarget;
-use target::ColorPickerTargetEnum;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
