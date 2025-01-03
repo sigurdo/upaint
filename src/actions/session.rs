@@ -1,7 +1,12 @@
 use crate::{file_formats::FileFormat, ProgramState};
+use keystrokes_parsing::Presetable;
+use serde::Deserialize;
+use serde::Serialize;
 
 use super::{Action, ExecuteActionResult, FallibleAction};
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState", preset_type = "Self")]
 pub struct Quit {}
 impl FallibleAction for Quit {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
@@ -23,6 +28,7 @@ impl Action for ForceQuit {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Save {}
 impl FallibleAction for Save {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
@@ -40,6 +46,7 @@ impl FallibleAction for Save {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct LossySave {}
 impl FallibleAction for LossySave {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
@@ -57,6 +64,7 @@ impl FallibleAction for LossySave {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct SaveAs {
     pub filename: String,
 }
@@ -73,6 +81,7 @@ impl FallibleAction for SaveAs {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct LossySaveAs {
     pub filename: String,
 }
@@ -89,6 +98,7 @@ impl FallibleAction for LossySaveAs {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct SaveQuit {}
 impl FallibleAction for SaveQuit {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {

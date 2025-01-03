@@ -134,6 +134,7 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
         }
     }
 
+    // Translate <C-m> to <Enter> and <C-h> to <BS>
     if let Event::Key(e) = &mut event {
         match e {
             KeyEvent {
@@ -156,6 +157,7 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
         }
     }
 
+    // Debugging
     if let Event::Key(e) = event {
         log::debug!(
             "handle_user_input {}, {}",
@@ -165,12 +167,14 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
         program_state.a += 1;
     }
 
+    // Add keystroke to macro recording
     if let Some(recording) = &mut program_state.macro_recording {
         if let Event::Key(e) = event {
             recording.keystrokes.push(Keystroke::from(e));
         }
     }
 
+    // Return to normal mode on <esc> or <C-c>
     if let Event::Key(e) = event {
         match e {
             KeyEvent {
@@ -187,12 +191,21 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
                 program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
                 program_state.input_mode = InputMode::Normal;
                 program_state.user_feedback = None;
+                program_state.new_messages.clear();
                 return Ok(());
             }
             _ => (),
         }
     }
 
+    // Accept any keystroke to close a message popup
+    if let Event::Key(_e) = event {
+        if let Some(_message) = program_state.new_messages.pop_front() {
+            return Ok(());
+        }
+    }
+
+    // Dispatch
     match program_state.input_mode {
         InputMode::Normal => handle_user_input_normal_mode(event, program_state),
         InputMode::Command => handle_user_input_command_mode(event, program_state),

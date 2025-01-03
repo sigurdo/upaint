@@ -7,6 +7,7 @@ use crate::color_picker::target::ColorPickerTargetEnum;
 use crate::color_picker::target::ColorPickerTargetMotion;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
+use crate::config::load_config;
 use crate::config::Config;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
@@ -49,16 +50,16 @@ pub trait Action: std::fmt::Debug {
 // Contains Ok(()) or Err(error_message)
 type ExecuteActionResult = Result<(), String>;
 
-pub trait FallibleAction {
+pub trait FallibleAction: std::fmt::Debug {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult;
 }
 
-impl<T> FallibleAction for T
+impl<T> Action for T
 where
-    T: Action,
+    T: FallibleAction,
 {
-    fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
-        Ok(self.execute(program_state))
+    fn execute(&self, program_state: &mut ProgramState) {
+        self.try_execute(program_state);
     }
 }
 
@@ -84,6 +85,8 @@ pub enum ActionEnum {
     MarkSet(MarkSet),
     Repeat(ActionRepeat),
     MacroRecordingStartStop(MacroRecordingStartStop),
+    Quit(session::Quit),
+    ReloadConfig(ReloadConfig),
 }
 
 #[enum_dispatch(Action)]
@@ -427,5 +430,14 @@ impl Action for MacroExecute {
                 }
             }
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct ReloadConfig {}
+impl Action for ReloadConfig {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.config = load_config().unwrap();
     }
 }

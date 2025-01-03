@@ -2,6 +2,7 @@ use ratatui::style::Color;
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::fmt::Display;
 
 pub mod actions;
@@ -179,6 +180,7 @@ pub struct ProgramState {
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
     pub user_feedback: Option<String>,
+    pub new_messages: VecDeque<String>,
     pub exit: bool,
     pub config: Config,
     pub keystroke_sequence_incomplete: KeystrokeSequence,

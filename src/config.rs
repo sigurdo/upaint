@@ -2,6 +2,7 @@ use crate::canvas::raw::transform::CharacterSwapMap;
 use crate::DirectionFree;
 use nestify::nest;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use crossterm::event::KeyCode;
 use ratatui::style::Color;
@@ -89,6 +90,7 @@ nest! {
             pub x: CharacterSwapMap,
             pub y: CharacterSwapMap,
         },
+        pub autoreload_config: bool,
     }
 }
 
@@ -105,18 +107,23 @@ impl Default for Config {
     }
 }
 
-pub fn local_config_toml() -> Result<String, ErrorCustom> {
+pub fn local_config_dir_path() -> Result<PathBuf, ErrorCustom> {
     let Some(mut config_file_path) = dirs::config_dir() else {
         return Err(ErrorCustom::String(
             "Couldn't detect the system's config directory.".to_string(),
         ));
     };
     config_file_path.push("upaint");
+    Ok(config_file_path)
+}
+
+pub fn local_config_toml() -> Result<String, ErrorCustom> {
+    let mut config_file_path = local_config_dir_path()?;
     config_file_path.push("upaint.toml");
     // let Some(config_file_path) = config_file_path.to_str() else {
     //     return Err(ErrorCustom::String("Couldn't derive the local upaint config file path.".to_string()))
     // };
-    Ok(std::fs::read_to_string(config_file_path).unwrap())
+    Ok(std::fs::read_to_string(config_file_path)?)
 }
 
 /// Read and load color theme preset, apply customizations.
@@ -147,7 +154,8 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
 
 pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
     load_color_preset(&mut toml_table)?;
-    let config: Config = toml::from_str(toml::to_string(&toml_table).unwrap().as_str()).unwrap();
+
+    let config: Config = Config::deserialize(toml_table).unwrap();
     Ok(config)
 }
 

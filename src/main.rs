@@ -1,3 +1,8 @@
+use std::path::Path;
+use upaint::config::load_config;
+use upaint::config::local_config_dir_path;
+use upaint::ErrorCustom;
+
 use clap::Parser;
 use crossterm::{
     cursor::{self, SetCursorStyle},
@@ -113,7 +118,8 @@ fn application(
     };
     program_state.canvas = VersionControlledCanvas::from_ansi(ansi_to_load)?;
     program_state.last_saved_revision = program_state.canvas.get_current_revision();
-    program_state.config = upaint::config::load_config()?;
+    program_state.config = load_config()?;
+    let autoreload_config = program_state.config.autoreload_config;
     // log::debug!("{:#?}", program_state.config);
     // let canvas_dimensions = program_state.canvas.get_dimensions();
     let canvas_area = program_state.canvas.raw().area();
@@ -167,6 +173,49 @@ fn application(
             }
             // Ok(())
         })?;
+
+    if autoreload_config {
+        let program_state_watch_config_file = Arc::clone(&program_state);
+        let redraw_tx_watch_config_file = Arc::clone(&redraw_tx);
+        thread::Builder::new()
+            .name("watch config file".to_string())
+            .spawn(move || -> ResultCustom<()> {
+                use notify::{recommended_watcher, Event, EventKind, RecursiveMode, Watcher};
+                loop {
+                    let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
+                    let mut watcher = recommended_watcher(tx).unwrap();
+                    let config_dir = local_config_dir_path()?;
+                    watcher
+                        .watch(config_dir.as_path(), RecursiveMode::Recursive)
+                        .unwrap();
+                    'receiving: while let Ok(result) = rx.recv() {
+                        let event = result.unwrap();
+                        if let EventKind::Modify(_) = event.kind {
+                            // For some reason, config cannot be reloaded immediately after it is
+                            // modified. I have no idea why...
+                            for _ in 0..100 {
+                                match load_config() {
+                                    Ok(config) => {
+                                        let mut program_state =
+                                            program_state_watch_config_file.lock()?;
+                                        program_state.config = config;
+                                        (*(redraw_tx_watch_config_file.lock()?))
+                                            .try_send(())
+                                            .unwrap_or(());
+                                        continue 'receiving;
+                                    }
+                                    Err(_) => {
+                                        std::thread::sleep(Duration::from_millis(10));
+                                    }
+                                }
+                            }
+                            panic!("Couldn't reload modified config even after 1 second")
+                        }
+                    }
+                    panic!("File system watcher disconnected")
+                }
+            })?;
+    }
 
     exit_rx.recv()?;
     Ok(())

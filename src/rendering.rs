@@ -62,6 +62,19 @@ pub fn draw_frame(
                 .as_ref(),
             )
             .split(sidebar_chunk)[1];
+
+        // WIP: New message popup system
+        // Requires updating ratatui to support Paragraph.line_count()
+        // let (message_popup_widget, message_popup_height) =
+        //     if let Some(message) = program_state.new_messages.front() {
+        //         let mut message = message.clone();
+        //         message.push_str("\n\nPress any key to close this message.");
+        //         let message_popup = Paragraph::new(message);
+        //         let lines = message_popup.line_count(chunks[0].width);
+        //         (Some(message_popup), u16::from)
+        //     } else {
+        //         (None, 0)
+        //     };
         let chunks = Layout::default()
             .direction(ratatui::prelude::Direction::Vertical)
             .constraints(

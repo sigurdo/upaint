@@ -1,6 +1,10 @@
 # All alternatives are listed in `color_theme_presets!(...)` in `src/config/color_theme.rs`
 color_theme_preset = "Basic"
 
+# Automatically reloads config when local config file is modified.
+# This options itself does not support hot reloading.
+autoreload_config = true
+
 # Row numbers
 [numbers.row]
 enable = true
@@ -44,6 +48,7 @@ relative = false
 # "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
 "q" = { MacroRecordingStartStop = {} }
 "gm" = { MirrorYank = { slot = "Active" }}
+"<F5>" = { ReloadConfig = {} }
 "" = [
     { Repeat = {}},
     { Operation = {}},

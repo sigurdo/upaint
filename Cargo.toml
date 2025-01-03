@@ -33,6 +33,7 @@ as-any = "0.3.1"
 upaint_derive = { version = "0.1.0", path = "upaint_derive" }
 keystrokes_parsing = { path = "keystrokes_parsing" }
 nestify = "0.3.3"
+notify = { version = "6.1.1", features = ["serde"] }
 
 [[bin]]
 name = "upaint"
