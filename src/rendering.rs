@@ -18,11 +18,6 @@ pub fn draw_frame(
     let command_line_active = program_state.input_mode == InputMode::Command;
     // terminal.hide_cursor()?;
     terminal.draw(|f| {
-        let user_feedback_height = if program_state.user_feedback.is_some() {
-            2
-        } else {
-            0
-        };
         let sidebar_width = if let InputMode::ColorPicker(_) = program_state.input_mode {
             18
         } else {
@@ -38,7 +33,7 @@ pub fn draw_frame(
                 ]
                 .as_ref(),
             )
-            .split(f.size());
+            .split(f.area());
         let status_bar_chunk = chunks[1];
         let command_line_chunk = chunks[2];
         let chunks = Layout::default()
@@ -73,7 +68,9 @@ pub fn draw_frame(
                         format!("\n{} more messages waiting", more_messages_waiting).as_str(),
                     );
                 }
-                let message_popup = Paragraph::new(message).wrap(Wrap { trim: false });
+                let message_popup = Paragraph::new(message)
+                    .wrap(Wrap { trim: false })
+                    .style(program_state.config.color_theme.user_feedback);
                 let lines = message_popup.line_count(chunks[0].width);
                 (Some(message_popup), lines as u16)
             } else {
@@ -85,14 +82,12 @@ pub fn draw_frame(
                 [
                     Constraint::Min(1),                    // Canvas
                     Constraint::Max(message_popup_height), // Message popup
-                    Constraint::Max(user_feedback_height), // User feedback
                 ]
                 .as_ref(),
             )
             .split(chunks[0]);
         let canvas_chunk = chunks[0];
         let message_popup_chunk = chunks[1];
-        let user_feedback_chunk = chunks[2];
         let block = Block::default();
         let inner_area = block.inner(canvas_chunk);
         f.render_widget(block, canvas_chunk);
@@ -133,15 +128,6 @@ pub fn draw_frame(
         }
 
         f.render_widget(canvas, inner_area);
-
-        let user_feedback = match &program_state.user_feedback {
-            Some(feedback) => feedback,
-            None => "",
-        };
-        let user_feedback_widget = Paragraph::new(vec![Line::from(vec![Span::raw(user_feedback)])])
-            .wrap(Wrap { trim: false })
-            .style(program_state.config.color_theme.user_feedback);
-        f.render_widget(user_feedback_widget, user_feedback_chunk);
 
         if let Some(widget) = message_popup_widget {
             f.render_widget(widget, message_popup_chunk);

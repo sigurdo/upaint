@@ -71,9 +71,6 @@ impl<'a> Widget for CommandLineWidget<'a> {
 
 /// Executes the command stored in `program_state.command_line`
 pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
-    // Clear eventual old feedback
-    program_state.user_feedback = None;
-
     let command = program_state.command_line.lines().join("\n");
     let mut command_split = command.split_whitespace();
     let Some(command_name) = command_split.next() else {
@@ -114,7 +111,7 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
             Ok(())
         }
         Err(feedback) => {
-            program_state.user_feedback = Some(feedback);
+            program_state.new_messages.push_back(feedback);
             Ok(())
         }
     }

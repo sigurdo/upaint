@@ -182,7 +182,6 @@ pub struct ProgramState {
     pub color_picker: ColorPicker,
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
-    pub user_feedback: Option<String>,
     pub new_messages: VecDeque<String>,
     pub exit: bool,
     pub config: Config,
