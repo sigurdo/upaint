@@ -1,5 +1,9 @@
 use crate::canvas::raw::transform::CharacterSwapMap;
 use crate::DirectionFree;
+use derive_more::Display;
+use derive_more::From;
+use derive_more::FromStr;
+use derive_more::Into;
 use nestify::nest;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -121,21 +125,19 @@ pub fn local_config_dir_path() -> Result<PathBuf, ErrorCustom> {
 pub fn local_config_toml() -> Result<String, ErrorCustom> {
     let mut config_file_path = local_config_dir_path()?;
     config_file_path.push("upaint.toml");
-    // let Some(config_file_path) = config_file_path.to_str() else {
-    //     return Err(ErrorCustom::String("Couldn't derive the local upaint config file path.".to_string()))
-    // };
     Ok(std::fs::read_to_string(config_file_path)?)
 }
 
 /// Read and load color theme preset, apply customizations.
-fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> {
+fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorConfigInvalid> {
     // let mut config_table = config.cache.clone().into_table()?;
     if let Some(preset) = config_table.get("color_theme_preset") {
         if let toml::Value::String(preset) = preset.clone() {
-            let preset: ColorThemePreset = serde::Deserialize::deserialize(ValueDeserializer::new(
+            let Ok(preset) = ColorThemePreset::deserialize(ValueDeserializer::new(
                 format!("\"{preset}\"").as_str(),
-            ))
-            .unwrap();
+            )) else {
+                return Err(format!("Value of color_theme_preset is invalid: {preset}").into());
+            };
 
             let mut theme_table = include_str!("config/color_theme/base.toml")
                 .parse::<toml::Table>()
@@ -153,11 +155,22 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorCustom> 
     Ok(())
 }
 
-pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorCustom> {
+#[derive(Debug, From, Into, Display)]
+#[display("Invalid config: {_0}")]
+pub struct ErrorConfigInvalid(String);
+#[derive(Debug, From, Display)]
+#[display("Error loading config: {_variant}")]
+pub enum ErrorLoadConfig {
+    Custom(ErrorCustom),
+    ConfigInvalid(ErrorConfigInvalid),
+}
+pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorConfigInvalid> {
     load_color_preset(&mut toml_table)?;
 
-    let config: Config = Config::deserialize(toml_table).unwrap();
-    Ok(config)
+    match Config::deserialize(toml_table) {
+        Ok(config) => Ok(config),
+        Err(err) => Err(err.to_string().into()),
+    }
 }
 
 pub fn load_default_config() -> Config {
@@ -167,10 +180,10 @@ pub fn load_default_config() -> Config {
     load_config_from_table(toml_table).unwrap()
 }
 
-pub fn load_config() -> Result<Config, ErrorCustom> {
+pub fn load_config() -> Result<Config, ErrorLoadConfig> {
     let mut toml_table = include_str!("config/default_config.toml")
         .parse::<toml::Table>()
         .unwrap();
     toml_table.extend_recurse_tables(local_config_toml()?.parse::<toml::Table>().unwrap());
-    load_config_from_table(toml_table)
+    Ok(load_config_from_table(toml_table)?)
 }

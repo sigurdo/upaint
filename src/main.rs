@@ -1,6 +1,8 @@
 use std::path::Path;
 use upaint::config::load_config;
+use upaint::config::load_default_config;
 use upaint::config::local_config_dir_path;
+use upaint::config::ErrorLoadConfig;
 use upaint::ErrorCustom;
 
 use clap::Parser;
@@ -118,7 +120,10 @@ fn application(
     };
     program_state.canvas = VersionControlledCanvas::from_ansi(ansi_to_load)?;
     program_state.last_saved_revision = program_state.canvas.get_current_revision();
-    program_state.config = load_config()?;
+    program_state.config = load_config().unwrap_or_else(|err| {
+        program_state.new_messages.push_back(format!("{err}"));
+        load_default_config()
+    });
     let autoreload_config = program_state.config.autoreload_config;
     // log::debug!("{:#?}", program_state.config);
     // let canvas_dimensions = program_state.canvas.get_dimensions();
@@ -180,7 +185,7 @@ fn application(
         thread::Builder::new()
             .name("watch config file".to_string())
             .spawn(move || -> ResultCustom<()> {
-                use notify::{recommended_watcher, Event, EventKind, RecursiveMode, Watcher};
+                use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
                 loop {
                     let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
                     let mut watcher = recommended_watcher(tx).unwrap();
@@ -188,31 +193,64 @@ fn application(
                     watcher
                         .watch(config_dir.as_path(), RecursiveMode::Recursive)
                         .unwrap();
-                    'receiving: while let Ok(result) = rx.recv() {
-                        let event = result.unwrap();
-                        if let EventKind::Modify(_) = event.kind {
-                            // For some reason, config cannot be reloaded immediately after it is
-                            // modified. I have no idea why...
-                            for _ in 0..100 {
-                                match load_config() {
-                                    Ok(config) => {
-                                        let mut program_state =
-                                            program_state_watch_config_file.lock()?;
-                                        program_state.config = config;
-                                        (*(redraw_tx_watch_config_file.lock()?))
-                                            .try_send(())
-                                            .unwrap_or(());
-                                        continue 'receiving;
+                    // The code for detecting config file changes is quite complex and ugly because
+                    // when the file is updated, it doesn't resolve to a single unambiguous event,
+                    // since the entire config folder must be watched in case the file is deleted
+                    // and recreated and which events occur depend on OS and which editor is used.
+                    // But still a single and clear error message should be displayed to the user.
+                    let mut changes = false;
+                    loop {
+                        let timeout = if changes {
+                            Duration::from_millis(50)
+                        } else {
+                            Duration::MAX
+                        };
+                        match rx.recv_timeout(timeout) {
+                            Err(mpsc::RecvTimeoutError::Timeout) => {
+                                if changes {
+                                    changes = false;
+                                    'max_attempts: {
+                                        for _ in 0..100 {
+                                            match load_config() {
+                                                Ok(config) => {
+                                                    let mut program_state =
+                                                        program_state_watch_config_file.lock()?;
+                                                    program_state.config = config;
+                                                    break 'max_attempts;
+                                                }
+                                                Err(ErrorLoadConfig::ConfigInvalid(err)) => {
+                                                    let mut program_state =
+                                                        program_state_watch_config_file.lock()?;
+                                                    program_state.new_messages.push_back(format!(
+                                                        "{}",
+                                                        ErrorLoadConfig::ConfigInvalid(err)
+                                                    ));
+                                                    break 'max_attempts;
+                                                }
+                                                Err(_) => {
+                                                    std::thread::sleep(Duration::from_millis(10));
+                                                }
+                                            }
+                                        }
+                                        panic!(
+                                            "Couldn't reload modified config even after 1 second"
+                                        )
                                     }
-                                    Err(_) => {
-                                        std::thread::sleep(Duration::from_millis(10));
-                                    }
+                                    (*(redraw_tx_watch_config_file.lock()?))
+                                        .try_send(())
+                                        .unwrap_or(());
                                 }
                             }
-                            panic!("Couldn't reload modified config even after 1 second")
+                            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                                panic!("File system watcher disconnected")
+                            }
+                            Ok(event) => {
+                                let _event = event.unwrap();
+                                // log::debug!("notify event: {:#?}", _event);
+                                changes = true;
+                            }
                         }
                     }
-                    panic!("File system watcher disconnected")
                 }
             })?;
     }

@@ -1,3 +1,6 @@
+use crate::config::ErrorConfigInvalid;
+use crate::config::ErrorLoadConfig;
+use derive_more::From;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -196,12 +199,21 @@ use std::{
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum ErrorCustom {
     String(String),
     IoError(io::Error),
     FmtError(std::fmt::Error),
-    ConfigError(::config::ConfigError),
+    ConfigInvalid(ErrorConfigInvalid),
+}
+
+impl From<ErrorLoadConfig> for ErrorCustom {
+    fn from(value: ErrorLoadConfig) -> Self {
+        match value {
+            ErrorLoadConfig::Custom(value) => value,
+            ErrorLoadConfig::ConfigInvalid(value) => Self::ConfigInvalid(value),
+        }
+    }
 }
 
 impl Display for ErrorCustom {
@@ -216,12 +228,6 @@ impl Display for ErrorCustom {
 impl From<ErrorCustom> for String {
     fn from(value: ErrorCustom) -> Self {
         value.to_string()
-    }
-}
-
-impl From<String> for ErrorCustom {
-    fn from(value: String) -> Self {
-        Self::String(value)
     }
 }
 
@@ -250,23 +256,5 @@ impl<T> From<TrySendError<T>> for ErrorCustom {
 impl From<RecvError> for ErrorCustom {
     fn from(value: RecvError) -> Self {
         ErrorCustom::String(value.to_string())
-    }
-}
-
-impl From<io::Error> for ErrorCustom {
-    fn from(value: io::Error) -> Self {
-        ErrorCustom::IoError(value)
-    }
-}
-
-impl From<std::fmt::Error> for ErrorCustom {
-    fn from(value: std::fmt::Error) -> Self {
-        ErrorCustom::FmtError(value)
-    }
-}
-
-impl From<::config::ConfigError> for ErrorCustom {
-    fn from(value: ::config::ConfigError) -> Self {
-        Self::ConfigError(value)
     }
 }

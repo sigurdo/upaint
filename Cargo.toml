@@ -28,7 +28,7 @@ nalgebra = "0.32.5"
 lending-iterator = "0.1.7"
 bitflags = "2.5.0"
 enum_dispatch = "0.3.13"
-derive_more = "0.99.18"
+derive_more = { version = "1.0.0", features = ["full"] }
 as-any = "0.3.1"
 upaint_derive = { version = "0.1.0", path = "upaint_derive" }
 keystrokes_parsing = { path = "keystrokes_parsing" }

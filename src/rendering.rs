@@ -63,12 +63,17 @@ pub fn draw_frame(
             )
             .split(sidebar_chunk)[1];
 
-        // WIP: New message popup system
         let (message_popup_widget, message_popup_height) =
             if let Some(message) = program_state.new_messages.front() {
                 let mut message = message.clone();
                 message.push_str("\n\nPress any key to close this message.");
-                let message_popup = Paragraph::new(message);
+                let more_messages_waiting = program_state.new_messages.len() - 1;
+                if more_messages_waiting > 0 {
+                    message.push_str(
+                        format!("\n{} more messages waiting", more_messages_waiting).as_str(),
+                    );
+                }
+                let message_popup = Paragraph::new(message).wrap(Wrap { trim: false });
                 let lines = message_popup.line_count(chunks[0].width);
                 (Some(message_popup), lines as u16)
             } else {
