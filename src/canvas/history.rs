@@ -109,6 +109,10 @@ impl VersionControlledCanvas {
         self.current.export_lossy(format)
     }
 
+    pub fn clean(&mut self) {
+        self.current.clean();
+    }
+
     pub fn from_ansi(ansi: String) -> ResultCustom<Self>
     where
         Self: Sized,

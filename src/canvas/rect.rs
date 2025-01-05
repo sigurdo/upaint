@@ -20,6 +20,26 @@ impl CanvasRect {
         result.include_index(b);
         result
     }
+    pub fn from_cells<Cells, Iter>(cells: Cells) -> Self
+    where
+        Cells: IntoIterator<Item = CanvasIndex, IntoIter = Iter>,
+        Iter: Iterator<Item = CanvasIndex>,
+    {
+        let mut iter = cells.into_iter();
+        let Some(first) = iter.next() else {
+            return CanvasRect::default();
+        };
+        let mut result = Self {
+            row: first.0,
+            column: first.1,
+            rows: 1,
+            columns: 1,
+        };
+        for index in iter {
+            result.include_index(index);
+        }
+        result
+    }
     pub fn first_row(&self) -> i16 {
         self.row
     }

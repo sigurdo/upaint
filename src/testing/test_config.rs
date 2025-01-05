@@ -1,4 +1,4 @@
-use config::Config;
+// use config::Config;
 // use ;
 // use serde::Serialize;
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -93,10 +93,10 @@ fn main() {
     let mut config_file_path = dirs::config_dir().unwrap();
     config_file_path.push("upaint");
     config_file_path.push("upaint.toml");
-    let _config = Config::builder()
-        .add_source(config::File::with_name(config_file_path.to_str().unwrap()))
-        .build()
-        .unwrap();
+    // let _config = Config::builder()
+    //     .add_source(config::File::with_name(config_file_path.to_str().unwrap()))
+    //     .build()
+    //     .unwrap();
 
     // let config: ConfigFile = config.try_deserialize().unwrap();
     //

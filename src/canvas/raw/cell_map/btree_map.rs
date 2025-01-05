@@ -25,6 +25,15 @@ impl<'a> CellMap {
     pub fn insert(&'a mut self, index: CanvasIndex, cell: CanvasCell) -> Option<CanvasCell> {
         self.0.insert(index, cell)
     }
+    pub fn remove(&'a mut self, index: &CanvasIndex) -> Option<CanvasCell> {
+        self.0.remove(index)
+    }
+    pub fn retain<F>(&'a mut self, f: F)
+    where
+        F: FnMut(&CanvasIndex, &mut CanvasCell) -> bool,
+    {
+        self.0.retain(f)
+    }
     pub fn iter(&'a self) -> Iter<'a> {
         self.0.iter()
     }

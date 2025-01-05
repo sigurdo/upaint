@@ -121,6 +121,12 @@ impl<'a> Canvas {
         self.area.include_index(index);
     }
 
+    /// Removes empty cells and reduces area to actual size.
+    pub fn clean(&mut self) {
+        self.cells.retain(|_index, cell| *cell != DEFAULT_CELL);
+        self.area = CanvasRect::from_cells(self.cells.iter().map(|(index, _cell)| *index));
+    }
+
     // Public interface
 
     pub fn get(&'a self, index: &CanvasIndex) -> &'a CanvasCell {

@@ -38,6 +38,7 @@ impl FallibleAction for Save {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
         let format = FileFormat::try_from(file_name.as_str())?;
+        program_state.canvas.clean();
         let output = program_state.canvas.export(format)?;
         match std::fs::write(file_name, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
@@ -57,6 +58,7 @@ impl FallibleAction for LossySave {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
         let format = FileFormat::try_from(file_name.as_str())?;
+        program_state.canvas.clean();
         let output = program_state.canvas.export_lossy(format)?;
         match std::fs::write(file_name, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
@@ -74,6 +76,7 @@ pub struct SaveAs {
 impl FallibleAction for SaveAs {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let format = FileFormat::try_from(self.filename.as_str())?;
+        program_state.canvas.clean();
         let output = program_state.canvas.export(format)?;
         match std::fs::write(&self.filename, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
@@ -91,6 +94,7 @@ pub struct LossySaveAs {
 impl FallibleAction for LossySaveAs {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let format = FileFormat::try_from(self.filename.as_str())?;
+        program_state.canvas.clean();
         let output = program_state.canvas.export_lossy(format)?;
         match std::fs::write(&self.filename, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
@@ -110,6 +114,7 @@ impl FallibleAction for SaveQuit {
             return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
         };
         let format = FileFormat::try_from(file_name.as_str())?;
+        program_state.canvas.clean();
         let output = program_state.canvas.export(format)?;
         match std::fs::write(file_name, output) {
             Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
