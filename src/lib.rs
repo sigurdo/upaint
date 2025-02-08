@@ -15,6 +15,7 @@ pub mod color_picker;
 pub mod command_line;
 pub mod config;
 pub mod file_formats;
+pub mod input_mode;
 pub mod keystrokes;
 pub mod macros;
 pub mod motions;
@@ -26,6 +27,7 @@ pub mod user_input;
 pub mod yank_slots;
 
 use crate::config::Config;
+use crate::config::ConfigInputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::motions::FindChar;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;
@@ -34,6 +36,7 @@ use canvas::raw::CanvasIndex;
 use canvas::{rect::CanvasRect, VersionControlledCanvas};
 use color_picker::target::ColorPickerTargetEnum;
 use color_picker::ColorPicker;
+use input_mode::InputMode;
 use keystrokes::ColorSlot;
 use keystrokes_parsing::KeystrokeSequence;
 use macros::Macro;
@@ -134,16 +137,6 @@ pub enum Ground {
     Background,
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
-pub enum InputMode {
-    #[default]
-    Normal,
-    Insert(CanvasIndexIteratorInfinite),
-    VisualRect((CanvasIndex, CanvasIndex)),
-    Command,
-    ColorPicker(ColorPickerTargetEnum),
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Default, Deserialize, Serialize)]
 pub enum Axis {
     #[default]
@@ -158,11 +151,12 @@ pub enum RotationDirection {
     Counterclockwise,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct ProgramState {
     pub a: u64,
     pub input_mode: InputMode,
-    pub cursor_position: (i16, i16),                  // (row, column)
+    pub cursor_position: (i16, i16), // (row, column)
+    pub cursor_position_iterator: Option<CanvasIndexIteratorInfinite>,
     pub cursor_position_previous: Option<(i16, i16)>, // (row, column)
     pub focus_position: (i16, i16),                   // (row, column)
     pub canvas_visible: CanvasRect,
@@ -173,6 +167,7 @@ pub struct ProgramState {
     pub yanks: HashMap<char, CanvasYank>,
     pub marks: HashMap<char, CanvasIndex>,
     pub selection_highlight: Option<char>,
+    pub visual_rect: Option<(CanvasIndex, CanvasIndex)>,
     pub yank_active: char,
     pub selection_active: char,
     pub color_or_slot_active: ColorOrSlot,
@@ -180,6 +175,7 @@ pub struct ProgramState {
     pub chosen_background_color: Option<Color>,
     pub command_line: TextArea<'static>,
     pub color_picker: ColorPicker,
+    pub color_picker_target: ColorPickerTargetEnum,
     pub open_file: Option<String>,
     pub last_saved_revision: u64,
     pub new_messages: VecDeque<String>,
@@ -188,6 +184,12 @@ pub struct ProgramState {
     pub keystroke_sequence_incomplete: KeystrokeSequence,
     pub macros: HashMap<char, Macro>,
     pub macro_recording: Option<MacroRecording>,
+}
+
+impl ProgramState {
+    fn input_mode_config(&self) -> Option<&ConfigInputMode> {
+        self.config.input_mode.get(&self.input_mode)
+    }
 }
 
 use std::{

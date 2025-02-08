@@ -8,6 +8,12 @@ autoreload_config = true
 # Can be disabled so keystroke used to close message popup is also passed through as normal
 message_popup_suppress_keystroke = true
 
+# Sets "n" as standard input mode
+input_mode_standard = "n"
+
+# Sets input mode to "n" at launch
+input_mode_initial = "n"
+
 # Row numbers
 [numbers.row]
 enable = true
@@ -22,7 +28,7 @@ relative = false
 "/" = "\\"
 "<" = ">"
 "(" = ")"
-"[" ="]"
+"[" = "]"
 "{" = "}"
 [character_mirrors.y]
 "/" = "\\"
@@ -30,18 +36,48 @@ relative = false
 "," = "\""
 "_" = "¨"
 
+[input_mode.i]
+handler = "Action"
+base_keymaps = ["n"]
 
-[keymaps.actions]
-":" = { "ModeCommand" = {} }
-"i" = { "ModeInsert" = { jump = "Diagonals" } }
-"gc" = { "ModeColorPicker" = { slot = "Active" } }
+[input_mode.i.keymaps.actions]
+"" = { InsertCharMoveCursor = {}}
+
+[input_mode.c]
+handler = "Command"
+base_keymaps = []
+keymaps = {}
+
+[input_mode.p]
+handler = "ColorPicker"
+base_keymaps = []
+keymaps = {}
+
+[input_mode.v]
+handler = "Action"
+base_keymaps = ["n"]
+
+[input_mode.v.keymaps.actions]
+"o" = { VisualRectSwapCorners = {} }
+# "" = { VisualRectOperation = {  } }
+"" = { Operation = { motion = { VisualRectMotion = {}}, return_to_standard_mode = true }}
+
+[input_mode.n]
+handler = "Action"
+base_keymaps = ["i"]
+
+[input_mode.n.keymaps.actions]
+":" = { "ModeCommand" = { mode = "c" } }
+"i" = { ModeInsert = { jump = "Diagonals", mode = "i" }}
+"gc" = { "ModeColorPicker" = { mode = "p" } }
 "gp" = { "Pipette" = { slot = "Active" }}
-"v" = { ModeVisualRect = {} }
+"v" = { ModeVisualRect = { mode = "v" } }
 "o" = { SetSelectionActive = { highlight = true } }
 '"' = { SetYankActive = {} }
 "O" = { HighlightSelectionClear = {} }
 "P" = { Paste = {} }
 "p" = { Paste = { slot = "Active" } }
+"<C-p>" = { Paste = { slot = "Active" } }
 "r" = { Operation = { motion = { Stay = {}}, operator = { Replace = {}}}}
 "R" = { OperationMotionFirst = { operator = { Replace = {}}}}
 "m" = { MarkSet = {}}
@@ -52,21 +88,25 @@ relative = false
 "q" = { MacroRecordingStartStop = {} }
 "gm" = { MirrorYank = { slot = "Active" }}
 "<F5>" = { ReloadConfig = {} }
+"<Up>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [-1, 0], jump = "DirectionAsStride" }}}}}}
+"<Down>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [1, 0], jump = "DirectionAsStride" }}}}}}
+"<Right>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [0, 1], jump = "DirectionAsStride" }}}}}}
+"<Left>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [0, -1], jump = "DirectionAsStride" }}}}}}
 "" = [
     { Repeat = {}},
     { Operation = {}},
     { MoveCursor = {}},
 ]
 
-[keymaps.action_repeats]
+[input_mode.n.keymaps.action_repeats]
 "" = { count = "FromKeystrokes", action = "FromKeystrokes" }
 
-[keymaps.actions_repeatable]
+[input_mode.n.keymaps.actions_repeatable]
 "u" = { "Undo" = {} }
 "<C-r>" = { "Redo" = {} }
 "@" = { MacroExecute = {} }
 
-[keymaps.operators]
+[input_mode.n.keymaps.operators]
 "c" = { "Colorize" = { ground = "Foreground", color = "Active" } }
 "C" = { "Colorize" = { ground = "Foreground" } }
 "b" = { "Colorize" = { ground = "Background", color = "Active" } }
@@ -79,8 +119,9 @@ relative = false
 "y" = { Yank = { content_type = "ALL", slot = "Active" } }
 "D" = { Cut = { content_type = "ALL" } }
 "d" = { Cut = { content_type = "ALL", slot = "Active" } }
+"gc" = { ColorPickerOperator = { mode = "p"} }
 
-[keymaps.motions]
+[input_mode.n.keymaps.motions]
 " " = { Stay = {} }
 "S" = { SelectionMotion = {} }
 "s" = { SelectionMotion = { slot = "Active" } }
@@ -91,10 +132,10 @@ relative = false
 "a" = { ContinuousRegion = { diagonals_allowed = true } }
 "" = { Repeat = {} }
 
-[keymaps.motion_repeats]
+[input_mode.n.keymaps.motion_repeats]
 "" = { count = "FromKeystrokes", motion = "FromKeystrokes" }
 
-[keymaps.motions_repeatable]
+[input_mode.n.keymaps.motions_repeatable]
 "w" = { WordBoundary = { boundary_type = "START" } }
 "e" = { WordBoundary = { boundary_type = "END" } }
 "f" = { FindChar = {} }
@@ -102,10 +143,10 @@ relative = false
 ";" = { FindCharRepeat = { direction_reversed = true } }
 "" = { FixedNumberOfCells = { jump = "DirectionAsStride" }}
 
-[keymaps.counts]
+[input_mode.n.keymaps.counts]
 "" = "TypeDecimal"
 
-[keymaps.directions]
+[input_mode.n.keymaps.directions]
 "h" = [0, -1]
 "j" = [1, 0]
 "k" = [-1, 0]
@@ -119,34 +160,34 @@ relative = false
 "," = [1, 1]
 "." = [1, 2]
 
-[keymaps.grounds]
+[input_mode.n.keymaps.grounds]
 "f" = "Foreground"
 "b" = "Background"
 
-[keymaps.axes]
+[input_mode.n.keymaps.axes]
 "x" = "X"
 "y" = "Y"
 
-[keymaps.rotation_directions]
+[input_mode.n.keymaps.rotation_directions]
 "k" = "Clockwise"
 "j" = "Counterclockwise"
 
-[keymaps.characters]
+[input_mode.n.keymaps.characters]
 "<C-u>-" = "—"
 "" = "Type"
 
-[keymaps.bools]
+[input_mode.n.keymaps.bools]
 "f" = false
 "t" = true
 "n" = false
 " " = true
 
-[keymaps.word_boundary_types]
+[input_mode.n.keymaps.word_boundary_types]
 "a" = "ANY"
 "s" = "START"
 "e" = "END"
 
-[keymaps.colors]
+[input_mode.n.keymaps.colors]
 " " = "Reset"
 "b" = "Black"
 "r" = "Red"
@@ -166,40 +207,39 @@ relative = false
 "W" = "White"
 # "s" = { Slot = "s" }
 
-[keymaps.color_or_slots]
+[input_mode.n.keymaps.color_or_slots]
 "s" = { Slot = "FromKeystrokes" }
 "" = [
     { Color = "FromKeystrokes" },
     { Slot = "FromKeystrokes" },
 ]
 
-[keymaps.test]
+[input_mode.n.keymaps.test]
 "h" = { a = "FromKeystrokes" }
 
-[keymaps.color_or_slot_specifications]
+[input_mode.n.keymaps.color_or_slot_specifications]
 "" = { Specific = "FromKeystrokes" }
 
-[keymaps.color_picker_target_motions]
+[input_mode.n.keymaps.color_picker_target_motions]
 "" = { ground = "Foreground" }
 
-[keymaps.color_picker_targets]
-"f" = { Motion = { ground = "Foreground" }}
-"b" = { Motion = { ground = "Background" }}
+[input_mode.n.keymaps.color_picker_targets]
 " " = { ColorOrSlot = "Active" }
 "" = [
-    { ColorOrSlot = "FromKeystrokes" }
+    { Motion = {} },
+    { ColorOrSlot = "FromKeystrokes" },
 ]
 
-[keymaps.canvas_iteration_jumps]
+[input_mode.n.keymaps.canvas_iteration_jumps]
 # "d" = "Diagonals"
 "s" = "DirectionAsStride"
 
-[keymaps.update_selection_operators]
+[input_mode.n.keymaps.update_selection_operators]
 "a" = "Add"
 "s" = "Overwrite"
 "z" = "Subtract"
 
-[keymaps.cell_content_types]
+[input_mode.n.keymaps.cell_content_types]
 "n" = "NONE"
 "a" = "ALL"
 "t" = "TEXT"
@@ -211,16 +251,17 @@ relative = false
 "C" = "COLOR | TEXT"
 "m" = "MODIFIERS"
 
-[keymaps.continuous_region_relative_types]
+[input_mode.n.keymaps.continuous_region_relative_types]
 "w" = { NonBlank = "TEXT" }
+"s" = { Same = "TEXT" }
 # "W" = { NonBlank = {} }
 
-[keymaps.keymap_u32]
-[keymaps.selection_slot_specifications]
-[keymaps.selection_specifications]
+[input_mode.n.keymaps.keymap_u32]
+[input_mode.n.keymaps.selection_slot_specifications]
+[input_mode.n.keymaps.selection_specifications]
 "s" = { Slot = "FromKeystrokes" }
 "" = [
     { Motion = "FromKeystrokes" },
 ]
 
-[keymaps.yank_slot_specifications]
+[input_mode.n.keymaps.yank_slot_specifications]

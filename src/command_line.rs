@@ -1,3 +1,4 @@
+use crate::input_mode::InputMode;
 use ratatui::prelude::{Buffer, Constraint, Direction, Layout, Rect};
 use ratatui::style::Style;
 
@@ -6,7 +7,7 @@ use tui_textarea::{CursorMove, TextArea};
 
 use crate::actions::session::{ForceQuit, LossySave, LossySaveAs, Quit, Save, SaveAs, SaveQuit};
 use crate::actions::{Action, FallibleAction};
-use crate::{InputMode, ProgramState, ResultCustom};
+use crate::{ProgramState, ResultCustom};
 
 #[derive(Clone)]
 pub struct CommandLine<'a> {
@@ -107,7 +108,7 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
     };
     match result {
         Ok(()) => {
-            program_state.input_mode = InputMode::Normal;
+            program_state.input_mode = InputMode::standard(program_state);
             Ok(())
         }
         Err(feedback) => {

@@ -7,6 +7,7 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::color_picker::target::ColorPickerTargetEnum;
 use crate::color_picker::target::ColorPickerTargetMotion;
+use crate::config::ConfigInputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::motions::MotionEnum;
@@ -14,6 +15,7 @@ use crate::motions::MotionRepeat;
 use crate::motions::MotionRepeatEnum;
 use crate::operators::OperatorEnum;
 use crate::operators::UpdateSelectionOperator;
+use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
 use crate::selections::SelectionSpecification;
 use crate::yank_slots::YankSlotSpecification;
@@ -25,32 +27,51 @@ use crate::RotationDirection;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 use keystrokes_parsing::from_keystrokes_by_preset_keymap;
+use keystrokes_parsing::from_keystrokes_by_source_iterator;
 use keystrokes_parsing::FromKeystrokes;
+use keystrokes_parsing::FromKeystrokesBy;
 use keystrokes_parsing::FromKeystrokesError;
 use keystrokes_parsing::Keymap;
 use keystrokes_parsing::KeystrokeIterator;
 use keystrokes_parsing::Presetable;
 use ratatui::style::Color;
-// use keystrokes_parsing::PresetDerive;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+
+pub mod base_keymaps_iter;
 
 macro_rules! keymaps {
     {$($ident:ident : $type:ty,)*} => {
         #[derive(Clone, Debug, Deserialize)]
         pub struct Keymaps {
             $(
-                pub $ident: Keymap<<$type as Presetable<ProgramState>>::Preset>,
+                pub $ident: Option<Keymap<<$type as Presetable<ProgramState>>::Preset>>,
             )*
         }
         $(
+            impl FromKeystrokesBy<&Keymaps, ProgramState> for $type {
+                fn from_keystrokes_by(
+                    keymaps: &Keymaps,
+                    keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+                    config: &ProgramState,
+                ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
+                    let Some(keymap) = &keymaps.$ident else {
+                        return Err(FromKeystrokesError::Invalid);
+                    };
+                    from_keystrokes_by_preset_keymap(
+                        keymap,
+                        keystrokes,
+                        config,
+                    )
+                }
+            }
             impl FromKeystrokes<ProgramState> for $type {
                 fn from_keystrokes(
                     keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
                     config: &ProgramState
                 ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
-                    from_keystrokes_by_preset_keymap(
-                        &config.config.keymaps.$ident,
+                    from_keystrokes_by_source_iterator(
+                        base_keymaps_iter::BaseKeymapsIter::new(config),
                         keystrokes,
                         config,
                     )
@@ -89,7 +110,7 @@ keymaps! {
     actions: ActionEnum,
     action_repeats: ActionRepeat,
     actions_repeatable: ActionRepeatableEnum,
-
+    selections: Selection,
 }
 
 macro_rules! impl_presetable_by_self {
@@ -117,6 +138,7 @@ impl_presetable_by_self!(RotationDirection);
 impl_presetable_by_self!(Color);
 impl_presetable_by_self!(YankSlotSpecification);
 impl_presetable_by_self!(UpdateSelectionOperator);
+impl_presetable_by_self!(Selection);
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum CharKeymapEntry {

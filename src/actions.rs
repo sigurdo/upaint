@@ -7,6 +7,7 @@ use crate::color_picker::target::ColorPickerTargetEnum;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
 use crate::config::load_config;
+use crate::input_mode::InputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::keystrokes::Count;
@@ -23,7 +24,6 @@ use crate::yank_slots::YankSlotSpecification;
 use crate::Axis;
 use crate::DirectionFree;
 use crate::Ground;
-use crate::InputMode;
 use crate::ProgramState;
 use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::FromKeystrokes;
@@ -70,8 +70,11 @@ pub enum ActionEnum {
     OperationMotionFirst(OperationMotionFirst),
     ModeCommand(ModeCommand),
     ModeInsert(ModeInsert),
+    InsertCharMoveCursor(InsertCharMoveCursor),
+    SetCursorPositionIterator(SetCursorPositionIterator),
     ModeColorPicker(ModeColorPicker),
     ModeVisualRect(ModeVisualRect),
+    VisualRectSwapCorners(VisualRectSwapCorners),
     HighlightSelection(HighlightSelection),
     HighlightSelectionClear(HighlightSelectionClear),
     SetSelectionActive(SetSelectionActive),
@@ -168,6 +171,13 @@ impl Action for MoveCursor {
             return;
         };
         program_state.cursor_position = *cursor_to;
+        if let Some(it) = &mut program_state.cursor_position_iterator {
+            // TODO: flytte it til den nye posisjonen
+            //itkdjkfjdks
+        }
+        if let Some((index_a, _)) = &mut program_state.visual_rect {
+            *index_a = *cursor_to;
+        }
         let (rows_away, columns_away) = program_state
             .canvas_visible
             .away_index(program_state.cursor_position);
@@ -177,15 +187,31 @@ impl Action for MoveCursor {
         program_state.canvas_visible.column += columns_away;
     }
 }
+fn fn_true() -> bool {
+    true
+}
+fn fn_false() -> bool {
+    false
+}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct Operation {
     pub operator: OperatorEnum,
     pub motion: MotionEnum,
+    #[presetable(required, default = "fn_true")]
+    pub clear_visual_rect: bool,
+    #[presetable(required, default = "fn_false")]
+    pub return_to_standard_mode: bool,
 }
 impl Action for Operation {
     fn execute(&self, program_state: &mut ProgramState) {
         let cells = self.motion.cells(program_state);
+        if self.clear_visual_rect {
+            program_state.visual_rect = None;
+        }
+        if self.return_to_standard_mode {
+            program_state.input_mode = InputMode::standard(program_state);
+        }
         self.operator.operate(&cells, program_state);
     }
 }
@@ -194,21 +220,32 @@ impl Action for Operation {
 pub struct OperationMotionFirst {
     pub motion: MotionEnum,
     pub operator: OperatorEnum,
+    #[presetable(required, default = "fn_true")]
+    pub clear_visual_rect: bool,
+    #[presetable(required, default = "fn_false")]
+    pub return_to_standard_mode: bool,
 }
 impl Action for OperationMotionFirst {
     fn execute(&self, program_state: &mut ProgramState) {
-        let cells = self.motion.cells(program_state);
-        self.operator.operate(&cells, program_state);
+        Operation {
+            operator: self.operator.clone(),
+            motion: self.motion.clone(),
+            clear_visual_rect: self.clear_visual_rect,
+            return_to_standard_mode: self.return_to_standard_mode,
+        }
+        .execute(program_state);
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeCommand {}
+pub struct ModeCommand {
+    pub mode: InputMode,
+}
 impl Action for ModeCommand {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.command_line =
             create_command_line_textarea(program_state.config.color_theme.command_line.into());
-        program_state.input_mode = InputMode::Command;
+        program_state.input_mode = self.mode.clone();
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -216,22 +253,66 @@ impl Action for ModeCommand {
 pub struct ModeInsert {
     pub jump: CanvasIterationJump,
     pub direction: DirectionFree,
+    pub mode: InputMode,
 }
 impl Action for ModeInsert {
     fn execute(&self, program_state: &mut ProgramState) {
-        let mut canvas_it = CanvasIndexIteratorInfinite::new(
+        SetCursorPositionIterator {
+            direction: self.direction,
+            jump: self.jump,
+        }
+        .execute(program_state);
+        program_state.input_mode = self.mode.clone();
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct SetCursorPositionIterator {
+    pub direction: DirectionFree,
+    pub jump: CanvasIterationJump,
+}
+impl Action for SetCursorPositionIterator {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let mut it = CanvasIndexIteratorInfinite::new(
             program_state.cursor_position,
             self.direction,
             self.jump,
         );
-        canvas_it.go_forward();
-        program_state.input_mode = InputMode::Insert(canvas_it);
+        it.go_forward();
+        program_state.cursor_position_iterator = Some(it);
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct InsertCharMoveCursor {
+    pub ch: char,
+}
+impl Action for InsertCharMoveCursor {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.canvas.stage(CanvasModification::SetCharacter(
+            program_state.cursor_position,
+            self.ch,
+        ));
+        // I think this is obsolete
+        program_state.cursor_position_previous = Some(program_state.cursor_position);
+        if let Some(it) = &mut program_state.cursor_position_iterator {
+            program_state.cursor_position = it.go_forward();
+        }
+        let away = program_state
+            .canvas_visible
+            .away_index(program_state.cursor_position);
+        program_state.focus_position.0 += away.0;
+        program_state.focus_position.1 += away.1;
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ModeColorPicker {
     pub target: ColorPickerTargetEnum,
+    pub mode: InputMode,
 }
 impl Action for ModeColorPicker {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -239,18 +320,35 @@ impl Action for ModeColorPicker {
         // TODO: Generere en fornuftig tittel
         let title = "".to_string();
         program_state.color_picker = ColorPicker::new(title, Some(initial_color));
-        program_state.input_mode = InputMode::ColorPicker(self.target.clone());
+        program_state.color_picker_target = self.target.clone();
+        program_state.input_mode = self.mode.clone();
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeVisualRect {}
+pub struct ModeVisualRect {
+    pub mode: InputMode,
+}
 impl Action for ModeVisualRect {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.input_mode =
-            InputMode::VisualRect((program_state.cursor_position, program_state.cursor_position));
+        program_state.input_mode = self.mode.clone();
+        program_state.visual_rect =
+            Some((program_state.cursor_position, program_state.cursor_position));
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct VisualRectSwapCorners {}
+impl Action for VisualRectSwapCorners {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some((index_a, index_b)) = &mut program_state.visual_rect {
+            std::mem::swap(index_a, index_b);
+            program_state.cursor_position = *index_a;
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct HighlightSelection {

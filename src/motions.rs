@@ -6,9 +6,11 @@ use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
+use crate::canvas::rect::CanvasRect;
 use crate::canvas::CanvasIndex;
 use crate::config::keymaps::UnsignedIntegerKeymapEntry;
 use crate::keystrokes::Count;
+use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::ProgramState;
@@ -27,6 +29,8 @@ pub trait Motion: Debug {
 pub enum MotionEnum {
     Stay(Stay),
     SelectionMotion(SelectionMotion),
+    SelectionDirectMotion(SelectionDirectMotion),
+    VisualRectMotion(VisualRectMotion),
     GoToMark(GoToMark),
     MatchingCells(MatchingCells),
     ContinuousRegion(ContinuousRegion),
@@ -162,9 +166,34 @@ impl Motion for SelectionMotion {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let slot = self.slot.as_char(program_state);
         if let Some(selection) = program_state.selections.get(&slot) {
-            selection.iter().copied().collect()
+            selection.cells(program_state)
         } else {
             Vec::new()
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct SelectionDirectMotion {
+    pub selection: Selection,
+}
+impl Motion for SelectionDirectMotion {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        self.selection.cells(program_state)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct VisualRectMotion {}
+impl Motion for VisualRectMotion {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        if let Some((index_a, index_b)) = program_state.visual_rect {
+            let rect = CanvasRect::from_corners((index_a, index_b));
+            rect.indices_contained()
+        } else {
+            vec![]
         }
     }
 }

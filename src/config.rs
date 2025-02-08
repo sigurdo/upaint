@@ -1,8 +1,11 @@
 use crate::canvas::raw::transform::CharacterSwapMap;
+use crate::input_mode::InputMode;
+use crate::input_mode::InputModeHandler;
 use derive_more::Display;
 use derive_more::From;
 use derive_more::Into;
 use nestify::nest;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use serde::Deserialize;
@@ -80,14 +83,24 @@ nest! {
             pub input_mode: StyleConfig,
             pub user_feedback: StyleConfig,
         },
-        pub keymaps: Keymaps,
         pub character_mirrors: #[derive(Clone, Debug, Deserialize)] pub struct ConfigCharacterMirrors {
             pub x: CharacterSwapMap,
             pub y: CharacterSwapMap,
         },
         pub autoreload_config: bool,
         pub message_popup_suppress_keystroke: bool,
+        pub input_mode: HashMap<InputMode, ConfigInputMode>,
+        pub input_mode_initial: InputMode,
+        pub input_mode_standard: InputMode,
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ConfigInputMode {
+    pub keymaps: Keymaps,
+    // Values are keys for config.input_mode hashmap
+    pub base_keymaps: Vec<InputMode>,
+    pub handler: InputModeHandler,
 }
 
 impl TomlValue for Keymaps {

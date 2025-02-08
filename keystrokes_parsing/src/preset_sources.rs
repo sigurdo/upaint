@@ -1,4 +1,4 @@
-use crate::{FromKeystrokesError, KeystrokeIterator, Presetable};
+use crate::{FromKeystrokesBy, FromKeystrokesError, KeystrokeIterator, Presetable};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
@@ -26,15 +26,15 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for PresetSources<T> {
     }
 }
 
-pub fn from_keystrokes_by_preset_sources<P, Config, C: Presetable<Config, Preset = P>>(
-    sources: PresetSources<P>,
+pub fn from_keystrokes_by_source_iterator<Config, T, C: FromKeystrokesBy<T, Config>>(
+    sources: impl Iterator<Item = T>,
     keystrokes: &mut KeystrokeIterator,
     config: &Config,
 ) -> Result<C, FromKeystrokesError> {
     let mut error = FromKeystrokesError::Invalid;
-    for preset in sources.0 {
+    for preset in sources {
         let mut keystrokes_cloned = keystrokes.clone();
-        match C::from_keystrokes_by_preset(preset, &mut keystrokes_cloned, config) {
+        match C::from_keystrokes_by(preset, &mut keystrokes_cloned, config) {
             Ok(value) => {
                 *keystrokes = keystrokes_cloned;
                 return Ok(value);
@@ -48,4 +48,12 @@ pub fn from_keystrokes_by_preset_sources<P, Config, C: Presetable<Config, Preset
         }
     }
     return Err(error);
+}
+
+pub fn from_keystrokes_by_preset_sources<P, Config, C: Presetable<Config, Preset = P>>(
+    sources: PresetSources<P>,
+    keystrokes: &mut KeystrokeIterator,
+    config: &Config,
+) -> Result<C, FromKeystrokesError> {
+    from_keystrokes_by_source_iterator(sources.0.into_iter(), keystrokes, config)
 }

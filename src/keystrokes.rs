@@ -31,9 +31,10 @@ impl Default for ColorOrSlot {
         Self::Slot('a')
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub enum ColorOrSlotSpecification {
+    #[default]
     Active,
     #[serde(untagged)]
     Specific(ColorOrSlot),

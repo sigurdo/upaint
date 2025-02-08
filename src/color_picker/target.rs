@@ -21,12 +21,19 @@ pub enum ColorPickerTargetEnum {
     ColorOrSlot(ColorOrSlotSpecification),
 }
 
+impl Default for ColorPickerTargetEnum {
+    fn default() -> Self {
+        Self::ColorOrSlot(ColorOrSlotSpecification::default())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ColorPickerTargetMotion {
-    motion: MotionEnum,
-    ground: Ground,
+    pub ground: Ground,
+    pub motion: MotionEnum,
 }
+
 impl ColorPickerTarget for ColorPickerTargetMotion {
     fn set_color(&self, color: Color, program_state: &mut ProgramState) {
         program_state.canvas.clear_staged();

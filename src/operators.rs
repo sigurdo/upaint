@@ -1,9 +1,16 @@
+use crate::actions::Action;
+use crate::actions::ModeColorPicker;
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
 use crate::canvas::CanvasModification;
+use crate::color_picker::target::ColorPickerTargetEnum;
+use crate::color_picker::target::ColorPickerTargetMotion;
+use crate::input_mode::InputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
+use crate::motions::MotionEnum;
+use crate::motions::SelectionDirectMotion;
 use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
 use crate::yank_slots::YankSlotSpecification;
@@ -27,6 +34,7 @@ pub enum OperatorEnum {
     UpdateSelection(UpdateSelection),
     Yank(Yank),
     Cut(Cut),
+    ColorPickerOperator(ColorPickerOperator),
 }
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -153,5 +161,25 @@ impl Operator for Cut {
             canvas_operations.push(CanvasModification::SetCell(*index, CanvasCell::default()));
         }
         program_state.canvas.create_commit(canvas_operations);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct ColorPickerOperator {
+    pub ground: Ground,
+    pub mode: InputMode,
+}
+impl Operator for ColorPickerOperator {
+    fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
+        ModeColorPicker {
+            target: ColorPickerTargetEnum::Motion(ColorPickerTargetMotion {
+                ground: self.ground,
+                motion: MotionEnum::SelectionDirectMotion(SelectionDirectMotion {
+                    selection: cell_indices.iter().cloned().collect(),
+                }),
+            }),
+            mode: self.mode.clone(),
+        }
+        .execute(program_state);
     }
 }

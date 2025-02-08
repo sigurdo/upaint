@@ -308,6 +308,17 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                     }
                 }
             };
+            let impl_from_keystrokes_by_preset_keymap = quote! {
+                impl ::#ident_crate::FromKeystrokesBy<&::#ident_crate::Keymap<#ident_preset>, #ident_config> for #ident {
+                    fn from_keystrokes_by(
+                        by: &#ident_crate::Keymap<#ident_preset>,
+                        keystrokes: &mut ::#ident_crate::KeystrokeIterator,
+                        config: &#ident_config,
+                    ) -> Result<Self, ::#ident_crate::FromKeystrokesError> {
+                        ::#ident_crate::from_keystrokes_by_preset_keymap(by, keystrokes, config)
+                    }
+                }
+            };
             let semicolon = if let Fields::Unnamed(_) = fields {
                 quote! { ; }
             } else {
@@ -317,6 +328,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::serde::Serialize, ::serde::Deserialize)]
                 #vis struct #fields_presetified #semicolon
                 #impl_from_preset
+                #impl_from_keystrokes_by_preset_keymap
             };
             result
         }

@@ -1,21 +1,14 @@
 use crate::actions::ActionEnum;
 use crate::color_picker::target::ColorPickerTarget;
+use crate::input_mode::InputMode;
+use crate::input_mode::InputModeHandlerTrait;
 use crate::ColorPickerTargetEnum;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
 use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
 
-use crate::{
-    actions::Action, command_line::execute_command, InputMode, ProgramState,
-    ResultCustom,
-};
+use crate::{actions::Action, command_line::execute_command, ProgramState, ResultCustom};
 use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};
-
-mod insert_mode;
-mod visual_rect;
-
-use insert_mode::handle_user_input_insert_mode;
-use visual_rect::handle_user_input_visual_rect;
 
 pub fn handle_user_input_command_mode(
     event: Event,
@@ -49,7 +42,7 @@ pub fn handle_user_input_command_mode(
     Ok(())
 }
 
-pub fn handle_user_input_normal_mode(
+pub fn handle_user_input_action(
     event: Event,
     program_state: &mut ProgramState,
 ) -> ResultCustom<()> {
@@ -89,7 +82,7 @@ pub fn handle_user_input_normal_mode(
     Ok(())
 }
 
-fn handle_user_input_color_picker(
+pub fn handle_user_input_color_picker(
     event: Event,
     program_state: &mut ProgramState,
     target: &ColorPickerTargetEnum,
@@ -99,19 +92,19 @@ fn handle_user_input_color_picker(
             KeyCode::Enter => {
                 target.set_color(program_state.color_picker.get_color(), program_state);
                 program_state.canvas.commit_staged();
-                program_state.input_mode = InputMode::Normal;
+                program_state.input_mode = InputMode::standard(program_state);
             }
             KeyCode::Delete | KeyCode::Backspace => {
                 // TODO:
                 // program_state.color_slots.remove(&slot);
                 target.set_color(program_state.color_picker.get_color(), program_state);
                 program_state.canvas.clear_staged();
-                program_state.input_mode = InputMode::Normal;
+                program_state.input_mode = InputMode::standard(program_state);
             }
             KeyCode::Char('r') => {
                 target.set_color(Color::Reset, program_state);
                 program_state.canvas.commit_staged();
-                program_state.input_mode = InputMode::Normal;
+                program_state.input_mode = InputMode::standard(program_state);
             }
             _ => {
                 program_state.color_picker.input(event);
@@ -189,7 +182,8 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
             } => {
                 program_state.canvas.commit_staged();
                 program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
-                program_state.input_mode = InputMode::Normal;
+                program_state.input_mode = InputMode::standard(program_state);
+                program_state.visual_rect = None;
                 program_state.new_messages.clear();
                 return Ok(());
             }
@@ -206,15 +200,8 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
         }
     }
 
-    // Dispatch
-    match program_state.input_mode {
-        InputMode::Normal => handle_user_input_normal_mode(event, program_state),
-        InputMode::Command => handle_user_input_command_mode(event, program_state),
-        InputMode::Insert(_) => handle_user_input_insert_mode(event, program_state),
-        InputMode::VisualRect(_) => handle_user_input_visual_rect(event, program_state),
-        InputMode::ColorPicker(ref target) => {
-            let target = target.clone();
-            handle_user_input_color_picker(event, program_state, &target)
-        }
-    }
+    program_state
+        .input_mode
+        .clone()
+        .handle_input(event, program_state)
 }

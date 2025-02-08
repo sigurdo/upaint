@@ -34,6 +34,7 @@ impl<'a> Widget for StatusBar<'a> {
             .constraints(
                 [
                     Constraint::Min(16),                // Open file
+                    Constraint::Max(8),                 // Input mode
                     Constraint::Max(8),                 // Input sequence
                     Constraint::Max(2),                 // Yank active
                     Constraint::Max(3),                 // Selection active
@@ -57,6 +58,8 @@ impl<'a> Widget for StatusBar<'a> {
         let base_style = self.program_state.config.color_theme.status_bar;
         let open_file =
             Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])]).style(base_style);
+
+        let input_mode = Paragraph::new(&self.program_state.input_mode).style(base_style);
 
         let input_sequence = Paragraph::new(vec![Line::from(vec![Span::raw(
             self.program_state.keystroke_sequence_incomplete.to_string(),
@@ -114,10 +117,11 @@ impl<'a> Widget for StatusBar<'a> {
             Paragraph::new(vec![Line::from(vec![Span::raw(cursor_index)])]).style(base_style);
 
         open_file.render(chunks[0], buf);
-        input_sequence.render(chunks[1], buf);
-        yank_active.render(chunks[2], buf);
-        selection_active.render(chunks[3], buf);
-        color_or_slot_active.render(chunks[4], buf);
-        cursor_index.render(chunks[5], buf);
+        input_mode.render(chunks[1], buf);
+        input_sequence.render(chunks[2], buf);
+        yank_active.render(chunks[3], buf);
+        selection_active.render(chunks[4], buf);
+        color_or_slot_active.render(chunks[5], buf);
+        cursor_index.render(chunks[6], buf);
     }
 }

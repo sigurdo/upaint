@@ -9,6 +9,12 @@ use std::collections::HashSet;
 
 pub type Selection = HashSet<CanvasIndex>;
 
+impl Motion for Selection {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        self.iter().copied().collect()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
 #[presetable(preset_type = "Self", config_type = "ProgramState")]
 pub enum SelectionSlotSpecification {

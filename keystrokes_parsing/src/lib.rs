@@ -15,7 +15,9 @@ pub use keystroke::Keystroke;
 pub use keystroke::KeystrokeIterator;
 pub use keystroke::KeystrokeSequence;
 pub use keystrokes_parsing_derive::Presetable;
-pub use preset_sources::{from_keystrokes_by_preset_sources, PresetSources};
+pub use preset_sources::{
+    from_keystrokes_by_preset_sources, from_keystrokes_by_source_iterator, PresetSources,
+};
 pub use preset_struct_field::{from_keystrokes_by_preset_struct_field, PresetStructField};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,6 +40,24 @@ pub trait Presetable<Config>: Sized {
         keystrokes: &mut KeystrokeIterator,
         config: &Config,
     ) -> Result<Self, FromKeystrokesError>;
+}
+
+pub trait FromKeystrokesBy<T, Config>: Sized {
+    fn from_keystrokes_by(
+        by: T,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, FromKeystrokesError>;
+}
+
+impl<Config, T: Sized + Presetable<Config>> FromKeystrokesBy<T::Preset, Config> for T {
+    fn from_keystrokes_by(
+        by: T::Preset,
+        keystrokes: &mut KeystrokeIterator,
+        config: &Config,
+    ) -> Result<Self, FromKeystrokesError> {
+        Self::from_keystrokes_by_preset(by, keystrokes, config)
+    }
 }
 
 impl<Config, T: Sized + Presetable<Config>> Presetable<Config> for Option<T> {
