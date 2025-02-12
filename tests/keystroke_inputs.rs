@@ -134,6 +134,8 @@ pub fn test() {
                     jump: CanvasIterationJump::DirectionAsStride,
                 }),
             }),
+            clear_visual_rect: true,
+            return_to_standard_mode: false,
         }),
     );
 }

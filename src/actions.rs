@@ -71,6 +71,7 @@ pub enum ActionEnum {
     ModeCommand(ModeCommand),
     ModeInsert(ModeInsert),
     InsertCharMoveCursor(InsertCharMoveCursor),
+    MoveCursorBackInsertChar(MoveCursorBackInsertChar),
     SetCursorPositionIterator(SetCursorPositionIterator),
     ModeColorPicker(ModeColorPicker),
     ModeVisualRect(ModeVisualRect),
@@ -172,8 +173,7 @@ impl Action for MoveCursor {
         };
         program_state.cursor_position = *cursor_to;
         if let Some(it) = &mut program_state.cursor_position_iterator {
-            // TODO: flytte it til den nye posisjonen
-            //itkdjkfjdks
+            it.tracer.index = *cursor_to;
         }
         if let Some((index_a, _)) = &mut program_state.visual_rect {
             *index_a = *cursor_to;
@@ -274,12 +274,11 @@ pub struct SetCursorPositionIterator {
 }
 impl Action for SetCursorPositionIterator {
     fn execute(&self, program_state: &mut ProgramState) {
-        let mut it = CanvasIndexIteratorInfinite::new(
+        let it = CanvasIndexIteratorInfinite::new(
             program_state.cursor_position,
             self.direction,
             self.jump,
         );
-        it.go_forward();
         program_state.cursor_position_iterator = Some(it);
     }
 }
@@ -308,6 +307,30 @@ impl Action for InsertCharMoveCursor {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct MoveCursorBackInsertChar {
+    ch: char,
+}
+impl Action for MoveCursorBackInsertChar {
+    fn execute(&self, program_state: &mut ProgramState) {
+        // I think this is obsolete
+        program_state.cursor_position_previous = Some(program_state.cursor_position);
+        if let Some(it) = &mut program_state.cursor_position_iterator {
+            program_state.cursor_position = it.go_backward();
+        }
+        let away = program_state
+            .canvas_visible
+            .away_index(program_state.cursor_position);
+        program_state.focus_position.0 += away.0;
+        program_state.focus_position.1 += away.1;
+
+        program_state.canvas.stage(CanvasModification::SetCharacter(
+            program_state.cursor_position,
+            self.ch,
+        ));
+    }
+}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ModeColorPicker {
