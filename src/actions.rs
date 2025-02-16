@@ -32,6 +32,7 @@ use keystrokes_parsing::KeystrokeSequence;
 use keystrokes_parsing::Presetable;
 use std::fmt::Debug;
 
+pub mod change_focus;
 pub mod session;
 
 #[enum_dispatch]
@@ -92,6 +93,7 @@ pub enum ActionEnum {
     LossySave(session::LossySave),
     SaveQuit(session::SaveQuit),
     ReloadConfig(ReloadConfig),
+    ChangeFocus(change_focus::ChangeFocus),
 }
 
 #[enum_dispatch(Action)]

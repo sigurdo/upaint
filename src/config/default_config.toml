@@ -90,6 +90,11 @@ base_keymaps = ["i"]
 "q" = { MacroRecordingStartStop = {} }
 "gm" = { MirrorYank = { slot = "Active" }}
 "<F5>" = { ReloadConfig = {} }
+"zz" = { ChangeFocus = { type_horizontal = "Center", type_vertical = "Center" }}
+"zl" = { ChangeFocus = { type_horizontal = { Start = 0 }}}
+"zh" = { ChangeFocus = { type_horizontal = { End = 0 }}}
+"zj" = { ChangeFocus = { type_vertical = { Start = 0 }}}
+"zk" = { ChangeFocus = { type_vertical = { End = 0 }}}
 "" = [
     { Repeat = {}},
     { Operation = {}},
