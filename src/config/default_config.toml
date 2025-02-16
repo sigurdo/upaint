@@ -90,10 +90,6 @@ base_keymaps = ["i"]
 "q" = { MacroRecordingStartStop = {} }
 "gm" = { MirrorYank = { slot = "Active" }}
 "<F5>" = { ReloadConfig = {} }
-"<Up>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [-1, 0], jump = "DirectionAsStride" }}}}}}
-"<Down>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [1, 0], jump = "DirectionAsStride" }}}}}}
-"<Right>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [0, 1], jump = "DirectionAsStride" }}}}}}
-"<Left>" = { MoveCursor =  { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = [0, -1], jump = "DirectionAsStride" }}}}}}
 "" = [
     { Repeat = {}},
     { Operation = {}},
@@ -271,3 +267,4 @@ base_keymaps = ["i"]
 ]
 
 [input_mode.n.keymaps.yank_slot_specifications]
+"" = { Specific = "FromKeystrokes" }

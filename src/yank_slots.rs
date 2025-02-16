@@ -1,8 +1,10 @@
 use crate::ProgramState;
+use keystrokes_parsing::Presetable;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub enum YankSlotSpecification {
     Active,
     Specific(char),

@@ -136,7 +136,6 @@ impl_presetable_by_self!(Ground);
 impl_presetable_by_self!(Axis);
 impl_presetable_by_self!(RotationDirection);
 impl_presetable_by_self!(Color);
-impl_presetable_by_self!(YankSlotSpecification);
 impl_presetable_by_self!(UpdateSelectionOperator);
 impl_presetable_by_self!(Selection);
 
