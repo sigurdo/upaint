@@ -77,6 +77,7 @@ pub fn test() {
                 let mut result = $expected;
                 let mut program_state = ProgramState::default();
                 program_state.config = config.clone();
+                program_state.input_mode = program_state.config.input_mode_initial.clone();
                 result = <_>::from_keystrokes(
                     &mut KeystrokeSequence::try_from($keystrokes.to_string())
                         .unwrap()
