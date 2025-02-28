@@ -8,14 +8,12 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::rect::CanvasRect;
 use crate::canvas::CanvasIndex;
-use crate::config::keymaps::UnsignedIntegerKeymapEntry;
 use crate::keystrokes::Count;
 use crate::selections::Selection;
 use crate::selections::SelectionSlotSpecification;
 use crate::DirectionFree;
 use crate::ProgramState;
 use enum_dispatch::enum_dispatch;
-use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use std::fmt::Debug;
 

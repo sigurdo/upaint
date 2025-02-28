@@ -7,7 +7,6 @@ use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::color_picker::target::ColorPickerTargetEnum;
 use crate::color_picker::target::ColorPickerTargetMotion;
-use crate::config::ConfigInputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::motions::MotionEnum;

@@ -3,31 +3,12 @@ use crate::Ground;
 use derive_more::IntoIterator;
 use ratatui::style::{Color, Modifier};
 use std::collections::BTreeMap;
-use std::mem::ManuallyDrop;
 
 use crate::canvas::raw::CanvasIndex;
 
 use super::yank::CanvasYank;
 use super::Canvas;
 use super::CanvasCell;
-
-union CanvasDiffSerialUnit {
-    control: ManuallyDrop<CanvasDiffSerialControl>,
-    index: (i16, i16),
-    ch: Option<char>,
-    color: Option<Color>,
-    modifier: Option<Modifier>,
-}
-
-enum CanvasDiffSerialControl {
-    Index,
-    Character,
-    Fg,
-    Bg,
-    Modifier,
-}
-
-struct CanvasDiffSerial2(Vec<CanvasDiffUnit>);
 
 #[derive(Debug, Clone, Default)]
 pub struct CanvasDiffUnit {

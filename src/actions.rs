@@ -25,7 +25,6 @@ use crate::Axis;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
-use core::error::Error;
 use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
