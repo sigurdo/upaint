@@ -1,5 +1,3 @@
-use crate::config::ErrorConfigInvalid;
-use crate::config::ErrorLoadConfig;
 use derive_more::From;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
@@ -9,7 +7,6 @@ use std::fmt::Display;
 use tui_textarea::TextArea;
 
 pub mod actions;
-// pub mod adopt_new_keystroke_system;
 pub mod canvas;
 pub mod color_picker;
 pub mod command_line;
@@ -189,73 +186,5 @@ pub struct ProgramState {
 impl ProgramState {
     fn input_mode_config(&self) -> Option<&ConfigInputMode> {
         self.config.input_mode.get(&self.input_mode)
-    }
-}
-
-use std::{
-    io::{self},
-    sync::{
-        mpsc::{RecvError, SendError, TrySendError},
-        PoisonError,
-    },
-};
-
-#[derive(Debug, From)]
-pub enum ErrorCustom {
-    String(String),
-    IoError(io::Error),
-    FmtError(std::fmt::Error),
-    ConfigInvalid(ErrorConfigInvalid),
-}
-
-impl From<ErrorLoadConfig> for ErrorCustom {
-    fn from(value: ErrorLoadConfig) -> Self {
-        match value {
-            ErrorLoadConfig::Custom(value) => value,
-            ErrorLoadConfig::ConfigInvalid(value) => Self::ConfigInvalid(value),
-        }
-    }
-}
-
-impl Display for ErrorCustom {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let ErrorCustom::String(s) = self {
-            write!(f, "{}", s)?;
-        }
-        Ok(())
-    }
-}
-
-impl From<ErrorCustom> for String {
-    fn from(value: ErrorCustom) -> Self {
-        value.to_string()
-    }
-}
-
-pub type ResultCustom<T> = Result<T, ErrorCustom>;
-
-// It is a shame that I need to duplicate so much code to have a semi-generic way of creating a ErrorCustom for any error type.
-
-impl<T> From<PoisonError<T>> for ErrorCustom {
-    fn from(value: PoisonError<T>) -> Self {
-        ErrorCustom::String(value.to_string())
-    }
-}
-
-impl<T> From<SendError<T>> for ErrorCustom {
-    fn from(value: SendError<T>) -> Self {
-        ErrorCustom::String(value.to_string())
-    }
-}
-
-impl<T> From<TrySendError<T>> for ErrorCustom {
-    fn from(value: TrySendError<T>) -> Self {
-        ErrorCustom::String(value.to_string())
-    }
-}
-
-impl From<RecvError> for ErrorCustom {
-    fn from(value: RecvError) -> Self {
-        ErrorCustom::String(value.to_string())
     }
 }

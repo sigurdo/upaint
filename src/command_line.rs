@@ -7,7 +7,7 @@ use tui_textarea::{CursorMove, TextArea};
 
 use crate::actions::session::{ForceQuit, LossySave, LossySaveAs, Quit, Save, SaveAs, SaveQuit};
 use crate::actions::{Action, FallibleAction};
-use crate::{ProgramState, ResultCustom};
+use crate::ProgramState;
 
 #[derive(Clone)]
 pub struct CommandLine<'a> {
@@ -71,13 +71,13 @@ impl<'a> Widget for CommandLineWidget<'a> {
 }
 
 /// Executes the command stored in `program_state.command_line`
-pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
+pub fn execute_command(program_state: &mut ProgramState) -> anyhow::Result<()> {
     let command = program_state.command_line.lines().join("\n");
     let mut command_split = command.split_whitespace();
     let Some(command_name) = command_split.next() else {
         return Ok(());
     };
-    let result = match command_name {
+    let result: anyhow::Result<()> = match command_name {
         "q" => Quit {}.try_execute(program_state),
         "q!" => {
             ForceQuit {}.execute(program_state);
@@ -104,7 +104,7 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
             }
         }
         "x" | "wq" => SaveQuit {}.try_execute(program_state),
-        command => Err(format!("Command not found: {}", command)),
+        command => Err(anyhow::anyhow!("Command not found: {}", command)),
     };
     match result {
         Ok(()) => {
@@ -112,7 +112,7 @@ pub fn execute_command(program_state: &mut ProgramState) -> ResultCustom<()> {
             Ok(())
         }
         Err(feedback) => {
-            program_state.new_messages.push_back(feedback);
+            program_state.new_messages.push_back(feedback.to_string());
             Ok(())
         }
     }

@@ -3,7 +3,7 @@ use std::mem;
 
 use crate::canvas::raw::operations::CanvasDiff;
 use crate::canvas::raw::operations::CanvasDiffBuilder;
-use crate::{config::Config, file_formats::FileFormat, ErrorCustom, ResultCustom};
+use crate::{config::Config, file_formats::FileFormat};
 
 use super::raw::{
     ansi_import::AnsiImportError, operations::CanvasModification, rendering::CanvasWidget, Canvas,
@@ -101,11 +101,11 @@ impl VersionControlledCanvas {
         }
     }
 
-    pub fn export(&self, format: FileFormat) -> ResultCustom<String> {
+    pub fn export(&self, format: FileFormat) -> anyhow::Result<String> {
         self.current.export(format)
     }
 
-    pub fn export_lossy(&self, format: FileFormat) -> ResultCustom<String> {
+    pub fn export_lossy(&self, format: FileFormat) -> anyhow::Result<String> {
         self.current.export_lossy(format)
     }
 
@@ -113,7 +113,7 @@ impl VersionControlledCanvas {
         self.current.clean();
     }
 
-    pub fn from_ansi(ansi: String) -> ResultCustom<Self>
+    pub fn from_ansi(ansi: String) -> Result<Self, AnsiImportError>
     where
         Self: Sized,
     {
@@ -124,33 +124,7 @@ impl VersionControlledCanvas {
                 result.current = canvas;
                 Ok(result)
             }
-            Err(e) => match e {
-                AnsiImportError::IllegalCharacter((row, column)) => {
-                    Err(ErrorCustom::String(format!(
-                        "ANSI file contains an illegal character on line {row}, column {column}"
-                    )))
-                }
-                AnsiImportError::IllegalEscapeSequence((row, column)) => {
-                    Err(ErrorCustom::String(format!(
-                        "ANSI file contains an illegal escape sequence on line {row}, collumn {column}"
-                    )))
-                }
-                AnsiImportError::UnfinishedEscapeSequence((row, column)) => {
-                    Err(ErrorCustom::String(format!(
-                        "ANSI file contains an unfinished escape sequence on line {row}, collumn {column}"
-                    )))
-                }
-                AnsiImportError::BadSgrSequence((row, column)) => {
-                    Err(ErrorCustom::String(format!(
-                        "ANSI file contains a bad SGR escape sequence on line {row}, collumn {column}"
-                    )))
-                }
-                AnsiImportError::UnsupportedSgrSequence((row, column)) => {
-                    Err(ErrorCustom::String(format!(
-                        "ANSI file contains an unsupported SGR escape sequence on line {row}, collumn {column}"
-                    )))
-                }
-            },
+            Err(e) => Err(e),
         }
     }
 

@@ -5,9 +5,10 @@ use crossterm::{
     },
     Command,
 };
+use derive_more::{Display, Error};
 use ratatui::style::{Color, Modifier};
 
-use crate::{file_formats::FileFormat, ErrorCustom, ResultCustom};
+use crate::file_formats::FileFormat;
 
 use super::{Canvas, CanvasCell, CanvasIndex};
 
@@ -15,23 +16,23 @@ use super::{Canvas, CanvasCell, CanvasIndex};
 mod test;
 
 impl Canvas {
-    pub fn to_ansi(&self, reset_sgr_effects_at_start: bool) -> ResultCustom<String> {
-        fn reset_all_sgr_effects(result: &mut String) -> ResultCustom<()> {
+    pub fn to_ansi(&self, reset_sgr_effects_at_start: bool) -> anyhow::Result<String> {
+        fn reset_all_sgr_effects(result: &mut String) -> anyhow::Result<()> {
             ResetColor.write_ansi(result)?;
             Ok(())
         }
 
-        fn apply_fg(cell: &CanvasCell, result: &mut String) -> ResultCustom<()> {
+        fn apply_fg(cell: &CanvasCell, result: &mut String) -> anyhow::Result<()> {
             SetForegroundColor(CColor::from(cell.fg)).write_ansi(result)?;
             Ok(())
         }
 
-        fn apply_bg(cell: &CanvasCell, result: &mut String) -> ResultCustom<()> {
+        fn apply_bg(cell: &CanvasCell, result: &mut String) -> anyhow::Result<()> {
             SetBackgroundColor(CColor::from(cell.bg)).write_ansi(result)?;
             Ok(())
         }
 
-        fn apply_modifiers(cell: &CanvasCell, result: &mut String) -> ResultCustom<()> {
+        fn apply_modifiers(cell: &CanvasCell, result: &mut String) -> anyhow::Result<()> {
             if cell.modifiers.contains(Modifier::BOLD) {
                 SetAttribute(CAttribute::Bold).write_ansi(result)?;
             }
@@ -127,15 +128,16 @@ impl Canvas {
         Ok(result)
     }
 
-    pub fn export_ansi(&self) -> ResultCustom<String> {
+    pub fn export_ansi(&self) -> anyhow::Result<String> {
         self.to_ansi(true)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Display, Error)]
 pub enum TxtExportError {
-    CellHasSgrEffects(CanvasIndex),
-    Other(ErrorCustom),
+    #[display("cell has SGR effects at line {}, column {}", _0.0, _0.1)]
+    CellHasSgrEffects(#[error(ignore)] CanvasIndex),
+    Other(anyhow::Error),
 }
 
 impl From<TxtExportError> for String {
@@ -146,12 +148,6 @@ impl From<TxtExportError> for String {
             ),
             TxtExportError::Other(error) => error.to_string(),
         }
-    }
-}
-
-impl From<TxtExportError> for ErrorCustom {
-    fn from(value: TxtExportError) -> Self {
-        ErrorCustom::String(value.into())
     }
 }
 
@@ -168,7 +164,7 @@ impl Canvas {
         }
     }
 
-    pub fn export_txt_decolorize(&self) -> ResultCustom<String> {
+    pub fn export_txt_decolorize(&self) -> anyhow::Result<String> {
         let mut canvas = self.clone();
         for (_index, cell) in canvas.cells.iter_mut() {
             cell.fg = Color::Reset;
@@ -180,14 +176,14 @@ impl Canvas {
 }
 
 impl Canvas {
-    pub fn export(&self, format: FileFormat) -> ResultCustom<String> {
+    pub fn export(&self, format: FileFormat) -> anyhow::Result<String> {
         match format {
             FileFormat::Ansi => self.export_ansi(),
             FileFormat::Txt => Ok(self.export_txt_preserve()?),
         }
     }
 
-    pub fn export_lossy(&self, format: FileFormat) -> ResultCustom<String> {
+    pub fn export_lossy(&self, format: FileFormat) -> anyhow::Result<String> {
         match format {
             FileFormat::Ansi => self.export_ansi(),
             FileFormat::Txt => self.export_txt_decolorize(),

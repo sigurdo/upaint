@@ -26,6 +26,8 @@ derive_more = { version = "1.0.0", features = ["full"] }
 keystrokes_parsing = { path = "keystrokes_parsing" }
 nestify = "0.3.3"
 notify = { version = "6.1.1", features = ["serde"] }
+anyhow = "1.0.95"
+thiserror = "2"
 
 [[bin]]
 name = "upaint"

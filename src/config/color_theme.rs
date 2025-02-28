@@ -28,6 +28,14 @@ macro_rules! color_theme_presets {
     };
 }
 
+impl ColorThemePreset {
+    pub fn toml_table(&self) -> toml::Table {
+        self.toml_str()
+            .parse::<toml::Table>()
+            .expect("color preset contains invalid TOML syntax")
+    }
+}
+
 color_theme_presets!(
     Basic = "basic.toml",
     Monokai = "monokai.toml",

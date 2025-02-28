@@ -1,5 +1,4 @@
 use crate::ProgramState;
-use crate::ResultCustom;
 use crossterm::event::Event;
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
@@ -35,7 +34,7 @@ impl<'a> Into<Text<'a>> for &'a InputMode {
 }
 
 pub trait InputModeHandlerTrait {
-    fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> ResultCustom<()>;
+    fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> anyhow::Result<()>;
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize)]
@@ -47,7 +46,7 @@ pub enum InputModeHandler {
 }
 
 impl InputModeHandlerTrait for InputModeHandler {
-    fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> anyhow::Result<()> {
         match self {
             InputModeHandler::Action => {
                 crate::user_input::handle_user_input_action(event, program_state)
@@ -64,7 +63,7 @@ impl InputModeHandlerTrait for InputModeHandler {
 }
 
 impl InputModeHandlerTrait for InputMode {
-    fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+    fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> anyhow::Result<()> {
         if let Some(config) = program_state
             .config
             .input_mode

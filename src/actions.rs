@@ -25,6 +25,7 @@ use crate::Axis;
 use crate::DirectionFree;
 use crate::Ground;
 use crate::ProgramState;
+use core::error::Error;
 use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
@@ -41,7 +42,7 @@ pub trait Action: std::fmt::Debug {
 }
 
 // Contains Ok(()) or Err(error_message)
-type ExecuteActionResult = Result<(), String>;
+type ExecuteActionResult = anyhow::Result<()>;
 
 pub trait FallibleAction: std::fmt::Debug {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult;
@@ -55,7 +56,7 @@ where
         match self.try_execute(program_state) {
             Ok(()) => (),
             Err(err) => {
-                program_state.new_messages.push_back(err);
+                program_state.new_messages.push_back(err.to_string());
             }
         };
     }

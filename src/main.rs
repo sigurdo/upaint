@@ -29,7 +29,7 @@ use std::{
 
 use upaint::{
     canvas::VersionControlledCanvas, command_line::create_command_line_textarea,
-    rendering::draw_frame, user_input::handle_user_input, ProgramState, ResultCustom,
+    rendering::draw_frame, user_input::handle_user_input, ProgramState,
 };
 
 #[derive(Parser, Debug)]
@@ -95,7 +95,7 @@ static LOGGER: FileLogger = FileLogger;
 fn application(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
     args: UpaintCli,
-) -> ResultCustom<()> {
+) -> anyhow::Result<()> {
     LOGGER.flush();
 
     log::set_logger(&LOGGER)
@@ -148,18 +148,18 @@ fn application(
     let redraw_tx_user_input = Arc::clone(&redraw_tx);
     thread::Builder::new()
         .name("user input".to_string())
-        .spawn(move || -> ResultCustom<()> {
+        .spawn(move || -> anyhow::Result<()> {
             loop {
                 // Block until an event has occurred, then aquire the program state mutex and keep it until all events are processed.
                 event::poll(Duration::from_secs(2 ^ 64 - 1))?;
-                let mut program_state = program_state_user_input.lock()?;
+                let mut program_state = program_state_user_input.lock().unwrap();
                 while event::poll(Duration::from_millis(0))? {
                     let e = event::read()?;
                     handle_user_input(e, &mut (*program_state))?;
                     if (*program_state).exit {
-                        (*(exit_tx_user_input.lock()?)).try_send(()).unwrap_or(());
+                        let _ = (*(exit_tx_user_input.lock().unwrap())).try_send(());
                     }
-                    (*(redraw_tx_user_input.lock()?)).try_send(()).unwrap_or(());
+                    let _ = (*(redraw_tx_user_input.lock().unwrap())).try_send(());
                 }
             }
             // Ok(())
@@ -169,10 +169,10 @@ fn application(
     let program_state_draw_screen = Arc::clone(&program_state);
     thread::Builder::new()
         .name("draw screen".to_string())
-        .spawn(move || -> ResultCustom<()> {
+        .spawn(move || -> anyhow::Result<()> {
             loop {
                 redraw_rx.recv()?;
-                let mut program_state = program_state_draw_screen.lock()?;
+                let mut program_state = program_state_draw_screen.lock().unwrap();
                 draw_frame(&mut terminal, &mut program_state)?;
             }
             // Ok(())
@@ -183,7 +183,7 @@ fn application(
         let redraw_tx_watch_config_file = Arc::clone(&redraw_tx);
         thread::Builder::new()
             .name("watch config file".to_string())
-            .spawn(move || -> ResultCustom<()> {
+            .spawn(move || -> anyhow::Result<()> {
                 use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
                 loop {
                     let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
@@ -213,13 +213,17 @@ fn application(
                                             match load_config() {
                                                 Ok(config) => {
                                                     let mut program_state =
-                                                        program_state_watch_config_file.lock()?;
+                                                        program_state_watch_config_file
+                                                            .lock()
+                                                            .unwrap();
                                                     program_state.config = config;
                                                     break 'max_attempts;
                                                 }
                                                 Err(ErrorLoadConfig::ConfigInvalid(err)) => {
                                                     let mut program_state =
-                                                        program_state_watch_config_file.lock()?;
+                                                        program_state_watch_config_file
+                                                            .lock()
+                                                            .unwrap();
                                                     program_state.new_messages.push_back(format!(
                                                         "{}",
                                                         ErrorLoadConfig::ConfigInvalid(err)
@@ -235,7 +239,7 @@ fn application(
                                             "Couldn't reload modified config even after 1 second"
                                         )
                                     }
-                                    (*(redraw_tx_watch_config_file.lock()?))
+                                    (*(redraw_tx_watch_config_file.lock().unwrap()))
                                         .try_send(())
                                         .unwrap_or(());
                                 }
@@ -258,7 +262,7 @@ fn application(
     Ok(())
 }
 
-fn setup_terminal() -> ResultCustom<Terminal<CrosstermBackend<io::Stdout>>> {
+fn setup_terminal() -> anyhow::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     let mut stdout = io::stdout();
     enable_raw_mode()?;
     execute!(
@@ -273,7 +277,7 @@ fn setup_terminal() -> ResultCustom<Terminal<CrosstermBackend<io::Stdout>>> {
     Ok(terminal)
 }
 
-fn restore_terminal() -> ResultCustom<()> {
+fn restore_terminal() -> anyhow::Result<()> {
     execute!(
         io::stdout(),
         LeaveAlternateScreen,
@@ -286,8 +290,8 @@ fn restore_terminal() -> ResultCustom<()> {
     Ok(())
 }
 
-fn application_wrapper(args: UpaintCli) -> ResultCustom<()> {
-    let terminal = setup_terminal().unwrap();
+fn application_wrapper(args: UpaintCli) -> anyhow::Result<()> {
+    let terminal = setup_terminal()?;
     let default_panic_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |e| {
         restore_terminal().unwrap();
@@ -295,7 +299,7 @@ fn application_wrapper(args: UpaintCli) -> ResultCustom<()> {
         std::process::exit(1);
     }));
     let result = application(terminal, args);
-    restore_terminal().unwrap();
+    restore_terminal()?;
     return result;
 }
 
@@ -303,7 +307,8 @@ fn main() {
     let args = UpaintCli::parse();
     let result = application_wrapper(args);
     if let Err(error) = result {
-        dbg!(error);
+        // dbg!(error);
+        println!("Error: {}", error);
         std::process::exit(1);
     }
     std::process::exit(0);

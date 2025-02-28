@@ -9,13 +9,13 @@ use std::io;
 
 use crate::{
     command_line::CommandLineWidget, input_mode::InputModeHandler, status_bar::StatusBar,
-    ProgramState, ResultCustom,
+    ProgramState,
 };
 
 pub fn draw_frame(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     program_state: &mut ProgramState,
-) -> ResultCustom<()> {
+) -> anyhow::Result<()> {
     let command_line_active = match program_state.input_mode_config() {
         None => false,
         Some(config) => config.handler == InputModeHandler::Command,

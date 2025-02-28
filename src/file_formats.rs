@@ -22,7 +22,7 @@ impl FileFormat {
 }
 
 impl TryFrom<&str> for FileFormat {
-    type Error = String;
+    type Error = anyhow::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let path = Path::new(value);
@@ -34,8 +34,10 @@ impl TryFrom<&str> for FileFormat {
             Ok(format) => format,
             Err(()) => {
                 return match extension {
-                    Some(extension) => Err(format!("File extension not recognized: .{extension}")),
-                    None => Err(format!("No file extension provided")),
+                    Some(extension) => Err(anyhow::anyhow!(
+                        "File extension not recognized: .{extension}"
+                    )),
+                    None => Err(anyhow::anyhow!("No file extension provided")),
                 }
             }
         };

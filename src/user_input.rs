@@ -7,13 +7,13 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, Mou
 use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
 
-use crate::{actions::Action, command_line::execute_command, ProgramState, ResultCustom};
+use crate::{actions::Action, command_line::execute_command, ProgramState};
 use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};
 
 pub fn handle_user_input_command_mode(
     event: Event,
     program_state: &mut ProgramState,
-) -> ResultCustom<()> {
+) -> anyhow::Result<()> {
     match event {
         Event::Key(e) => {
             match e.code {
@@ -45,7 +45,7 @@ pub fn handle_user_input_command_mode(
 pub fn handle_user_input_action(
     event: Event,
     program_state: &mut ProgramState,
-) -> ResultCustom<()> {
+) -> anyhow::Result<()> {
     match event {
         Event::Key(e) => {
             program_state
@@ -86,7 +86,7 @@ pub fn handle_user_input_color_picker(
     event: Event,
     program_state: &mut ProgramState,
     target: &ColorPickerTargetEnum,
-) -> ResultCustom<()> {
+) -> anyhow::Result<()> {
     match event {
         Event::Key(e) => match e.code {
             KeyCode::Enter => {
@@ -119,7 +119,7 @@ pub fn handle_user_input_color_picker(
 /// Handles user input
 ///
 /// Returns a tuple of booleans `(redraw, exit)`.
-pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> ResultCustom<()> {
+pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> anyhow::Result<()> {
     // Ignore all release events
     if let Event::Key(e) = event {
         if e.kind == KeyEventKind::Release {

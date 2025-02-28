@@ -15,7 +15,7 @@ impl FallibleAction for Quit {
             program_state.exit = true;
             Ok(())
         } else {
-            Err(format!("Changes have been made since last save. Use :x to save changes and quit or :q! to quit without saving changes."))
+            Err(anyhow::anyhow!("Changes have been made since last save. Use :x to save changes and quit or :q! to quit without saving changes."))
         }
     }
 }
@@ -35,13 +35,13 @@ pub struct Save {}
 impl FallibleAction for Save {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let Some(file_name) = &program_state.open_file else {
-            return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
+            anyhow::bail!("No file open. Use \"save as\" instead (:w <filename>)");
         };
         let format = FileFormat::try_from(file_name.as_str())?;
         program_state.canvas.clean();
         let output = program_state.canvas.export(format)?;
         match std::fs::write(file_name, output) {
-            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            Err(e) => anyhow::bail!("Could not save file: {e}"),
             _ => (),
         }
         program_state.last_saved_revision = program_state.canvas.get_current_revision();
@@ -55,13 +55,13 @@ pub struct LossySave {}
 impl FallibleAction for LossySave {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let Some(file_name) = &program_state.open_file else {
-            return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
+            anyhow::bail!("No file open. Use \"save as\" instead (:w <filename>)");
         };
         let format = FileFormat::try_from(file_name.as_str())?;
         program_state.canvas.clean();
         let output = program_state.canvas.export_lossy(format)?;
         match std::fs::write(file_name, output) {
-            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            Err(e) => anyhow::bail!("Could not save file: {e}"),
             _ => (),
         }
         program_state.last_saved_revision = program_state.canvas.get_current_revision();
@@ -79,7 +79,7 @@ impl FallibleAction for SaveAs {
         program_state.canvas.clean();
         let output = program_state.canvas.export(format)?;
         match std::fs::write(&self.filename, output) {
-            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            Err(e) => anyhow::bail!("Could not save file: {e}"),
             _ => (),
         }
         program_state.last_saved_revision = program_state.canvas.get_current_revision();
@@ -97,7 +97,7 @@ impl FallibleAction for LossySaveAs {
         program_state.canvas.clean();
         let output = program_state.canvas.export_lossy(format)?;
         match std::fs::write(&self.filename, output) {
-            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            Err(e) => return Err(anyhow::anyhow!("Could not save file: {e}")),
             _ => (),
         }
         program_state.last_saved_revision = program_state.canvas.get_current_revision();
@@ -111,13 +111,13 @@ pub struct SaveQuit {}
 impl FallibleAction for SaveQuit {
     fn try_execute(&self, program_state: &mut ProgramState) -> ExecuteActionResult {
         let Some(file_name) = &program_state.open_file else {
-            return Err("No file open. Use \"save as\" instead (:w <filename>)".to_string());
+            anyhow::bail!("No file open. Use \"save as\" instead (:w <filename>)");
         };
         let format = FileFormat::try_from(file_name.as_str())?;
         program_state.canvas.clean();
         let output = program_state.canvas.export(format)?;
         match std::fs::write(file_name, output) {
-            Err(e) => return Err(format!("Could not save file: {}", e.to_string())),
+            Err(e) => anyhow::bail!("Could not save file: {e}"),
             _ => (),
         }
         program_state.last_saved_revision = program_state.canvas.get_current_revision();

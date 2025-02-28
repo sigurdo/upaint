@@ -11,8 +11,6 @@ use std::path::PathBuf;
 use serde::Deserialize;
 use toml::de::ValueDeserializer;
 
-use crate::ErrorCustom;
-
 pub mod color_theme;
 pub mod keymaps;
 
@@ -116,37 +114,35 @@ impl Default for Config {
     }
 }
 
-pub fn local_config_dir_path() -> Result<PathBuf, ErrorCustom> {
+pub fn local_config_dir_path() -> anyhow::Result<PathBuf> {
     let Some(mut config_file_path) = dirs::config_dir() else {
-        return Err(ErrorCustom::String(
-            "Couldn't detect the system's config directory.".to_string(),
-        ));
+        anyhow::bail!("Couldn't detect the system's config directory.".to_string(),);
     };
     config_file_path.push("upaint");
     Ok(config_file_path)
 }
 
-pub fn local_config_toml() -> Result<String, ErrorCustom> {
+pub fn local_config_toml() -> anyhow::Result<String> {
     let mut config_file_path = local_config_dir_path()?;
     config_file_path.push("upaint.toml");
     Ok(std::fs::read_to_string(config_file_path)?)
 }
 
 /// Read and load color theme preset, apply customizations.
-fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorConfigInvalid> {
+fn load_color_preset(config_table: &mut toml::Table) -> anyhow::Result<()> {
     // let mut config_table = config.cache.clone().into_table()?;
     if let Some(preset) = config_table.get("color_theme_preset") {
         if let toml::Value::String(preset) = preset.clone() {
             let Ok(preset) = ColorThemePreset::deserialize(ValueDeserializer::new(
                 format!("\"{preset}\"").as_str(),
             )) else {
-                return Err(format!("Value of color_theme_preset is invalid: {preset}").into());
+                anyhow::bail!("Value of color_theme_preset is invalid: {preset}");
             };
 
             let mut theme_table = include_str!("config/color_theme/base.toml")
                 .parse::<toml::Table>()
                 .unwrap();
-            theme_table.extend_recurse_tables(preset.toml_str().parse::<toml::Table>().unwrap());
+            theme_table.extend_recurse_tables(preset.toml_table());
 
             if let Some(toml::Value::Table(theme_custom)) = config_table.get("color_theme") {
                 theme_table.extend_recurse_tables(theme_custom.clone());
@@ -159,22 +155,9 @@ fn load_color_preset(config_table: &mut toml::Table) -> Result<(), ErrorConfigIn
     Ok(())
 }
 
-#[derive(Debug, From, Into, Display)]
-#[display("Invalid config: {_0}")]
-pub struct ErrorConfigInvalid(String);
-#[derive(Debug, From, Display)]
-#[display("Error loading config: {_variant}")]
-pub enum ErrorLoadConfig {
-    Custom(ErrorCustom),
-    ConfigInvalid(ErrorConfigInvalid),
-}
-pub fn load_config_from_table(mut toml_table: toml::Table) -> Result<Config, ErrorConfigInvalid> {
+pub fn load_config_from_table(mut toml_table: toml::Table) -> anyhow::Result<Config> {
     load_color_preset(&mut toml_table)?;
-
-    match Config::deserialize(toml_table) {
-        Ok(config) => Ok(config),
-        Err(err) => Err(err.to_string().into()),
-    }
+    Ok(Config::deserialize(toml_table)?)
 }
 
 pub fn load_default_config() -> Config {
@@ -184,10 +167,21 @@ pub fn load_default_config() -> Config {
     load_config_from_table(toml_table).unwrap()
 }
 
+#[derive(Debug, From, Display)]
+#[display("error loading config: {_variant}")]
+pub enum ErrorLoadConfig {
+    Any(anyhow::Error),
+    #[from(ignore)]
+    #[display("config invalid: {_0}")]
+    ConfigInvalid(anyhow::Error),
+}
 pub fn load_config() -> Result<Config, ErrorLoadConfig> {
     let mut toml_table = include_str!("config/default_config.toml")
         .parse::<toml::Table>()
         .unwrap();
     toml_table.extend_recurse_tables(local_config_toml()?.parse::<toml::Table>().unwrap());
-    Ok(load_config_from_table(toml_table)?)
+    match load_config_from_table(toml_table) {
+        Ok(config) => Ok(config),
+        Err(e) => Err(ErrorLoadConfig::ConfigInvalid(e)),
+    }
 }
