@@ -13,8 +13,9 @@ use tracer::CanvasIndexTracer;
 #[cfg(test)]
 mod test;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum CanvasIterationJump {
+    #[default]
     NoJump,
     Diagonals,
     DirectionAsStride,
@@ -54,6 +55,12 @@ bitflags! {
         const START = 0b01;
         const END   = 0b10;
         const ANY   = 0b11;
+    }
+}
+
+impl Default for WordBoundaryType {
+    fn default() -> Self {
+        Self::ANY
     }
 }
 

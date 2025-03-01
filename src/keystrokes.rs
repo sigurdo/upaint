@@ -15,6 +15,7 @@ pub type ColorSlot = char;
 pub enum ColorOrSlot {
     Slot(ColorSlot),
     #[serde(untagged)]
+    #[presetable(default)]
     Color(Color),
 }
 
@@ -35,6 +36,7 @@ impl Default for ColorOrSlot {
 #[presetable(config_type = "ProgramState")]
 pub enum ColorOrSlotSpecification {
     #[default]
+    #[presetable(default)]
     Active,
     #[serde(untagged)]
     Specific(ColorOrSlot),

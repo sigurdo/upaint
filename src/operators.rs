@@ -29,6 +29,7 @@ pub trait Operator: Debug {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
 pub enum OperatorEnum {
+    #[presetable(default)]
     Colorize(Colorize),
     Replace(Replace),
     UpdateSelection(UpdateSelection),
@@ -81,10 +82,11 @@ impl Operator for Replace {
         program_state.canvas.create_commit(canvas_operations);
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum UpdateSelectionOperator {
     Add,
     Subtract,
+    #[default]
     Overwrite,
     // Intersect,
     // Invert,

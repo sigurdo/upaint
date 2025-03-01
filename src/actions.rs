@@ -65,6 +65,8 @@ where
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
 pub enum ActionEnum {
+    #[presetable(default)]
+    Repeat(ActionRepeat),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
     Operation(Operation),
@@ -85,7 +87,6 @@ pub enum ActionEnum {
     SetYankActive(SetYankActive),
     MirrorYank(MirrorYank),
     MarkSet(MarkSet),
-    Repeat(ActionRepeat),
     MacroRecordingStartStop(MacroRecordingStartStop),
     Quit(session::Quit),
     ForceQuit(session::ForceQuit),
@@ -100,6 +101,7 @@ pub enum ActionEnum {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
 pub enum ActionRepeatableEnum {
+    #[presetable(default)]
     Undo(Undo),
     Redo(Redo),
     MacroExecute(MacroExecute),
@@ -107,8 +109,8 @@ pub enum ActionRepeatableEnum {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ActionRepeat {
-    count: Count,
-    action: ActionRepeatableEnum,
+    pub count: Count,
+    pub action: ActionRepeatableEnum,
 }
 impl Action for ActionRepeat {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -133,7 +135,7 @@ impl Action for Redo {
         program_state.canvas.redo();
     }
 }
-#[derive(Clone, Debug, PartialEq, Presetable)]
+#[derive(Clone, Debug, PartialEq, Default, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct Pipette {
     pub ground: Ground,
@@ -312,7 +314,7 @@ impl Action for InsertCharMoveCursor {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct MoveCursorBackInsertChar {
-    ch: char,
+    pub ch: char,
 }
 impl Action for MoveCursorBackInsertChar {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -446,8 +448,8 @@ impl Action for SetYankActive {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct MirrorYank {
-    slot: YankSlotSpecification,
-    axis: Axis,
+    pub slot: YankSlotSpecification,
+    pub axis: Axis,
 }
 impl Action for MirrorYank {
     fn execute(&self, program_state: &mut ProgramState) {
@@ -486,6 +488,7 @@ pub struct MacroRecordingStartStop {
 #[presetable(config_type = "ProgramState")]
 pub enum MacroRecordingStartStopType {
     Start(char),
+    #[presetable(default)]
     Stop,
 }
 impl FromKeystrokes<ProgramState> for MacroRecordingStartStopType {
@@ -528,7 +531,7 @@ impl Action for MacroRecordingStartStop {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct MacroExecute {
-    slot: char,
+    pub slot: char,
 }
 impl Action for MacroExecute {
     fn execute(&self, program_state: &mut ProgramState) {

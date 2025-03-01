@@ -37,6 +37,7 @@ impl FieldOpts {
 #[darling(default, attributes(presetable))]
 struct VariantOpts {
     required: bool,
+    default: bool,
 }
 
 fn presetify_fields(
@@ -48,7 +49,7 @@ fn presetify_fields(
     let result = fields
         .iter()
         .map(|field| {
-            let Field { ident, ty, .. } = field;
+            let Field { ident, ty, vis, .. } = field;
             let opts = FieldOpts::from_field_expect(field);
             let required = all_required || opts.required;
             let value = if required {
@@ -64,17 +65,17 @@ fn presetify_fields(
                 if let Some(default) = opts.default {
                     quote! {
                         #[serde(default = #default)]
-                        #ident: #value,
+                        #vis #ident: #value,
                     }
                 } else {
                     quote! {
                         #[serde(default)]
-                        #ident: #value,
+                        #vis #ident: #value,
                     }
                 }
             } else {
                 quote! {
-                    #value,
+                    #vis #value,
                 }
             }
         })
@@ -102,6 +103,51 @@ fn presetify_ident_fields(
         }
         Fields::Named(named) => {
             let fields = presetify_fields(&named.named, config_type, all_required);
+            quote! {
+                #ident { #fields }
+            }
+        }
+    }
+}
+
+fn default_init_ident_fields(
+    ident: &Ident,
+    fields: &Fields,
+    ident_config: &Ident,
+    all_required: bool,
+) -> proc_macro2::TokenStream {
+    let ident_crate = ident_crate();
+    match fields {
+        Fields::Unit => {
+            quote! {
+                #ident
+            }
+        }
+        Fields::Unnamed(unnamed) => {
+            let fields = unnamed.unnamed.iter().map(|f| {
+                let Field { ty, .. } = f;
+                let field_opts = FieldOpts::from_field_expect(f);
+                if all_required || field_opts.required {
+                    quote! { <#ty as Presetable<#ident_config>>::Preset::default() }
+                } else {
+                    quote! { ::#ident_crate::PresetStructField::Preset(<#ty as Presetable<#ident_config>>::Preset::default()) }
+                }
+            }).reduce(join_by_comma);
+            quote! {
+               #ident(#fields)
+            }
+        }
+        Fields::Named(named) => {
+            let fields = named.named.iter().map(|f| {
+                let Field { ident, ty, .. } = f;
+                let ident = ident.as_ref().expect("named fields missing identifier");
+                let field_opts = FieldOpts::from_field_expect(f);
+                if all_required || field_opts.required {
+                    quote! { #ident: ::#ident_crate::PresetStructField::Preset(<#ty as Presetable<#ident_config>>::Preset::default()) }
+                } else {
+                    quote! { #ident: <#ty as Presetable<#ident_config>>::Preset::default() }
+                }
+            }).reduce(join_by_comma);
             quote! {
                 #ident { #fields }
             }
@@ -163,6 +209,23 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                     presetify_ident_fields(ident, fields, ident_config.clone(), opts.all_required)
                 })
                 .reduce(join_by_comma);
+
+            let impl_default = data.variants.iter().find_map(|variant| {
+                let Variant { ident, fields, .. } = variant;
+                let variant_opts = VariantOpts::from_variant(variant).expect("Failed to parse VariantOpts");
+                if variant_opts.default {
+                    let field_defaults = default_init_ident_fields(&ident, &fields, &ident_config, opts.all_required);
+                    Some(quote! {
+                        impl ::core::default::Default for #ident_preset {
+                            fn default() -> Self  {
+                                Self::#field_defaults
+                            }
+                        }
+                    })
+                } else {
+                    None
+                }
+            });
 
             let definition_enum = quote! {
                 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -242,6 +305,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
             quote! {
                 #definition_enum
                 #impl_presetable
+                #impl_default
             }
         }
         Data::Struct(data) => {
@@ -325,7 +389,7 @@ pub fn derive_presetable(input: TokenStream) -> TokenStream {
                 quote! {}
             };
             let result = quote! {
-                #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+                #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::PartialEq, ::core::default::Default, ::serde::Serialize, ::serde::Deserialize)]
                 #vis struct #fields_presetified #semicolon
                 #impl_from_preset
                 #impl_from_keystrokes_by_preset_keymap

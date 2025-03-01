@@ -153,6 +153,7 @@ impl MatchValue<CanvasCell> for MatchCell {
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub enum ContinuousRegionRelativeType {
+    #[presetable(default)]
     Same(CellContentType),
     NonBlank(CellContentType),
 }

@@ -6,6 +6,7 @@ use serde::Serialize;
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub enum YankSlotSpecification {
+    #[presetable(default)]
     Active,
     Specific(char),
 }

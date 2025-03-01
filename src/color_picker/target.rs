@@ -18,6 +18,7 @@ pub trait ColorPickerTarget {
 #[presetable(config_type = "ProgramState")]
 pub enum ColorPickerTargetEnum {
     Motion(ColorPickerTargetMotion),
+    #[presetable(default)]
     ColorOrSlot(ColorOrSlotSpecification),
 }
 

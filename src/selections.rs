@@ -15,9 +15,11 @@ impl Motion for Selection {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Presetable)]
-#[presetable(preset_type = "Self", config_type = "ProgramState")]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize, Presetable)]
+#[presetable(config_type = "ProgramState")]
 pub enum SelectionSlotSpecification {
+    #[default]
+    #[presetable(default)]
     Active,
     Specific(char),
 }

@@ -25,6 +25,7 @@ pub trait Motion: Debug {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
 pub enum MotionEnum {
+    #[presetable(default)]
     Stay(Stay),
     SelectionMotion(SelectionMotion),
     SelectionDirectMotion(SelectionDirectMotion),
@@ -43,6 +44,7 @@ pub trait MotionRepeatable: Debug {
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
 pub enum MotionRepeatEnum {
+    #[presetable(default)]
     FixedNumberOfCells(FixedNumberOfCells),
     WordBoundary(WordBoundary),
     FindChar(FindChar),

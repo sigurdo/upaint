@@ -1,5 +1,4 @@
 use crate::actions::ActionEnum;
-use crate::actions::ActionRepeat;
 use crate::actions::ActionRepeatableEnum;
 use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::iter::CanvasIterationJump;
@@ -10,7 +9,6 @@ use crate::color_picker::target::ColorPickerTargetMotion;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::motions::MotionEnum;
-use crate::motions::MotionRepeat;
 use crate::motions::MotionRepeatEnum;
 use crate::operators::OperatorEnum;
 use crate::operators::UpdateSelectionOperator;
@@ -84,7 +82,6 @@ keymaps! {
     keymap_u32: u32,
     characters: char,
     motions: MotionEnum,
-    motion_repeats: MotionRepeat,
     motions_repeatable: MotionRepeatEnum,
     // counts: Count,
     operators: OperatorEnum,
@@ -107,7 +104,6 @@ keymaps! {
     yank_slot_specifications: YankSlotSpecification,
     update_selection_operators: UpdateSelectionOperator,
     actions: ActionEnum,
-    action_repeats: ActionRepeat,
     actions_repeatable: ActionRepeatableEnum,
     selections: Selection,
 }
@@ -143,6 +139,11 @@ pub enum CharKeymapEntry {
     Type,
     #[serde(untagged)]
     Char(char),
+}
+impl Default for CharKeymapEntry {
+    fn default() -> Self {
+        Self::Char(' ')
+    }
 }
 impl Presetable<ProgramState> for char {
     type Preset = CharKeymapEntry;
@@ -210,6 +211,11 @@ pub enum UnsignedIntegerKeymapEntry<T> {
     TypeDecimal,
     #[serde(untagged)]
     Number(T),
+}
+impl Default for UnsignedIntegerKeymapEntry<u32> {
+    fn default() -> Self {
+        Self::Number(1)
+    }
 }
 macro_rules! unsigned_integer_impl_presetable {
     ($($type:ty,)*) => {

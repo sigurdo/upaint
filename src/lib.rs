@@ -50,11 +50,19 @@ pub enum Direction {
 }
 
 /// A free direction defined by a number of rows and columns.
-#[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "(i16, i16)")]
 pub struct DirectionFree {
     pub rows: i16,
     pub columns: i16,
+}
+impl Default for DirectionFree {
+    fn default() -> Self {
+        Self {
+            rows: 0,
+            columns: 1,
+        }
+    }
 }
 #[derive(Debug, Clone, Copy)]
 pub enum DirectionFreeError {

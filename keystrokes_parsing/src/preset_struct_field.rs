@@ -3,12 +3,17 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 /// Basically a custom Option type with more appropriate Deserialize behavior and distinct meaning.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum PresetStructField<T> {
-    #[default]
     FromKeystrokes,
     #[serde(untagged)]
     Preset(T),
+}
+
+impl<T: Default> Default for PresetStructField<T> {
+    fn default() -> Self {
+        Self::Preset(T::default())
+    }
 }
 
 pub fn from_keystrokes_by_preset_struct_field<

@@ -42,7 +42,7 @@ base_keymaps = ["n"]
 
 [input_mode.i.keymaps.actions]
 "<BS>" = { MoveCursorBackInsertChar = { ch = " " }}
-"" = { InsertCharMoveCursor = {}}
+"" = { InsertCharMoveCursor = { ch = "FromKeystrokes" }}
 
 [input_mode.c]
 handler = "Command"
@@ -61,34 +61,31 @@ base_keymaps = ["n"]
 [input_mode.v.keymaps.actions]
 "o" = { VisualRectSwapCorners = {} }
 # "" = { VisualRectOperation = {  } }
-"" = { Operation = { motion = { VisualRectMotion = {}}, return_to_standard_mode = true }}
+"" = { Operation = { operator = "FromKeystrokes", motion = { VisualRectMotion = {}}, return_to_standard_mode = true }}
 
 [input_mode.n]
 handler = "Action"
 base_keymaps = ["i"]
 
 [input_mode.n.keymaps.actions]
-":" = { "ModeCommand" = { mode = "c" } }
-"i" = { ModeInsert = { jump = "Diagonals", mode = "i" }}
-"I" = { ModeInsert = { jump = "NoJump", mode = "i" }}
-"gc" = { "ModeColorPicker" = { mode = "p" } }
-"gp" = { "Pipette" = { slot = "Active" }}
+":" = { ModeCommand = { mode = "c" } }
+"i" = { ModeInsert = { jump = "Diagonals", direction = "FromKeystrokes", mode = "i" }}
+"I" = { ModeInsert = { jump = "NoJump", direction = "FromKeystrokes", mode = "i" }}
+"gc" = { ModeColorPicker = { target = "FromKeystrokes", mode = "p" } }
+"gp" = { Pipette = { ground = "FromKeystrokes", slot = "Active" }}
 "v" = { ModeVisualRect = { mode = "v" } }
-"o" = { SetSelectionActive = { highlight = true } }
-'"' = { SetYankActive = {} }
+"o" = { SetSelectionActive = { slot = "FromKeystrokes", highlight = true } }
+'"' = { SetYankActive = { slot = "FromKeystrokes" } }
 "O" = { HighlightSelectionClear = {} }
-"P" = { Paste = {} }
+"P" = { Paste = { slot = "FromKeystrokes" } }
 "p" = { Paste = { slot = "Active" } }
 "<C-p>" = { Paste = { slot = "Active" } }
-"r" = { Operation = { motion = { Stay = {}}, operator = { Replace = {}}}}
-"R" = { OperationMotionFirst = { operator = { Replace = {}}}}
-"m" = { MarkSet = {}}
-"#" = { SetColorOrSlotActive = {} }
-"Kr" = { Operation = { motion = { Stay = {}}, operator = { Replace = { ch = "h"}}}}
-# "" = { Operation = { operator = { Replace = { ch = "h"}}}}
-# "" = { MoveCursor = { motion = { FixedNumberOfCells = {  }
-"q" = { MacroRecordingStartStop = {} }
-"gm" = { MirrorYank = { slot = "Active" }}
+"r" = { Operation = { operator = { Replace = { ch = "FromKeystrokes" }}, motion = { Stay = {}}}}
+"R" = { OperationMotionFirst = { motion = "FromKeystrokes", operator = { Replace = { ch = "FromKeystrokes" }}}}
+"m" = { MarkSet = { slot = "FromKeystrokes" }}
+"#" = { SetColorOrSlotActive = { color_or_slot = "FromKeystrokes" } }
+"q" = { MacroRecordingStartStop = { start_or_stop = "FromKeystrokes" } }
+"gm" = { MirrorYank = { slot = "Active", axis = "FromKeystrokes" }}
 "<F5>" = { ReloadConfig = {} }
 "zz" = { ChangeFocus = { type_horizontal = "Center", type_vertical = "Center" }}
 "zl" = { ChangeFocus = { type_horizontal = { Start = 0 }}}
@@ -96,55 +93,49 @@ base_keymaps = ["i"]
 "zj" = { ChangeFocus = { type_vertical = { Start = 0 }}}
 "zk" = { ChangeFocus = { type_vertical = { End = 0 }}}
 "" = [
-    { Repeat = {}},
-    { Operation = {}},
-    { MoveCursor = {}},
+    { Repeat = { count = "FromKeystrokes", action = "FromKeystrokes" }},
+    { Operation = { operator = "FromKeystrokes", motion = "FromKeystrokes" }},
+    { MoveCursor = { motion = "FromKeystrokes" }},
 ]
-
-[input_mode.n.keymaps.action_repeats]
-"" = { count = "FromKeystrokes", action = "FromKeystrokes" }
 
 [input_mode.n.keymaps.actions_repeatable]
 "u" = { "Undo" = {} }
 "<C-r>" = { "Redo" = {} }
-"@" = { MacroExecute = {} }
+"@" = { MacroExecute = { slot = "FromKeystrokes" } }
 
 [input_mode.n.keymaps.operators]
-"c" = { "Colorize" = { ground = "Foreground", color = "Active" } }
-"C" = { "Colorize" = { ground = "Foreground" } }
-"b" = { "Colorize" = { ground = "Background", color = "Active" } }
-"B" = { "Colorize" = { ground = "Background" } }
-"r" = { Replace = {} }
-"S" = { UpdateSelection = { highlight = true } }
+"c" = { Colorize = { ground = "Foreground" } }
+"C" = { Colorize = { ground = "Foreground", color = "FromKeystrokes" } }
+"b" = { Colorize = { ground = "Background" } }
+"B" = { Colorize = { ground = "Background", color = "FromKeystrokes" } }
+"r" = { Replace = { ch = "FromKeystrokes" } }
+"S" = { UpdateSelection = { operator = "FromKeystrokes", slot = "FromKeystrokes", highlight = true } }
 "a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true } }
 "z" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true } }
 "s" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true } }
 "y" = { Yank = { content_type = "ALL", slot = "Active" } }
-"D" = { Cut = { content_type = "ALL" } }
+"Y" = { Yank = { content_type = "ALL", slot = "FromKeystrokes" } }
 "d" = { Cut = { content_type = "ALL", slot = "Active" } }
-"gc" = { ColorPickerOperator = { mode = "p"} }
+"D" = { Cut = { content_type = "ALL" , slot = "FromKeystrokes" } }
+"gc" = { ColorPickerOperator = { ground = "FromKeystrokes", mode = "p" } }
 
 [input_mode.n.keymaps.motions]
 " " = { Stay = {} }
-"S" = { SelectionMotion = {} }
+"S" = { SelectionMotion = { slot = "FromKeystrokes" } }
 "s" = { SelectionMotion = { slot = "Active" } }
-"J" = { GoToMark = { jump = "Diagonals" } }
-"L" = { GoToMark = { jump = "Diagonals", slot = "l" } }
-"A" = { MatchingCells = {} }
-"i" = { ContinuousRegion = { diagonals_allowed = false } }
-"a" = { ContinuousRegion = { diagonals_allowed = true } }
-"" = { Repeat = {} }
-
-[input_mode.n.keymaps.motion_repeats]
-"" = { count = "FromKeystrokes", motion = "FromKeystrokes" }
+"J" = { GoToMark = { jump = "Diagonals", slot = "FromKeystrokes" } }
+"A" = { MatchingCells = { content_type = "FromKeystrokes" } }
+"i" = { ContinuousRegion = { relative_type = "FromKeystrokes", diagonals_allowed = false } }
+"a" = { ContinuousRegion = { relative_type = "FromKeystrokes", diagonals_allowed = true } }
+"" = { Repeat = { count = "FromKeystrokes", motion = "FromKeystrokes" } }
 
 [input_mode.n.keymaps.motions_repeatable]
-"w" = { WordBoundary = { boundary_type = "START" } }
-"e" = { WordBoundary = { boundary_type = "END" } }
-"f" = { FindChar = {} }
+"w" = { WordBoundary = { direction = "FromKeystrokes", boundary_type = "START" } }
+"e" = { WordBoundary = { direction = "FromKeystrokes", boundary_type = "END" } }
+"f" = { FindChar = { direction = "FromKeystrokes", ch = "FromKeystrokes" } }
 "," = { FindCharRepeat = { direction_reversed = false } }
 ";" = { FindCharRepeat = { direction_reversed = true } }
-"" = { FixedNumberOfCells = { jump = "DirectionAsStride" }}
+"" = { FixedNumberOfCells = { direction = "FromKeystrokes", jump = "DirectionAsStride" }}
 
 [input_mode.n.keymaps.counts]
 "" = "TypeDecimal"
@@ -212,7 +203,6 @@ base_keymaps = ["i"]
 "M" = "LightMagenta"
 "C" = "LightCyan"
 "W" = "White"
-# "s" = { Slot = "s" }
 
 [input_mode.n.keymaps.color_or_slots]
 "s" = { Slot = "FromKeystrokes" }
@@ -221,24 +211,22 @@ base_keymaps = ["i"]
     { Slot = "FromKeystrokes" },
 ]
 
-[input_mode.n.keymaps.test]
-"h" = { a = "FromKeystrokes" }
-
 [input_mode.n.keymaps.color_or_slot_specifications]
 "" = { Specific = "FromKeystrokes" }
 
 [input_mode.n.keymaps.color_picker_target_motions]
-"" = { ground = "Foreground" }
+"" = { ground = "FromKeystrokes", motion = "FromKeystrokes" }
 
 [input_mode.n.keymaps.color_picker_targets]
 " " = { ColorOrSlot = "Active" }
 "" = [
-    { Motion = {} },
+    { Motion = "FromKeystrokes" },
     { ColorOrSlot = "FromKeystrokes" },
 ]
 
 [input_mode.n.keymaps.canvas_iteration_jumps]
-# "d" = "Diagonals"
+"n" = "NoJump"
+"d" = "Diagonals"
 "s" = "DirectionAsStride"
 
 [input_mode.n.keymaps.update_selection_operators]
@@ -261,10 +249,13 @@ base_keymaps = ["i"]
 [input_mode.n.keymaps.continuous_region_relative_types]
 "w" = { NonBlank = "TEXT" }
 "s" = { Same = "TEXT" }
-# "W" = { NonBlank = {} }
+" " = { NonBlank = "FromKeystrokes" }
+"" = { Same = "FromKeystrokes" }
 
 [input_mode.n.keymaps.keymap_u32]
 [input_mode.n.keymaps.selection_slot_specifications]
+"" = { Specific = "FromKeystrokes" }
+
 [input_mode.n.keymaps.selection_specifications]
 "s" = { Slot = "FromKeystrokes" }
 "" = [
