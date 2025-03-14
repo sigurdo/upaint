@@ -9,6 +9,14 @@ pub struct CanvasRect {
 }
 
 impl CanvasRect {
+    pub const fn new() -> Self {
+        Self {
+            row: 0,
+            column: 0,
+            rows: 0,
+            columns: 0,
+        }
+    }
     pub fn from_corners(corners: (CanvasIndex, CanvasIndex)) -> Self {
         let ((a_row, a_column), b) = corners;
         let mut result = Self {

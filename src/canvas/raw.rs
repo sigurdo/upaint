@@ -103,6 +103,8 @@ pub struct Canvas {
     cells: CellMap,
 }
 
+pub const EMPTY_CANVAS: Canvas = Canvas::new();
+
 impl<'a> Canvas {
     // Internal interface
 
@@ -128,6 +130,12 @@ impl<'a> Canvas {
     }
 
     // Public interface
+    pub const fn new() -> Self {
+        Self {
+            area: CanvasRect::new(),
+            cells: CellMap::new(),
+        }
+    }
 
     pub fn get(&'a self, index: &CanvasIndex) -> &'a CanvasCell {
         if let Some(cell) = self.cells.get(index) {

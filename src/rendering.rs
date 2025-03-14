@@ -8,8 +8,8 @@ use ratatui::{
 use std::io;
 
 use crate::{
-    command_line::CommandLineWidget, input_mode::InputModeHandler, status_bar::StatusBar,
-    ProgramState,
+    command_line::CommandLineWidget, input_mode::InputModeHandler,
+    line_drawing::draw_line_on_canvas, status_bar::StatusBar, ProgramState,
 };
 
 pub fn draw_frame(
@@ -98,6 +98,17 @@ pub fn draw_frame(
         let inner_area = block.inner(canvas_chunk);
         f.render_widget(block, canvas_chunk);
 
+        let canvas_revision = program_state.canvas.get_current_revision();
+        if let Some(line_drawing) = &program_state.line_drawing {
+            let from = line_drawing.from;
+            let to = program_state.cursor_position;
+            if from != to {
+                program_state
+                    .canvas
+                    .create_commit(draw_line_on_canvas(from, to));
+            }
+        }
+
         let mut canvas = program_state.canvas.widget(&program_state.config);
         canvas.focus = program_state.focus_position;
         let canvas_visible = canvas.visible(inner_area);
@@ -159,6 +170,8 @@ pub fn draw_frame(
                 f.render_widget(program_state.color_picker.widget(), color_picker_chunk);
             }
         }
+
+        program_state.canvas.reset_hard(canvas_revision);
     })?;
     Ok(())
 }

@@ -61,7 +61,7 @@ fn find_cell_exit(start: na::Vector2<f64>, direction: DirectionFree) -> na::Vect
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum ExitType {
+pub enum ExitType {
     Horizontal,
     Vertical,
 }
@@ -87,7 +87,7 @@ fn get_exit_type(
     }
 }
 
-fn get_cell_exit(
+pub fn get_cell_exit(
     entry: na::Vector2<f64>,
     direction: DirectionFree,
     prefer_exit_horizontal: bool,

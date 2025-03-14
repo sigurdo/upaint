@@ -12,10 +12,45 @@ use super::CanvasCell;
 
 #[derive(Debug, Clone, Default)]
 pub struct CanvasDiffUnit {
-    ch: Option<char>,
-    fg: Option<Color>,
-    bg: Option<Color>,
-    modifier: Option<Modifier>,
+    pub ch: Option<char>,
+    pub fg: Option<Color>,
+    pub bg: Option<Color>,
+    pub modifier: Option<Modifier>,
+}
+
+impl CanvasDiffUnit {
+    pub fn ch(ch: char) -> Self {
+        Self {
+            ch: Some(ch),
+            fg: None,
+            bg: None,
+            modifier: None,
+        }
+    }
+    pub fn fg(fg: Color) -> Self {
+        Self {
+            ch: None,
+            fg: Some(fg),
+            bg: None,
+            modifier: None,
+        }
+    }
+    pub fn bg(bg: Color) -> Self {
+        Self {
+            ch: None,
+            fg: None,
+            bg: Some(bg),
+            modifier: None,
+        }
+    }
+    pub fn modifier(modifier: Modifier) -> Self {
+        Self {
+            ch: None,
+            fg: None,
+            bg: None,
+            modifier: Some(modifier),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -175,14 +210,17 @@ pub fn diff_builder_add(
     }
 }
 impl CanvasDiffBuilder {
-    pub fn from_modifications(modifications: Vec<CanvasModification>, canvas: &Canvas) -> Self {
+    pub fn from_modifications(
+        modifications: impl IntoIterator<Item = CanvasModification>,
+        canvas: &Canvas,
+    ) -> Self {
         let mut selff = Self::default();
         selff.add_modifications(modifications, canvas, true);
         selff
     }
     pub fn add_modifications(
         &mut self,
-        modifications: Vec<CanvasModification>,
+        modifications: impl IntoIterator<Item = CanvasModification>,
         canvas: &Canvas,
         overwrite: bool,
     ) {
@@ -192,6 +230,9 @@ impl CanvasDiffBuilder {
     }
     pub fn add_diff(&mut self, diff: Self, overwrite: bool) {
         diff_builder_add(self, diff.entries, overwrite);
+    }
+    pub fn add_diff_unit(&mut self, index: CanvasIndex, diff: CanvasDiffUnit) {
+        diff_builder_add(self, [(index, diff)], true);
     }
     pub fn serialize(self) -> CanvasDiff {
         CanvasDiff(self.entries.into_iter().collect())

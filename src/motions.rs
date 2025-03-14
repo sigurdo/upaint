@@ -4,6 +4,7 @@ use crate::canvas::raw::continuous_region::MatchCell;
 use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
+use crate::canvas::raw::iter::StopConditionContent;
 use crate::canvas::raw::iter::WordBoundaryType;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::rect::CanvasRect;
@@ -82,9 +83,7 @@ pub struct FixedNumberOfCells {
 impl MotionRepeatable for FixedNumberOfCells {
     fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
-        let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
-            canvas,
             start,
             self.direction,
             self.jump,
@@ -106,11 +105,13 @@ impl MotionRepeatable for WordBoundary {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
-            canvas,
             start,
             self.direction,
             CanvasIterationJump::Diagonals,
-            StopCondition::WordBoundary(self.boundary_type),
+            StopCondition::Content {
+                canvas,
+                condition: StopConditionContent::WordBoundary(self.boundary_type),
+            },
             count,
         );
         it.collect()
@@ -128,11 +129,13 @@ impl MotionRepeatable for FindChar {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
-            canvas,
             start,
             self.direction,
             CanvasIterationJump::Diagonals,
-            StopCondition::CharacterMatch(self.ch),
+            StopCondition::Content {
+                canvas,
+                condition: StopConditionContent::CharacterMatch(self.ch),
+            },
             count,
         );
         it.collect()
@@ -211,7 +214,6 @@ impl Motion for GoToMark {
             let columns = mark.1 - program_state.cursor_position.1;
             let direction = DirectionFree { rows, columns };
             let it = CanvasIndexIterator::new(
-                program_state.canvas.raw(),
                 program_state.cursor_position,
                 direction,
                 self.jump,

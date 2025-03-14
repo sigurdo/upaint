@@ -16,6 +16,9 @@ pub type BTreeCellMap = BTreeMap<CanvasIndex, CanvasCell>;
 pub struct CellMap(BTreeCellMap);
 
 impl<'a> CellMap {
+    pub const fn new() -> Self {
+        Self(BTreeMap::new())
+    }
     pub fn get(&'a self, index: &CanvasIndex) -> Option<&'a CanvasCell> {
         self.0.get(index)
     }

@@ -11,6 +11,8 @@ use crate::input_mode::InputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
 use crate::keystrokes::Count;
+use crate::line_drawing::draw_line_on_canvas;
+use crate::line_drawing::LineDrawingState;
 use crate::macros::Macro;
 use crate::macros::MacroRecording;
 use crate::motions::Motion;
@@ -76,6 +78,10 @@ pub enum ActionEnum {
     InsertCharMoveCursor(InsertCharMoveCursor),
     MoveCursorBackInsertChar(MoveCursorBackInsertChar),
     SetCursorPositionIterator(SetCursorPositionIterator),
+    ModeLineDrawing(ModeLineDrawing),
+    LineDrawingAutoStart(LineDrawingAutoStart),
+    LineDrawingEndAndExitMode(LineDrawingEndAndExitMode),
+    LineDrawingAutoStartAndEnd(LineDrawingAutoStartAndEnd),
     ModeColorPicker(ModeColorPicker),
     ModeVisualRect(ModeVisualRect),
     VisualRectSwapCorners(VisualRectSwapCorners),
@@ -335,6 +341,72 @@ impl Action for MoveCursorBackInsertChar {
         ));
     }
 }
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct ModeLineDrawing {
+    mode: InputMode,
+}
+impl Action for ModeLineDrawing {
+    fn execute(&self, program_state: &mut ProgramState) {
+        LineDrawingAutoStart {}.execute(program_state);
+        program_state.input_mode = self.mode.clone();
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct LineDrawingAutoStart {}
+impl Action for LineDrawingAutoStart {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(line_drawing) = &program_state.line_drawing {
+            let from = line_drawing.from;
+            let to = program_state.cursor_position;
+            let diff = draw_line_on_canvas(from, to);
+            program_state.canvas.create_commit(diff);
+        }
+        program_state.line_drawing = Some(LineDrawingState {
+            from: program_state.cursor_position,
+        });
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct LineDrawingEndAndExitMode {
+    mode: InputMode,
+}
+impl Action for LineDrawingEndAndExitMode {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(line_drawing) = &program_state.line_drawing {
+            let from = line_drawing.from;
+            let to = program_state.cursor_position;
+            let diff = draw_line_on_canvas(from, to);
+            program_state.canvas.create_commit(diff);
+        }
+        program_state.line_drawing = None;
+        program_state.input_mode = self.mode.clone();
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct LineDrawingAutoStartAndEnd {}
+impl Action for LineDrawingAutoStartAndEnd {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(line_drawing) = &program_state.line_drawing {
+            let from = line_drawing.from;
+            let to = program_state.cursor_position;
+            if from == to {
+                program_state.line_drawing = None;
+                return;
+            } else {
+                let diff = draw_line_on_canvas(from, to);
+                program_state.canvas.create_commit(diff);
+            }
+        }
+        program_state.line_drawing = Some(LineDrawingState {
+            from: program_state.cursor_position,
+        });
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ModeColorPicker {

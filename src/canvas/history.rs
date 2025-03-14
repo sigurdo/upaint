@@ -48,7 +48,10 @@ impl VersionControlledCanvas {
 
     /// Creates and applies a new commit from provided modifications.
     /// Modifications in staging area will be committed first if any.
-    pub fn create_commit(&mut self, modifications: Vec<CanvasModification>) -> &mut Self {
+    pub fn create_commit(
+        &mut self,
+        modifications: impl IntoIterator<Item = CanvasModification>,
+    ) -> &mut Self {
         self.commit_staged();
         let mut diff =
             CanvasDiffBuilder::from_modifications(modifications, &self.current).serialize();
@@ -83,6 +86,12 @@ impl VersionControlledCanvas {
         if let Some(mut last_commit) = self.commits.pop_back() {
             self.current.apply_diff(&mut last_commit.diff);
             self.commits_unapplied.push_front(last_commit);
+        }
+    }
+
+    pub fn reset_hard(&mut self, target: u64) {
+        while self.get_current_revision() > target {
+            self.undo();
         }
     }
 

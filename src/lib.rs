@@ -14,6 +14,7 @@ pub mod config;
 pub mod file_formats;
 pub mod input_mode;
 pub mod keystrokes;
+pub mod line_drawing;
 pub mod macros;
 pub mod motions;
 pub mod operators;
@@ -36,6 +37,7 @@ use color_picker::ColorPicker;
 use input_mode::InputMode;
 use keystrokes::ColorSlot;
 use keystrokes_parsing::KeystrokeSequence;
+use line_drawing::LineDrawingState;
 use macros::Macro;
 use macros::MacroRecording;
 use selections::Selection;
@@ -189,6 +191,7 @@ pub struct ProgramState {
     pub keystroke_sequence_incomplete: KeystrokeSequence,
     pub macros: HashMap<char, Macro>,
     pub macro_recording: Option<MacroRecording>,
+    pub line_drawing: Option<LineDrawingState>,
 }
 
 impl ProgramState {
