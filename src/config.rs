@@ -1,6 +1,7 @@
 use crate::canvas::raw::transform::CharacterSwapMap;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandler;
+use crate::line_drawing::LineDrawingCharacters;
 use derive_more::Display;
 use derive_more::From;
 use nestify::nest;
@@ -84,6 +85,7 @@ nest! {
             pub x: CharacterSwapMap,
             pub y: CharacterSwapMap,
         },
+        pub line_drawing_characters: LineDrawingCharacters,
         pub autoreload_config: bool,
         pub message_popup_suppress_keystroke: bool,
         pub input_mode: HashMap<InputMode, ConfigInputMode>,

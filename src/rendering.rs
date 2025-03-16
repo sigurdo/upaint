@@ -103,9 +103,11 @@ pub fn draw_frame(
             let from = line_drawing.from;
             let to = program_state.cursor_position;
             if from != to {
-                program_state
-                    .canvas
-                    .create_commit(draw_line_on_canvas(from, to));
+                program_state.canvas.create_commit(draw_line_on_canvas(
+                    from,
+                    to,
+                    &program_state.config.line_drawing_characters,
+                ));
             }
         }
 

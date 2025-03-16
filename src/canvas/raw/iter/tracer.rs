@@ -65,7 +65,7 @@ pub enum ExitType {
     Horizontal,
     Vertical,
 }
-fn get_exit_type(
+pub fn get_exit_type(
     exit: na::Vector2<f64>,
     direction: DirectionFree,
     prefer_exit_horizontal: bool,

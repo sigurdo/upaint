@@ -36,6 +36,27 @@ relative = false
 "," = "\""
 "_" = "¨"
 
+[line_drawing_characters]
+straight_horizontal = "-"
+straight_vertical = "|"
+steep_rising = "/"
+steep_falling = "\\"
+
+# Using unicode box drawing characters:
+# straight_horizontal = "─"
+# straight_vertical = "│"
+# steep_rising = "╱"
+# steep_falling = "╲"
+
+[line_drawing_characters.gentle_slope]
+"¨" = -0.5
+"\"" = -0.3
+"'" = -0.25
+"-" = 0
+"." = 0.25
+"," = 0.3
+"_" = 0.5
+
 [input_mode.i]
 handler = "Action"
 base_keymaps = ["n"]

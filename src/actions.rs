@@ -360,7 +360,7 @@ impl Action for LineDrawingAutoStart {
         if let Some(line_drawing) = &program_state.line_drawing {
             let from = line_drawing.from;
             let to = program_state.cursor_position;
-            let diff = draw_line_on_canvas(from, to);
+            let diff = draw_line_on_canvas(from, to, &program_state.config.line_drawing_characters);
             program_state.canvas.create_commit(diff);
         }
         program_state.line_drawing = Some(LineDrawingState {
@@ -378,7 +378,7 @@ impl Action for LineDrawingEndAndExitMode {
         if let Some(line_drawing) = &program_state.line_drawing {
             let from = line_drawing.from;
             let to = program_state.cursor_position;
-            let diff = draw_line_on_canvas(from, to);
+            let diff = draw_line_on_canvas(from, to, &program_state.config.line_drawing_characters);
             program_state.canvas.create_commit(diff);
         }
         program_state.line_drawing = None;
@@ -397,7 +397,8 @@ impl Action for LineDrawingAutoStartAndEnd {
                 program_state.line_drawing = None;
                 return;
             } else {
-                let diff = draw_line_on_canvas(from, to);
+                let diff =
+                    draw_line_on_canvas(from, to, &program_state.config.line_drawing_characters);
                 program_state.canvas.create_commit(diff);
             }
         }
