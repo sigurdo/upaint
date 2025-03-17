@@ -1,4 +1,5 @@
 use crate::actions::ActionEnum;
+use crate::actions::ModeNormal;
 use crate::color_picker::target::ColorPickerTarget;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
@@ -180,12 +181,10 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                program_state.canvas.commit_staged();
-                program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
-                program_state.input_mode = InputMode::standard(program_state);
-                program_state.visual_rect = None;
-                program_state.line_drawing = None;
-                program_state.new_messages.clear();
+                ModeNormal {
+                    mode: InputMode::standard(program_state),
+                }
+                .execute(program_state);
                 return Ok(());
             }
             _ => (),

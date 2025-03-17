@@ -69,6 +69,7 @@ where
 pub enum ActionEnum {
     #[presetable(default)]
     Repeat(ActionRepeat),
+    ModeNormal(ModeNormal),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
     Operation(Operation),
@@ -123,6 +124,21 @@ impl Action for ActionRepeat {
         for _ in 0..(self.count.0) {
             self.action.execute(program_state);
         }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct ModeNormal {
+    pub mode: InputMode,
+}
+impl Action for ModeNormal {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.canvas.commit_staged();
+        program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+        program_state.input_mode = self.mode.clone();
+        program_state.visual_rect = None;
+        program_state.line_drawing = None;
+        program_state.new_messages.clear();
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]

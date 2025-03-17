@@ -133,14 +133,18 @@ base_keymaps = ["base"]
     { MoveCursor = { motion = "FromKeystrokes" }},
 ]
 
+[input_mode.n.keymaps.actions_repeatable]
+"u" = { "Undo" = {} }
+"<C-r>" = { "Redo" = {} }
+"@" = { MacroExecute = { slot = "FromKeystrokes" } }
+
 [input_mode.base]
 handler = "Action"
 base_keymaps = []
 
-[input_mode.base.keymaps.actions_repeatable]
-"u" = { "Undo" = {} }
-"<C-r>" = { "Redo" = {} }
-"@" = { MacroExecute = { slot = "FromKeystrokes" } }
+[input_mode.base.keymaps.actions]
+"<C-c>" = { ModeNormal = { mode = "n" }}
+"<Esc>" = { ModeNormal = { mode = "n" }}
 
 [input_mode.base.keymaps.operators]
 "c" = { Colorize = { ground = "Foreground" } }
