@@ -1,3 +1,9 @@
+use std::fmt::Debug;
+use std::fmt::Display;
+// use derive_more::
+use derive_more::{Add, Div, Mul, Sub};
+// use std::ops::{Add, Div, Mul, Sub};
+
 use super::CanvasIterationJump;
 use crate::canvas::raw::CanvasIndex;
 use crate::DirectionFree;
@@ -105,6 +111,68 @@ pub fn get_cell_exit(
     (exit, exit_type)
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Add, Sub, Mul, Div)]
+pub struct CellPositionComponent(i32);
+
+impl Display for CellPositionComponent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", f64::from(*self))
+    }
+}
+
+impl Debug for CellPositionComponent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(self, f)
+    }
+}
+
+impl From<f64> for CellPositionComponent {
+    fn from(value: f64) -> Self {
+        let max = i32::MAX as f64;
+        let min = i32::MIN as f64;
+        let value = value * 2.0 * max;
+        if value > max {
+            Self::MAX
+        } else if value < min {
+            Self::MIN
+        } else {
+            Self(value as i32)
+        }
+    }
+}
+
+impl From<CellPositionComponent> for f64 {
+    fn from(value: CellPositionComponent) -> Self {
+        value.0 as f64
+    }
+}
+
+impl From<i16> for CellPositionComponent {
+    fn from(value: i16) -> Self {
+        Self(value as i32)
+    }
+}
+
+impl CellPositionComponent {
+    pub const MAX: Self = Self(i32::MAX);
+    pub const MIN: Self = Self(i32::MIN);
+    pub const MID: Self = Self(0);
+}
+
+pub struct CellPosition {
+    pub x: CellPositionComponent,
+    pub y: CellPositionComponent,
+}
+
+impl From<(f64, f64)> for CellPosition {
+    fn from(value: (f64, f64)) -> Self {
+        Self {
+            x: value.0.into(),
+            y: value.1.into(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CanvasIndexTracer {
     pub index: CanvasIndex,
@@ -132,6 +200,7 @@ impl CanvasIndexTracer {
                 self.index.1 += direction.columns.signum();
                 self.entry = exit;
                 self.entry.x = -0.5 * direction.columns.signum() as f64;
+                // let a = CellPositionComponent::MIN * direction.columns.signum() as i32;
             }
             ExitType::Vertical => {
                 self.index.0 += direction.rows.signum();
