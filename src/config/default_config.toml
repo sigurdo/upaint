@@ -135,6 +135,7 @@ base_keymaps = ["base"]
 
 [input_mode.n.keymaps.actions_repeatable]
 "u" = { "Undo" = {} }
+"U" = { "Redo" = {} }
 "<C-r>" = { "Redo" = {} }
 "@" = { MacroExecute = { slot = "FromKeystrokes" } }
 

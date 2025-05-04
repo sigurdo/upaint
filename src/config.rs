@@ -1,3 +1,5 @@
+use crate::actions::interactive::InteractiveAction;
+use crate::actions::interactive::InteractiveActionEnum;
 use crate::canvas::raw::transform::CharacterSwapMap;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandler;
@@ -100,6 +102,7 @@ pub struct ConfigInputMode {
     // Values are keys for config.input_mode hashmap
     pub base_keymaps: Vec<InputMode>,
     pub handler: InputModeHandler,
+    pub interactive_action: Option<InteractiveActionEnum>,
 }
 
 impl TomlValue for Keymaps {

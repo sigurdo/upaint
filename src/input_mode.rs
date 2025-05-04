@@ -1,3 +1,4 @@
+use crate::actions::ActionEnum;
 use crate::ProgramState;
 use crossterm::event::Event;
 use keystrokes_parsing::FromKeystrokes;
@@ -49,7 +50,7 @@ impl InputModeHandlerTrait for InputModeHandler {
     fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> anyhow::Result<()> {
         match self {
             InputModeHandler::Action => {
-                crate::user_input::handle_user_input_action(event, program_state)
+                crate::user_input::handle_user_input_action::<ActionEnum>(event, program_state)
             }
             InputModeHandler::Command => {
                 crate::user_input::handle_user_input_command_mode(event, program_state)

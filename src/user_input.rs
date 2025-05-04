@@ -43,7 +43,7 @@ pub fn handle_user_input_command_mode(
     Ok(())
 }
 
-pub fn handle_user_input_action(
+pub fn handle_user_input_action<ActionEnumType: FromKeystrokes<ProgramState> + Action>(
     event: Event,
     program_state: &mut ProgramState,
 ) -> anyhow::Result<()> {
@@ -56,7 +56,7 @@ pub fn handle_user_input_action(
                 .keystroke_sequence_incomplete
                 .iter()
                 .peekable();
-            match ActionEnum::from_keystrokes(&mut it, &program_state) {
+            match ActionEnumType::from_keystrokes(&mut it, &program_state) {
                 Ok(action) => {
                     log::debug!("Fant action");
                     action.execute(program_state);

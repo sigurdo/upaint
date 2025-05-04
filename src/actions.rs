@@ -32,10 +32,14 @@ use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
 use keystrokes_parsing::KeystrokeSequence;
 use keystrokes_parsing::Presetable;
+use serde::Deserialize;
 use std::fmt::Debug;
 
 pub mod change_focus;
+pub mod interactive;
 pub mod session;
+
+use interactive::InteractiveAction;
 
 #[enum_dispatch]
 pub trait Action: std::fmt::Debug {
@@ -69,6 +73,7 @@ where
 pub enum ActionEnum {
     #[presetable(default)]
     Repeat(ActionRepeat),
+    ChangeMode(ChangeMode),
     ModeNormal(ModeNormal),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
@@ -126,6 +131,26 @@ impl Action for ActionRepeat {
         }
     }
 }
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct ChangeMode {
+    pub mode: InputMode,
+    pub canvas_commit_staged: bool,
+}
+impl Action for ChangeMode {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(old_mode_config) = program_state.input_mode_config() {
+            if let Some(interactive) = &old_mode_config.interactive_action {
+                interactive.clone().on_leave(program_state);
+            }
+        }
+        program_state.input_mode = self.mode.clone();
+        if self.canvas_commit_staged {
+            program_state.canvas.commit_staged();
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ModeNormal {

@@ -1,3 +1,4 @@
+use crate::canvas::raw::action::CanvasAction;
 use crate::canvas::raw::iter::tracer::get_cell_exit;
 use crate::canvas::raw::iter::tracer::get_exit_type;
 use crate::canvas::raw::iter::tracer::ExitType;
@@ -12,6 +13,15 @@ use std::ops::Bound;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct LineDrawingState {
     pub from: CanvasIndex,
+}
+
+impl CanvasAction for LineDrawingState {
+    fn get_modifications(
+        &self,
+        canvas: &crate::canvas::Canvas,
+    ) -> impl Iterator<Item = CanvasModification> {
+        draw_line_on_canvas(self.from, to, characters)
+    }
 }
 
 fn btreemap_get_closest<T>(map: &BTreeMap<i16, T>, target: i16) -> Option<&T> {
@@ -139,7 +149,7 @@ pub fn draw_line_on_canvas<'a>(
     from: CanvasIndex,
     to: CanvasIndex,
     characters: &'a LineDrawingCharacters,
-) -> impl IntoIterator<Item = CanvasModification> + use<'a> {
+) -> impl Iterator<Item = CanvasModification> + use<'a> {
     LineDrawingModificationIter {
         it: CanvasIndexIteratorFromTo::new(from, to, CanvasIterationJump::Diagonals),
         characters,

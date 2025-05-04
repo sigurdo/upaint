@@ -10,6 +10,7 @@ use crate::Ground;
 
 use super::rect::CanvasRect;
 
+pub mod action;
 pub mod ansi_export;
 pub mod ansi_import;
 pub mod cell_map;
