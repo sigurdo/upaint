@@ -139,7 +139,7 @@ pub fn draw_line_on_canvas<'a>(
     from: CanvasIndex,
     to: CanvasIndex,
     characters: &'a LineDrawingCharacters,
-) -> impl IntoIterator<Item = CanvasModification> + use<'a> {
+) -> impl Iterator<Item = CanvasModification> + use<'a> {
     LineDrawingModificationIter {
         it: CanvasIndexIteratorFromTo::new(from, to, CanvasIterationJump::Diagonals),
         characters,

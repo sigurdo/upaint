@@ -60,24 +60,44 @@ steep_falling = "\\"
 [input_mode.i]
 handler = "Action"
 base_keymaps = ["n"]
+on_enter = [
+    { SetCursorPositionIterator = { jump = "Diagonals", direction = "FromKeystrokes" }}
+]
 
 [input_mode.i.keymaps.actions]
 "<BS>" = { MoveCursorBackInsertChar = { ch = " " }}
 "" = { InsertCharMoveCursor = { ch = "FromKeystrokes" }}
 
+[input_mode.I]
+handler = "Action"
+base_keymaps = ["i"]
+on_enter = [
+    { SetCursorPositionIterator = { jump = "NoJump", direction = "FromKeystrokes" }}
+]
+keymaps = {}
+
 [input_mode.c]
 handler = "Command"
 base_keymaps = []
+on_enter = [
+    { InitCommandLine = {} }
+]
 keymaps = {}
 
 [input_mode.p]
 handler = "ColorPicker"
 base_keymaps = []
 keymaps = {}
+on_enter = [
+    { InitColorPicker = { target = "FromKeystrokes" }}
+]
 
 [input_mode.v]
 handler = "Action"
 base_keymaps = ["n"]
+on_enter = [
+    { InitVisualRect = {} }
+]
 
 [input_mode.v.keymaps.actions]
 "o" = { VisualRectSwapCorners = {} }
@@ -87,9 +107,12 @@ base_keymaps = ["n"]
 [input_mode.L]
 handler = "Action"
 base_keymaps = ["n"]
+on_enter = [
+    { LineDrawingStartNewLine = {} }
+]
 
 [input_mode.L.keymaps.actions]
-" " = { LineDrawingAutoStart = {}}
+" " = { LineDrawingStartNewLine = {}}
 "<Enter>" = { LineDrawingEndAndExitMode = { mode = "n" }}
 "" =  [
     # Prioritize "i" and "," to move cursor before their other motions
@@ -102,12 +125,12 @@ handler = "Action"
 base_keymaps = ["base"]
 
 [input_mode.n.keymaps.actions]
-":" = { ModeCommand = { mode = "c" } }
-"i" = { ModeInsert = { jump = "Diagonals", direction = "FromKeystrokes", mode = "i" }}
-"I" = { ModeInsert = { jump = "NoJump", direction = "FromKeystrokes", mode = "i" }}
-"gc" = { ModeColorPicker = { target = "FromKeystrokes", mode = "p" } }
+":" = { ChangeMode = { mode = "c" } }
+"i" = { ChangeMode = { mode = "i" }}
+"I" = { ChangeMode = { mode = "I" }}
+"gc" = { ChangeMode = { mode = "p" }}
 "gp" = { Pipette = { ground = "FromKeystrokes", slot = "Active" }}
-"v" = { ModeVisualRect = { mode = "v" } }
+"v" = { ChangeMode = { mode = "v" } }
 "o" = { SetSelectionActive = { slot = "FromKeystrokes", highlight = true } }
 '"' = { SetYankActive = { slot = "FromKeystrokes" } }
 "O" = { HighlightSelectionClear = {} }
@@ -126,7 +149,7 @@ base_keymaps = ["base"]
 "zh" = { ChangeFocus = { type_horizontal = { End = 0 }}}
 "zj" = { ChangeFocus = { type_vertical = { Start = 0 }}}
 "zk" = { ChangeFocus = { type_vertical = { End = 0 }}}
-"L" = { ModeLineDrawing = { mode = "L" }}
+"L" = { ChangeMode = { mode = "L" }}
 "" = [
     { Repeat = { count = "FromKeystrokes", action = "FromKeystrokes" }},
     { Operation = { operator = "FromKeystrokes", motion = "FromKeystrokes" }},
@@ -135,6 +158,7 @@ base_keymaps = ["base"]
 
 [input_mode.n.keymaps.actions_repeatable]
 "u" = { "Undo" = {} }
+"U" = { "Redo" = {} }
 "<C-r>" = { "Redo" = {} }
 "@" = { MacroExecute = { slot = "FromKeystrokes" } }
 
@@ -143,8 +167,8 @@ handler = "Action"
 base_keymaps = []
 
 [input_mode.base.keymaps.actions]
-"<C-c>" = { ModeNormal = { mode = "n" }}
-"<Esc>" = { ModeNormal = { mode = "n" }}
+"<C-c>" = { ChangeMode = { mode = "n" }}
+"<Esc>" = { ChangeMode = { mode = "n" }}
 
 [input_mode.base.keymaps.operators]
 "c" = { Colorize = { ground = "Foreground" } }

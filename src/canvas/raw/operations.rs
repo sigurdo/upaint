@@ -178,6 +178,20 @@ impl CanvasDiff {
             .into_iter()
             .map(|value| (&value.0, &mut value.1))
     }
+
+    pub fn from_modifications<T>(canvas: &Canvas, modifications: T) -> Self
+    where
+        T: IntoIterator<Item = CanvasModification>,
+    {
+        CanvasDiffBuilder::from_modifications(modifications, canvas).serialize()
+    }
+
+    pub fn from_diff_units<T>(diff_units: T) -> Self
+    where
+        T: IntoIterator<Item = (CanvasIndex, CanvasDiffUnit)>,
+    {
+        Self(diff_units.into_iter().collect())
+    }
 }
 
 pub fn diff_builder_add(

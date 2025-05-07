@@ -1,5 +1,4 @@
 use crate::actions::ActionEnum;
-use crate::actions::ModeNormal;
 use crate::color_picker::target::ColorPickerTarget;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
@@ -165,29 +164,6 @@ pub fn handle_user_input(mut event: Event, program_state: &mut ProgramState) -> 
     if let Some(recording) = &mut program_state.macro_recording {
         if let Event::Key(e) = event {
             recording.keystrokes.push(Keystroke::from(e));
-        }
-    }
-
-    // Return to normal mode on <esc> or <C-c>
-    if let Event::Key(e) = event {
-        match e {
-            KeyEvent {
-                code: KeyCode::Esc,
-                modifiers: KeyModifiers::NONE,
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-                ..
-            } => {
-                ModeNormal {
-                    mode: InputMode::standard(program_state),
-                }
-                .execute(program_state);
-                return Ok(());
-            }
-            _ => (),
         }
     }
 

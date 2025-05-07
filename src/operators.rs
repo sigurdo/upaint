@@ -1,5 +1,7 @@
 use crate::actions::Action;
-use crate::actions::ModeColorPicker;
+use crate::actions::ActionEnum;
+use crate::actions::ChangeMode;
+use crate::actions::InitColorPicker;
 use crate::canvas::raw::CanvasCell;
 use crate::canvas::raw::CellContentType;
 use crate::canvas::CanvasIndex;
@@ -173,14 +175,19 @@ pub struct ColorPickerOperator {
 }
 impl Operator for ColorPickerOperator {
     fn operate(&self, cell_indices: &[CanvasIndex], program_state: &mut ProgramState) {
-        ModeColorPicker {
+        let action_init_color_picker = InitColorPicker {
             target: ColorPickerTargetEnum::Motion(ColorPickerTargetMotion {
                 ground: self.ground,
                 motion: MotionEnum::SelectionDirectMotion(SelectionDirectMotion {
                     selection: cell_indices.iter().cloned().collect(),
                 }),
             }),
+        };
+        ChangeMode {
             mode: self.mode.clone(),
+            canvas_commit_staged: true,
+            clear_all_mode_items: true,
+            on_enter: vec![ActionEnum::InitColorPicker(action_init_color_picker)],
         }
         .execute(program_state);
     }

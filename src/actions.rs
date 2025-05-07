@@ -32,6 +32,8 @@ use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
 use keystrokes_parsing::KeystrokeSequence;
 use keystrokes_parsing::Presetable;
+use serde::Deserialize;
+use serde::Serialize;
 use std::fmt::Debug;
 
 pub mod change_focus;
@@ -69,22 +71,20 @@ where
 pub enum ActionEnum {
     #[presetable(default)]
     Repeat(ActionRepeat),
-    ModeNormal(ModeNormal),
+    ChangeMode(ChangeMode),
+    ClearAllModeItems(ClearAllModeItems),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
     Operation(Operation),
     OperationMotionFirst(OperationMotionFirst),
-    ModeCommand(ModeCommand),
-    ModeInsert(ModeInsert),
+    InitCommandLine(InitCommandLine),
     InsertCharMoveCursor(InsertCharMoveCursor),
     MoveCursorBackInsertChar(MoveCursorBackInsertChar),
     SetCursorPositionIterator(SetCursorPositionIterator),
-    ModeLineDrawing(ModeLineDrawing),
-    LineDrawingAutoStart(LineDrawingAutoStart),
+    LineDrawingStartNewLine(LineDrawingStartNewLine),
     LineDrawingEndAndExitMode(LineDrawingEndAndExitMode),
-    LineDrawingAutoStartAndEnd(LineDrawingAutoStartAndEnd),
-    ModeColorPicker(ModeColorPicker),
-    ModeVisualRect(ModeVisualRect),
+    InitColorPicker(InitColorPicker),
+    InitVisualRect(InitVisualRect),
     VisualRectSwapCorners(VisualRectSwapCorners),
     HighlightSelection(HighlightSelection),
     HighlightSelectionClear(HighlightSelectionClear),
@@ -126,16 +126,112 @@ impl Action for ActionRepeat {
         }
     }
 }
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChangeMode {
+    pub mode: InputMode,
+    pub canvas_commit_staged: bool,
+    pub clear_all_mode_items: bool,
+    pub on_enter: Vec<ActionEnum>,
+}
+
+fn canvas_commit_staged_default(
+) -> keystrokes_parsing::PresetStructField<<bool as Presetable<ProgramState>>::Preset> {
+    keystrokes_parsing::PresetStructField::Preset(true)
+}
+
+fn clear_all_mode_items_default(
+) -> keystrokes_parsing::PresetStructField<<bool as Presetable<ProgramState>>::Preset> {
+    keystrokes_parsing::PresetStructField::Preset(true)
+}
+fn execute_on_enter_default() -> bool {
+    true
+}
+
+#[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
+pub struct ChangeModePreset {
+    pub mode:
+        keystrokes_parsing::PresetStructField<<InputMode as Presetable<ProgramState>>::Preset>,
+    #[serde(default = "canvas_commit_staged_default")]
+    pub canvas_commit_staged:
+        keystrokes_parsing::PresetStructField<<bool as Presetable<ProgramState>>::Preset>,
+    #[serde(default = "clear_all_mode_items_default")]
+    pub clear_all_mode_items:
+        keystrokes_parsing::PresetStructField<<bool as Presetable<ProgramState>>::Preset>,
+    #[serde(default = "execute_on_enter_default")]
+    pub execute_on_enter: bool,
+}
+
+impl Presetable<ProgramState> for ChangeMode {
+    type Preset = ChangeModePreset;
+    fn from_keystrokes_by_preset(
+        preset: Self::Preset,
+        keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+        config: &ProgramState,
+    ) -> Result<Self, FromKeystrokesError> {
+        let mode = keystrokes_parsing::from_keystrokes_by_preset_struct_field(
+            preset.mode,
+            keystrokes,
+            config,
+        )?;
+        let Some(mode_config) = config.config.input_mode.get(&mode) else {
+            return Err(FromKeystrokesError::Invalid);
+        };
+        let canvas_commit_staged = keystrokes_parsing::from_keystrokes_by_preset_struct_field(
+            preset.canvas_commit_staged,
+            keystrokes,
+            config,
+        )?;
+        let clear_all_mode_items = keystrokes_parsing::from_keystrokes_by_preset_struct_field(
+            preset.clear_all_mode_items,
+            keystrokes,
+            config,
+        )?;
+        let mut on_enter = vec![];
+        if preset.execute_on_enter {
+            if let Some(presets) = &mode_config.on_enter {
+                for preset in presets.clone() {
+                    on_enter.push(ActionEnum::from_keystrokes_by_preset(
+                        preset, keystrokes, config,
+                    )?);
+                }
+            }
+        };
+        // let canvas_commit_staged: keystrokes_parsing::from_keystrokes_by_preset_struct_field(hm, keystrokes, config)?;
+        Ok(ChangeMode {
+            mode,
+            canvas_commit_staged,
+            clear_all_mode_items,
+            on_enter,
+        })
+    }
+}
+
+impl Action for ChangeMode {
+    fn execute(&self, program_state: &mut ProgramState) {
+        if let Some(_old_mode_config) = program_state.input_mode_config() {
+            // TODO: if let Some(on_leave)
+        }
+        if self.canvas_commit_staged {
+            program_state.canvas.commit_staged();
+        } else {
+            program_state.canvas.clear_staged();
+        }
+        if self.clear_all_mode_items {
+            ClearAllModeItems {}.execute(program_state);
+        }
+        program_state.input_mode = self.mode.clone();
+        for on_enter in &self.on_enter {
+            on_enter.execute(program_state);
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeNormal {
-    pub mode: InputMode,
-}
-impl Action for ModeNormal {
+pub struct ClearAllModeItems {}
+impl Action for ClearAllModeItems {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.canvas.commit_staged();
         program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
-        program_state.input_mode = self.mode.clone();
         program_state.visual_rect = None;
         program_state.line_drawing = None;
         program_state.new_messages.clear();
@@ -264,31 +360,11 @@ impl Action for OperationMotionFirst {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeCommand {
-    pub mode: InputMode,
-}
-impl Action for ModeCommand {
+pub struct InitCommandLine {}
+impl Action for InitCommandLine {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.command_line =
             create_command_line_textarea(program_state.config.color_theme.command_line.into());
-        program_state.input_mode = self.mode.clone();
-    }
-}
-#[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(config_type = "ProgramState")]
-pub struct ModeInsert {
-    pub jump: CanvasIterationJump,
-    pub direction: DirectionFree,
-    pub mode: InputMode,
-}
-impl Action for ModeInsert {
-    fn execute(&self, program_state: &mut ProgramState) {
-        SetCursorPositionIterator {
-            direction: self.direction,
-            jump: self.jump,
-        }
-        .execute(program_state);
-        program_state.input_mode = self.mode.clone();
     }
 }
 
@@ -359,19 +435,8 @@ impl Action for MoveCursorBackInsertChar {
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeLineDrawing {
-    mode: InputMode,
-}
-impl Action for ModeLineDrawing {
-    fn execute(&self, program_state: &mut ProgramState) {
-        LineDrawingAutoStart {}.execute(program_state);
-        program_state.input_mode = self.mode.clone();
-    }
-}
-#[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(config_type = "ProgramState")]
-pub struct LineDrawingAutoStart {}
-impl Action for LineDrawingAutoStart {
+pub struct LineDrawingStartNewLine {}
+impl Action for LineDrawingStartNewLine {
     fn execute(&self, program_state: &mut ProgramState) {
         if let Some(line_drawing) = &program_state.line_drawing {
             let from = line_drawing.from;
@@ -401,53 +466,26 @@ impl Action for LineDrawingEndAndExitMode {
         program_state.input_mode = self.mode.clone();
     }
 }
-#[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(config_type = "ProgramState")]
-pub struct LineDrawingAutoStartAndEnd {}
-impl Action for LineDrawingAutoStartAndEnd {
-    fn execute(&self, program_state: &mut ProgramState) {
-        if let Some(line_drawing) = &program_state.line_drawing {
-            let from = line_drawing.from;
-            let to = program_state.cursor_position;
-            if from == to {
-                program_state.line_drawing = None;
-                return;
-            } else {
-                let diff =
-                    draw_line_on_canvas(from, to, &program_state.config.line_drawing_characters);
-                program_state.canvas.create_commit(diff);
-            }
-        }
-        program_state.line_drawing = Some(LineDrawingState {
-            from: program_state.cursor_position,
-        });
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeColorPicker {
+pub struct InitColorPicker {
     pub target: ColorPickerTargetEnum,
-    pub mode: InputMode,
 }
-impl Action for ModeColorPicker {
+impl Action for InitColorPicker {
     fn execute(&self, program_state: &mut ProgramState) {
         let initial_color = self.target.get_color(program_state);
         // TODO: Generere en fornuftig tittel
         let title = "".to_string();
         program_state.color_picker = ColorPicker::new(title, Some(initial_color));
         program_state.color_picker_target = self.target.clone();
-        program_state.input_mode = self.mode.clone();
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct ModeVisualRect {
-    pub mode: InputMode,
-}
-impl Action for ModeVisualRect {
+pub struct InitVisualRect {}
+impl Action for InitVisualRect {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.input_mode = self.mode.clone();
         program_state.visual_rect =
             Some((program_state.cursor_position, program_state.cursor_position));
     }
