@@ -60,9 +60,7 @@ steep_falling = "\\"
 [input_mode.i]
 handler = "Action"
 base_keymaps = ["n"]
-on_enter = [
-    { SetCursorPositionIterator = { jump = "Diagonals", direction = "FromKeystrokes" }}
-]
+on_enter = { SetCursorPositionIterator = { jump = "Diagonals", direction = "FromKeystrokes" }}
 
 [input_mode.i.keymaps.actions]
 "<BS>" = { MoveCursorBackInsertChar = { ch = " " }}
@@ -71,33 +69,25 @@ on_enter = [
 [input_mode.I]
 handler = "Action"
 base_keymaps = ["i"]
-on_enter = [
-    { SetCursorPositionIterator = { jump = "NoJump", direction = "FromKeystrokes" }}
-]
-keymaps = {}
+on_enter = { SetCursorPositionIterator = { jump = "NoJump", direction = "FromKeystrokes"}}
+keymaps= {}
 
 [input_mode.c]
 handler = "Command"
 base_keymaps = []
-on_enter = [
-    { InitCommandLine = {} }
-]
+on_enter = { InitCommandLine = {} }
 keymaps = {}
 
 [input_mode.p]
 handler = "ColorPicker"
 base_keymaps = []
 keymaps = {}
-on_enter = [
-    { InitColorPicker = { target = "FromKeystrokes" }}
-]
+on_enter = { InitColorPicker = { target = "FromKeystrokes" }}
 
 [input_mode.v]
 handler = "Action"
 base_keymaps = ["n"]
-on_enter = [
-    { InitVisualRect = {} }
-]
+on_enter = { InitVisualRect = {} }
 
 [input_mode.v.keymaps.actions]
 "o" = { VisualRectSwapCorners = {} }
@@ -107,13 +97,14 @@ on_enter = [
 [input_mode.L]
 handler = "Action"
 base_keymaps = ["n"]
-on_enter = [
-    { LineDrawingStartNewLine = {} }
-]
+on_enter = { LineDrawingStartNewLine = {} }
 
 [input_mode.L.keymaps.actions]
 " " = { LineDrawingStartNewLine = {}}
-"<Enter>" = { LineDrawingEndAndExitMode = { mode = "n" }}
+"<Enter>" = { Batch = [
+    { LineDrawingStartNewLine = {} },
+    { ChangeMode = { mode = "n" }}
+]} 
 "" =  [
     # Prioritize "i" and "," to move cursor before their other motions
     { MoveCursor = { motion = { Repeat = { count = "FromKeystrokes", motion = { FixedNumberOfCells = { direction = "FromKeystrokes", jump = "DirectionAsStride" }}}}}},
@@ -143,6 +134,10 @@ base_keymaps = ["base"]
 "#" = { SetColorOrSlotActive = { color_or_slot = "FromKeystrokes" } }
 "q" = { MacroRecordingStartStop = { start_or_stop = "FromKeystrokes" } }
 "gm" = { MirrorYank = { slot = "Active", axis = "FromKeystrokes" }}
+"gmb" = { Batch = [
+    { MirrorYank = { slot = "Active", axis = "X" }},
+    { MirrorYank = { slot = "Active", axis = "Y" }},
+]}
 "<F5>" = { ReloadConfig = {} }
 "zz" = { ChangeFocus = { type_horizontal = "Center", type_vertical = "Center" }}
 "zl" = { ChangeFocus = { type_horizontal = { Start = 0 }}}

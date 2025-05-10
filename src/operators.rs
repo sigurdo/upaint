@@ -1,4 +1,5 @@
 use crate::actions::Action;
+use crate::actions::ActionBatch;
 use crate::actions::ActionEnum;
 use crate::actions::ChangeMode;
 use crate::actions::InitColorPicker;
@@ -187,7 +188,9 @@ impl Operator for ColorPickerOperator {
             mode: self.mode.clone(),
             canvas_commit_staged: true,
             clear_all_mode_items: true,
-            on_enter: vec![ActionEnum::InitColorPicker(action_init_color_picker)],
+            on_enter: Box::new(ActionBatch::single(ActionEnum::InitColorPicker(
+                action_init_color_picker,
+            ))),
         }
         .execute(program_state);
     }

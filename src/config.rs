@@ -1,4 +1,4 @@
-use crate::actions::ActionEnumPreset;
+use crate::actions::ActionBatchPreset;
 use crate::canvas::raw::transform::CharacterSwapMap;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandler;
@@ -101,7 +101,7 @@ pub struct ConfigInputMode {
     // Values are keys for config.input_mode hashmap
     pub base_keymaps: Vec<InputMode>,
     pub handler: InputModeHandler,
-    pub on_enter: Option<Vec<ActionEnumPreset>>,
+    pub on_enter: Option<ActionBatchPreset>,
 }
 
 impl TomlValue for Keymaps {

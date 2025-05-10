@@ -1,4 +1,4 @@
-use crate::actions::ActionEnum;
+use crate::actions::ActionBatch;
 use crate::actions::ActionRepeatableEnum;
 use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::iter::CanvasIterationJump;
@@ -103,7 +103,7 @@ keymaps! {
     rotation_directions: RotationDirection,
     yank_slot_specifications: YankSlotSpecification,
     update_selection_operators: UpdateSelectionOperator,
-    actions: ActionEnum,
+    actions: ActionBatch,
     actions_repeatable: ActionRepeatableEnum,
     selections: Selection,
 }

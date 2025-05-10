@@ -65,6 +65,62 @@ where
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum ActionBatchPreset {
+    None,
+    Batch(Vec<ActionEnumPreset>),
+    #[serde(untagged)]
+    Single(ActionEnumPreset),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActionBatch(pub Vec<ActionEnum>);
+
+impl ActionBatch {
+    pub fn none() -> Self {
+        Self(vec![])
+    }
+
+    pub fn single(action: ActionEnum) -> Self {
+        Self(vec![action])
+    }
+}
+
+impl Presetable<ProgramState> for ActionBatch {
+    type Preset = ActionBatchPreset;
+    fn from_keystrokes_by_preset(
+        preset: Self::Preset,
+        keystrokes: &mut keystrokes_parsing::KeystrokeIterator,
+        config: &ProgramState,
+    ) -> Result<Self, FromKeystrokesError> {
+        let mut actions = vec![];
+        match preset {
+            ActionBatchPreset::None => (),
+            ActionBatchPreset::Batch(presets) => {
+                for preset in presets {
+                    actions.push(ActionEnum::from_keystrokes_by_preset(
+                        preset, keystrokes, config,
+                    )?);
+                }
+            }
+            ActionBatchPreset::Single(preset) => {
+                actions.push(ActionEnum::from_keystrokes_by_preset(
+                    preset, keystrokes, config,
+                )?);
+            }
+        }
+        Ok(Self(actions))
+    }
+}
+
+impl Action for ActionBatch {
+    fn execute(&self, program_state: &mut ProgramState) {
+        for action in &self.0 {
+            action.execute(program_state);
+        }
+    }
+}
+
 #[enum_dispatch(Action)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
@@ -82,7 +138,6 @@ pub enum ActionEnum {
     MoveCursorBackInsertChar(MoveCursorBackInsertChar),
     SetCursorPositionIterator(SetCursorPositionIterator),
     LineDrawingStartNewLine(LineDrawingStartNewLine),
-    LineDrawingEndAndExitMode(LineDrawingEndAndExitMode),
     InitColorPicker(InitColorPicker),
     InitVisualRect(InitVisualRect),
     VisualRectSwapCorners(VisualRectSwapCorners),
@@ -131,7 +186,7 @@ pub struct ChangeMode {
     pub mode: InputMode,
     pub canvas_commit_staged: bool,
     pub clear_all_mode_items: bool,
-    pub on_enter: Vec<ActionEnum>,
+    pub on_enter: Box<ActionBatch>,
 }
 
 fn canvas_commit_staged_default(
@@ -186,14 +241,11 @@ impl Presetable<ProgramState> for ChangeMode {
             keystrokes,
             config,
         )?;
-        let mut on_enter = vec![];
+        let mut on_enter = Box::new(ActionBatch::none());
         if preset.execute_on_enter {
-            if let Some(presets) = &mode_config.on_enter {
-                for preset in presets.clone() {
-                    on_enter.push(ActionEnum::from_keystrokes_by_preset(
-                        preset, keystrokes, config,
-                    )?);
-                }
+            if let Some(preset) = &mode_config.on_enter {
+                *on_enter =
+                    ActionBatch::from_keystrokes_by_preset(preset.clone(), keystrokes, config)?;
             }
         };
         // let canvas_commit_staged: keystrokes_parsing::from_keystrokes_by_preset_struct_field(hm, keystrokes, config)?;
@@ -220,9 +272,7 @@ impl Action for ChangeMode {
             ClearAllModeItems {}.execute(program_state);
         }
         program_state.input_mode = self.mode.clone();
-        for on_enter in &self.on_enter {
-            on_enter.execute(program_state);
-        }
+        self.on_enter.execute(program_state);
     }
 }
 
@@ -447,23 +497,6 @@ impl Action for LineDrawingStartNewLine {
         program_state.line_drawing = Some(LineDrawingState {
             from: program_state.cursor_position,
         });
-    }
-}
-#[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(config_type = "ProgramState")]
-pub struct LineDrawingEndAndExitMode {
-    mode: InputMode,
-}
-impl Action for LineDrawingEndAndExitMode {
-    fn execute(&self, program_state: &mut ProgramState) {
-        if let Some(line_drawing) = &program_state.line_drawing {
-            let from = line_drawing.from;
-            let to = program_state.cursor_position;
-            let diff = draw_line_on_canvas(from, to, &program_state.config.line_drawing_characters);
-            program_state.canvas.create_commit(diff);
-        }
-        program_state.line_drawing = None;
-        program_state.input_mode = self.mode.clone();
     }
 }
 

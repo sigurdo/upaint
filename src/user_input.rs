@@ -1,4 +1,4 @@
-use crate::actions::ActionEnum;
+use crate::actions::ActionBatch;
 use crate::color_picker::target::ColorPickerTarget;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
@@ -55,7 +55,7 @@ pub fn handle_user_input_action(
                 .keystroke_sequence_incomplete
                 .iter()
                 .peekable();
-            match ActionEnum::from_keystrokes(&mut it, &program_state) {
+            match ActionBatch::from_keystrokes(&mut it, &program_state) {
                 Ok(action) => {
                     log::debug!("Fant action");
                     action.execute(program_state);
@@ -64,9 +64,9 @@ pub fn handle_user_input_action(
                 Err(FromKeystrokesError::MissingKeystrokes) => {
                     log::debug!("MissingKeystrokes");
                 }
-                Err(_) => {
+                Err(FromKeystrokesError::Invalid) => {
                     // Abort keystroke sequence completion
-                    log::debug!("Err(_)");
+                    log::debug!("Invalid");
                     program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
                 }
             }
