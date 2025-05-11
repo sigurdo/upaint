@@ -29,6 +29,7 @@ pub enum MotionEnum {
     #[presetable(default)]
     Stay(Stay),
     SelectionMotion(SelectionMotion),
+    Highlighted(Highlighted),
     SelectionDirectMotion(SelectionDirectMotion),
     VisualRectMotion(VisualRectMotion),
     GoToMark(GoToMark),
@@ -172,6 +173,22 @@ impl Motion for SelectionMotion {
             selection.cells(program_state)
         } else {
             Vec::new()
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct Highlighted {}
+impl Motion for Highlighted {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        if let Some(slot) = program_state.selection_highlight {
+            SelectionMotion {
+                slot: SelectionSlotSpecification::Specific(slot),
+            }
+            .cells(program_state)
+        } else {
+            vec![program_state.cursor_position]
         }
     }
 }

@@ -6,7 +6,7 @@ use crate::color_picker::target::ColorPickerTarget;
 use crate::color_picker::target::ColorPickerTargetEnum;
 use crate::color_picker::ColorPicker;
 use crate::command_line::create_command_line_textarea;
-use crate::config::load_config;
+use crate::config::sources::load_config_from_sources;
 use crate::input_mode::InputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::keystrokes::ColorOrSlotSpecification;
@@ -725,6 +725,6 @@ impl Action for MacroExecute {
 pub struct ReloadConfig {}
 impl Action for ReloadConfig {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.config = load_config().unwrap();
+        program_state.config = load_config_from_sources(&program_state.config_sources).unwrap();
     }
 }

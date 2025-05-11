@@ -1,6 +1,8 @@
-use upaint::config::load_config;
 use upaint::config::load_default_config;
 use upaint::config::local_config_dir_path;
+use upaint::config::sources::load_config_from_sources;
+use upaint::config::sources::BaseConfig;
+use upaint::config::sources::ConfigSources;
 use upaint::config::ErrorLoadConfig;
 
 use clap::Parser;
@@ -36,6 +38,10 @@ use upaint::{
 #[command(author, version, about, long_about = None)]
 pub struct UpaintCli {
     ansi_file: Option<String>,
+    #[arg(short, long)]
+    base_config: Option<String>,
+    #[arg(short, long)]
+    user_config: Vec<String>,
 }
 
 struct FileLogger;
@@ -118,7 +124,19 @@ fn application(
     };
     program_state.canvas = VersionControlledCanvas::from_ansi(ansi_to_load)?;
     program_state.last_saved_revision = program_state.canvas.get_current_revision();
-    program_state.config = load_config().unwrap_or_else(|err| {
+    let config_sources = ConfigSources {
+        base: if let Some(base) = args.base_config {
+            BaseConfig::from_str(base.as_str()).unwrap()
+        } else {
+            BaseConfig::default()
+        },
+        user: args
+            .user_config
+            .iter()
+            .map(|s| s.try_into().unwrap())
+            .collect(),
+    };
+    program_state.config = load_config_from_sources(&config_sources).unwrap_or_else(|err| {
         program_state.new_messages.push_back(format!("{err}"));
         load_default_config()
     });
@@ -210,20 +228,16 @@ fn application(
                                     changes = false;
                                     'max_attempts: {
                                         for _ in 0..100 {
-                                            match load_config() {
+                                            let mut program_state =
+                                                program_state_watch_config_file.lock().unwrap();
+                                            match load_config_from_sources(
+                                                &program_state.config_sources,
+                                            ) {
                                                 Ok(config) => {
-                                                    let mut program_state =
-                                                        program_state_watch_config_file
-                                                            .lock()
-                                                            .unwrap();
                                                     program_state.config = config;
                                                     break 'max_attempts;
                                                 }
                                                 Err(ErrorLoadConfig::ConfigInvalid(err)) => {
-                                                    let mut program_state =
-                                                        program_state_watch_config_file
-                                                            .lock()
-                                                            .unwrap();
                                                     program_state.new_messages.push_back(format!(
                                                         "{}",
                                                         ErrorLoadConfig::ConfigInvalid(err)
@@ -231,6 +245,7 @@ fn application(
                                                     break 'max_attempts;
                                                 }
                                                 Err(_) => {
+                                                    drop(program_state);
                                                     std::thread::sleep(Duration::from_millis(10));
                                                 }
                                             }

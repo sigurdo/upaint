@@ -6,6 +6,7 @@ use crate::line_drawing::LineDrawingCharacters;
 use derive_more::Display;
 use derive_more::From;
 use nestify::nest;
+use sources::load_config_from_sources;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -14,6 +15,7 @@ use toml::de::ValueDeserializer;
 
 pub mod color_theme;
 pub mod keymaps;
+pub mod sources;
 
 use self::{
     color_theme::{ColorThemePreset, ColorToml, StyleConfig},
@@ -164,10 +166,7 @@ pub fn load_config_from_table(mut toml_table: toml::Table) -> anyhow::Result<Con
 }
 
 pub fn load_default_config() -> Config {
-    let toml_table = include_str!("config/default_config.toml")
-        .parse::<toml::Table>()
-        .unwrap();
-    load_config_from_table(toml_table).unwrap()
+    load_config_from_sources(&sources::ConfigSources::default()).unwrap()
 }
 
 #[derive(Debug, From, Display)]
@@ -177,14 +176,4 @@ pub enum ErrorLoadConfig {
     #[from(ignore)]
     #[display("config invalid: {_0}")]
     ConfigInvalid(anyhow::Error),
-}
-pub fn load_config() -> Result<Config, ErrorLoadConfig> {
-    let mut toml_table = include_str!("config/default_config.toml")
-        .parse::<toml::Table>()
-        .unwrap();
-    toml_table.extend_recurse_tables(local_config_toml()?.parse::<toml::Table>().unwrap());
-    match load_config_from_table(toml_table) {
-        Ok(config) => Ok(config),
-        Err(e) => Err(ErrorLoadConfig::ConfigInvalid(e)),
-    }
 }
