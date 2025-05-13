@@ -38,14 +38,14 @@ pub struct ColorPickerTargetMotion {
 impl ColorPickerTarget for ColorPickerTargetMotion {
     fn set_color(&self, color: Color, program_state: &mut ProgramState) {
         program_state.canvas.clear_staged();
-        for index in self.motion.cells(program_state).iter() {
+        for index in self.motion.trail(program_state).iter() {
             program_state
                 .canvas
                 .stage(CanvasModification::set_color(*index, self.ground, color));
         }
     }
     fn get_color(&self, program_state: &ProgramState) -> Color {
-        let cells = self.motion.cells(program_state);
+        let cells = self.motion.trail(program_state);
         let index_first = cells.iter().next();
         if let Some(index) = index_first {
             program_state.canvas.raw().color(*index, self.ground)

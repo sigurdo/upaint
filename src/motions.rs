@@ -18,9 +18,29 @@ use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::Presetable;
 use std::fmt::Debug;
 
+/// Implementer must implement either trail() or or trail_target(), to avoid recursion.
+/// Implementing only trail() implies that
 #[enum_dispatch]
 pub trait Motion: Debug {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex>;
+    fn trail_target(&self, program_state: &ProgramState) -> (Vec<CanvasIndex>, CanvasIndex) {
+        let trail = self.trail(program_state);
+        let target = trail.last().cloned().unwrap_or_else(|| {
+            log::debug!(
+                "WARNING: target defaulted to (0, 0) in Motion.trail_target() for Motion {:#?}",
+                self
+            );
+            (0, 0)
+        });
+        (trail, target)
+    }
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let (trail, _target) = self.trail_target(program_state);
+        trail
+    }
+    fn target(&self, program_state: &ProgramState) -> CanvasIndex {
+        let (_trail, target) = self.trail_target(program_state);
+        target
+    }
 }
 #[enum_dispatch(Motion)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -38,9 +58,32 @@ pub enum MotionEnum {
     Repeat(MotionRepeat),
 }
 
+/// Implementer must implement either trail_repeatable or trail_target_repeatable to avoid recursion
 #[enum_dispatch]
 pub trait MotionRepeatable: Debug {
-    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex>;
+    fn trail_target_repeatable(
+        &self,
+        count: u32,
+        program_state: &ProgramState,
+    ) -> (Vec<CanvasIndex>, CanvasIndex) {
+        let trail = self.trail_repeatable(count, program_state);
+        let target = trail.last().cloned().unwrap_or_else(|| {
+            log::debug!(
+                "WARNING: target defaulted to (0, 0) in Motion.trail_target() for Motion {:#?}",
+                self
+            );
+            (0, 0)
+        });
+        (trail, target)
+    }
+    fn trail_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let (trail, _target) = self.trail_target_repeatable(count, program_state);
+        trail
+    }
+    fn target_repeatable(&self, count: u32, program_state: &ProgramState) -> CanvasIndex {
+        let (_trail, target) = self.trail_target_repeatable(count, program_state);
+        target
+    }
 }
 #[enum_dispatch(MotionRepeatable)]
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -60,8 +103,12 @@ pub struct MotionRepeat {
     pub motion: MotionRepeatEnum,
 }
 impl Motion for MotionRepeat {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
-        self.motion.cells_repeatable(self.count.0, program_state)
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        self.motion.trail_repeatable(self.count.0, program_state)
+    }
+    fn trail_target(&self, program_state: &ProgramState) -> (Vec<CanvasIndex>, CanvasIndex) {
+        self.motion
+            .trail_target_repeatable(self.count.0, program_state)
     }
 }
 
@@ -69,7 +116,7 @@ impl Motion for MotionRepeat {
 #[presetable(config_type = "ProgramState")]
 pub struct Stay {}
 impl Motion for Stay {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         vec![start]
     }
@@ -82,7 +129,11 @@ pub struct FixedNumberOfCells {
     pub jump: CanvasIterationJump,
 }
 impl MotionRepeatable for FixedNumberOfCells {
-    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail_target_repeatable(
+        &self,
+        count: u32,
+        program_state: &ProgramState,
+    ) -> (Vec<CanvasIndex>, CanvasIndex) {
         let start = program_state.cursor_position;
         let it = CanvasIndexIterator::new(
             start,
@@ -91,7 +142,15 @@ impl MotionRepeatable for FixedNumberOfCells {
             StopCondition::Always,
             count,
         );
-        it.collect()
+        if count == 1 {
+            let target = it.last().unwrap_or(start);
+            let trail = vec![target];
+            (trail, target)
+        } else {
+            let trail: Vec<_> = it.collect();
+            let target = trail.last().cloned().unwrap_or(start);
+            (trail, target)
+        }
     }
 }
 
@@ -102,7 +161,7 @@ pub struct WordBoundary {
     boundary_type: WordBoundaryType,
 }
 impl MotionRepeatable for WordBoundary {
-    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
@@ -126,7 +185,7 @@ pub struct FindChar {
     pub ch: char,
 }
 impl MotionRepeatable for FindChar {
-    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let start = program_state.cursor_position;
         let canvas = program_state.canvas.raw();
         let it = CanvasIndexIterator::new(
@@ -149,12 +208,12 @@ pub struct FindCharRepeat {
     pub direction_reversed: bool,
 }
 impl MotionRepeatable for FindCharRepeat {
-    fn cells_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail_repeatable(&self, count: u32, program_state: &ProgramState) -> Vec<CanvasIndex> {
         if let Some(mut find_char) = program_state.find_char_last.clone() {
             if self.direction_reversed {
                 find_char.direction = find_char.direction.reversed();
             }
-            find_char.cells_repeatable(count, program_state)
+            find_char.trail_repeatable(count, program_state)
         } else {
             vec![]
         }
@@ -167,10 +226,10 @@ pub struct SelectionMotion {
     pub slot: SelectionSlotSpecification,
 }
 impl Motion for SelectionMotion {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let slot = self.slot.as_char(program_state);
         if let Some(selection) = program_state.selections.get(&slot) {
-            selection.cells(program_state)
+            selection.trail(program_state)
         } else {
             Vec::new()
         }
@@ -181,12 +240,12 @@ impl Motion for SelectionMotion {
 #[presetable(config_type = "ProgramState")]
 pub struct Highlighted {}
 impl Motion for Highlighted {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         if let Some(slot) = program_state.selection_highlight {
             SelectionMotion {
                 slot: SelectionSlotSpecification::Specific(slot),
             }
-            .cells(program_state)
+            .trail(program_state)
         } else if let Some(selection) = &program_state.highlight {
             let cells: Vec<_> = selection.clone().into_iter().collect();
             if cells.len() > 0 {
@@ -206,8 +265,8 @@ pub struct SelectionDirectMotion {
     pub selection: Selection,
 }
 impl Motion for SelectionDirectMotion {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
-        self.selection.cells(program_state)
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        self.selection.trail(program_state)
     }
 }
 
@@ -215,7 +274,7 @@ impl Motion for SelectionDirectMotion {
 #[presetable(config_type = "ProgramState")]
 pub struct VisualRectMotion {}
 impl Motion for VisualRectMotion {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         if let Some((index_a, index_b)) = program_state.visual_rect {
             let rect = CanvasRect::from_corners((index_a, index_b));
             rect.indices_contained()
@@ -232,7 +291,7 @@ pub struct GoToMark {
     pub slot: char,
 }
 impl Motion for GoToMark {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         if let Some(mark) = program_state.marks.get(&self.slot) {
             let rows = mark.0 - program_state.cursor_position.0;
             let columns = mark.1 - program_state.cursor_position.1;
@@ -257,7 +316,7 @@ pub struct MatchingCells {
     pub content_type: CellContentType,
 }
 impl Motion for MatchingCells {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let canvas = program_state.canvas.raw();
         let index = program_state.cursor_position;
 
@@ -301,7 +360,7 @@ pub struct ContinuousRegion {
     pub diagonals_allowed: bool,
 }
 impl Motion for ContinuousRegion {
-    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn trail(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
         let canvas = program_state.canvas.raw();
         let start = program_state.cursor_position;
         let match_cell = MatchCell::from((canvas.get(&start), self.relative_type));

@@ -344,7 +344,7 @@ impl Action for MoveCursor {
             }
             .execute(program_state);
         }
-        let cells = self.motion.cells(program_state);
+        let cells = self.motion.trail(program_state);
         // if let MotionRepeat {
         //     motion: MotionEnum::FindChar(ref find_char),
         // ..
@@ -382,8 +382,8 @@ pub struct HighlightTrail {
 }
 impl Action for HighlightTrail {
     fn execute(&self, program_state: &mut ProgramState) {
-        let cells = self.motion.cells(program_state);
-        let trail = Selection::from_iter(cells.into_iter());
+        let (trail, _target) = self.motion.trail_target(program_state);
+        let trail = Selection::from_iter(trail.into_iter());
         program_state.selection_highlight = None;
         program_state.highlight = Some(trail);
     }
@@ -407,7 +407,7 @@ pub struct Operation {
 }
 impl Action for Operation {
     fn execute(&self, program_state: &mut ProgramState) {
-        let cells = self.motion.cells(program_state);
+        let cells = self.motion.trail(program_state);
         if self.clear_visual_rect {
             program_state.visual_rect = None;
         }
