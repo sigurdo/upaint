@@ -1,4 +1,5 @@
 use crate::actions::ActionBatch;
+use crate::actions::ClearAllModeItems;
 use crate::color_picker::target::ColorPickerTarget;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
@@ -92,6 +93,7 @@ pub fn handle_user_input_color_picker(
             KeyCode::Enter => {
                 target.set_color(program_state.color_picker.get_color(), program_state);
                 program_state.canvas.commit_staged();
+                ClearAllModeItems {}.execute(program_state);
                 program_state.input_mode = InputMode::standard(program_state);
             }
             KeyCode::Delete | KeyCode::Backspace => {
@@ -99,11 +101,13 @@ pub fn handle_user_input_color_picker(
                 // program_state.color_slots.remove(&slot);
                 target.set_color(program_state.color_picker.get_color(), program_state);
                 program_state.canvas.clear_staged();
+                ClearAllModeItems {}.execute(program_state);
                 program_state.input_mode = InputMode::standard(program_state);
             }
             KeyCode::Char('r') => {
                 target.set_color(Color::Reset, program_state);
                 program_state.canvas.commit_staged();
+                ClearAllModeItems {}.execute(program_state);
                 program_state.input_mode = InputMode::standard(program_state);
             }
             _ => {

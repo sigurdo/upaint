@@ -133,11 +133,15 @@ pub fn draw_frame(
         program_state.canvas_visible = canvas_visible;
         canvas.cursor = Some(program_state.cursor_position);
 
-        if let Some(corners) = program_state.visual_rect {
-            canvas.visual_rect = Some(corners);
-        }
-        if let Some(ch) = program_state.selection_highlight {
-            canvas.selection = program_state.selections.get(&ch).cloned();
+        if program_state.highlighting_on {
+            if let Some(corners) = program_state.visual_rect {
+                canvas.visual_rect = Some(corners);
+            }
+            if let Some(ch) = program_state.selection_highlight {
+                canvas.selection = program_state.selections.get(&ch).cloned();
+            } else if let Some(highlight) = &program_state.highlight {
+                canvas.selection = Some(highlight.clone());
+            }
         }
 
         f.render_widget(canvas, inner_area);

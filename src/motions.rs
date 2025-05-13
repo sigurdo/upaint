@@ -187,6 +187,13 @@ impl Motion for Highlighted {
                 slot: SelectionSlotSpecification::Specific(slot),
             }
             .cells(program_state)
+        } else if let Some(selection) = &program_state.highlight {
+            let cells: Vec<_> = selection.clone().into_iter().collect();
+            if cells.len() > 0 {
+                cells
+            } else {
+                vec![program_state.cursor_position]
+            }
         } else {
             vec![program_state.cursor_position]
         }

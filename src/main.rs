@@ -151,6 +151,8 @@ fn application(
         create_command_line_textarea(program_state.config.color_theme.command_line.into());
     program_state.selection_active = 'a';
     program_state.yank_active = 'a';
+    program_state.highlight = None;
+    program_state.highlighting_on = true;
     let program_state = Arc::new(Mutex::new(program_state));
     let (exit_tx, exit_rx) = mpsc::sync_channel::<()>(1);
     let exit_tx = Arc::new(Mutex::new(exit_tx));

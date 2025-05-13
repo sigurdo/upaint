@@ -82,7 +82,7 @@ keymaps = {}
 handler = "ColorPicker"
 base_keymaps = []
 keymaps = {}
-on_enter = { InitColorPicker = { target = "FromKeystrokes" }}
+on_enter = { InitColorPicker = { target = { ColorOrSlot = "Active" }}}
 
 [input_mode.v]
 handler = "Action"
@@ -92,6 +92,10 @@ on_enter = { InitVisualRect = {} }
 [input_mode.v.keymaps.actions]
 "o" = { VisualRectSwapCorners = {} }
 # "" = { VisualRectOperation = {  } }
+"<Enter>" = { Batch = [
+    { HighlightTrail = { motion = { VisualRectMotion = {}} }},
+    { ChangeMode = { mode = "n" }},
+]}
 "" = { Operation = { operator = "FromKeystrokes", motion = { VisualRectMotion = {}}, return_to_standard_mode = true }}
 
 [input_mode.L]
@@ -119,18 +123,16 @@ base_keymaps = ["base"]
 ":" = { ChangeMode = { mode = "c" } }
 "i" = { ChangeMode = { mode = "i" }}
 "I" = { ChangeMode = { mode = "I" }}
-"gc" = { ChangeMode = { mode = "p" }}
+"gc " = { ChangeMode = { mode = "p" }}
 "gp" = { Pipette = { ground = "FromKeystrokes", slot = "Active" }}
 "v" = { ChangeMode = { mode = "v" } }
-"o" = { SetSelectionActive = { slot = "FromKeystrokes", highlight = true } }
 '"' = { SetYankActive = { slot = "FromKeystrokes" } }
-"O" = { HighlightSelectionClear = {} }
+"o" = { SetSelectionActive = { slot = "FromKeystrokes", highlight = true } }
+"O" = { HighlightTrail = { motion = { Stay = {}}}}
+"m" = { HighlightTrail = { motion = "FromKeystrokes" }}
 "P" = { Paste = { slot = "FromKeystrokes" } }
 "p" = { Paste = { slot = "Active" } }
 "<C-p>" = { Paste = { slot = "Active" } }
-"r" = { Operation = { operator = { Replace = { ch = "FromKeystrokes" }}, motion = { Stay = {}}}}
-"R" = { OperationMotionFirst = { motion = "FromKeystrokes", operator = { Replace = { ch = "FromKeystrokes" }}}}
-"m" = { MarkSet = { slot = "FromKeystrokes" }}
 "#" = { SetColorOrSlotActive = { color_or_slot = "FromKeystrokes" } }
 "q" = { MacroRecordingStartStop = { start_or_stop = "FromKeystrokes" } }
 "gm" = { MirrorYank = { slot = "Active", axis = "FromKeystrokes" }}
@@ -145,19 +147,14 @@ base_keymaps = ["base"]
 "zj" = { ChangeFocus = { type_vertical = { Start = 0 }}}
 "zk" = { ChangeFocus = { type_vertical = { End = 0 }}}
 "L" = { ChangeMode = { mode = "L" }}
-"s" = { OperationMotionFirst = { motion = "FromKeystrokes", operator = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true }}}}
-"a" = { OperationMotionFirst = { motion = "FromKeystrokes", operator = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true }}}}
-"-" = { OperationMotionFirst = { motion = "FromKeystrokes", operator = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true }}}}
 "d" = { Batch = [
     { Operation = { motion = { Highlighted = {} }, operator = { Cut = { content_type = "ALL", slot = "Active" }}}},
     { HighlightSelectionClear = {} },
 ]}
-# "d" = { HighlighSelectionClear = {} }
-# "d" = { HighlightSelectionClear = {} }
 "" = [
     { Repeat = { count = "FromKeystrokes", action = "FromKeystrokes" }},
     { Operation = { operator = "FromKeystrokes", motion = { Highlighted = {} }}},
-    { MoveCursor = { motion = "FromKeystrokes" }},
+    { MoveCursor = { motion = "FromKeystrokes", highlight_trail = true }},
 ]
 
 [input_mode.n.keymaps.actions_repeatable]
@@ -179,9 +176,9 @@ base_keymaps = []
 "b" = { Colorize = { ground = "Background" } }
 "B" = { Colorize = { ground = "Background", color = "FromKeystrokes" } }
 "r" = { Replace = { ch = "FromKeystrokes" } }
-"a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true } }
-"z" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true } }
-"s" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true } }
+"a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = false } }
+"z" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = false } }
+"s" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = false } }
 "y" = { Yank = { content_type = "ALL", slot = "Active" } }
 "Y" = { Yank = { content_type = "FromKeystrokes", slot = "Active" } }
 "d" = { Cut = { content_type = "ALL", slot = "Active" } }
@@ -281,6 +278,7 @@ base_keymaps = []
 ]
 
 [input_mode.base.keymaps.color_or_slot_specifications]
+" " = "Active"
 "" = { Specific = "FromKeystrokes" }
 
 [input_mode.base.keymaps.color_picker_target_motions]

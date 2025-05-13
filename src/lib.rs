@@ -175,6 +175,8 @@ pub struct ProgramState {
     pub yanks: HashMap<char, CanvasYank>,
     pub marks: HashMap<char, CanvasIndex>,
     pub selection_highlight: Option<char>,
+    pub highlight: Option<Selection>,
+    pub highlighting_on: bool,
     pub visual_rect: Option<(CanvasIndex, CanvasIndex)>,
     pub yank_active: char,
     pub selection_active: char,

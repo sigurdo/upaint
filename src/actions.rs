@@ -21,6 +21,7 @@ use crate::motions::MotionRepeat;
 use crate::motions::MotionRepeatEnum;
 use crate::operators::Operator;
 use crate::operators::OperatorEnum;
+use crate::selections::Selection;
 use crate::user_input::handle_user_input;
 use crate::yank_slots::YankSlotSpecification;
 use crate::Axis;
@@ -31,6 +32,7 @@ use enum_dispatch::enum_dispatch;
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::FromKeystrokesError;
 use keystrokes_parsing::KeystrokeSequence;
+use keystrokes_parsing::PresetStructField;
 use keystrokes_parsing::Presetable;
 use serde::Deserialize;
 use serde::Serialize;
@@ -131,6 +133,7 @@ pub enum ActionEnum {
     ClearAllModeItems(ClearAllModeItems),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
+    HighlightTrail(HighlightTrail),
     Operation(Operation),
     OperationMotionFirst(OperationMotionFirst),
     InitCommandLine(InitCommandLine),
@@ -285,6 +288,7 @@ impl Action for ClearAllModeItems {
         program_state.visual_rect = None;
         program_state.line_drawing = None;
         program_state.new_messages.clear();
+        program_state.highlighting_on = true;
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
@@ -322,13 +326,24 @@ impl Action for Pipette {
         }
     }
 }
+fn fn_false_preset() -> PresetStructField<bool> {
+    PresetStructField::Preset(false)
+}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct MoveCursor {
     pub motion: MotionEnum,
+    #[presetable(default = "fn_false_preset")]
+    pub highlight_trail: bool,
 }
 impl Action for MoveCursor {
     fn execute(&self, program_state: &mut ProgramState) {
+        if self.highlight_trail {
+            HighlightTrail {
+                motion: self.motion.clone(),
+            }
+            .execute(program_state);
+        }
         let cells = self.motion.cells(program_state);
         // if let MotionRepeat {
         //     motion: MotionEnum::FindChar(ref find_char),
@@ -359,6 +374,21 @@ impl Action for MoveCursor {
         program_state.canvas_visible.column += columns_away;
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct HighlightTrail {
+    pub motion: MotionEnum,
+}
+impl Action for HighlightTrail {
+    fn execute(&self, program_state: &mut ProgramState) {
+        let cells = self.motion.cells(program_state);
+        let trail = Selection::from_iter(cells.into_iter());
+        program_state.selection_highlight = None;
+        program_state.highlight = Some(trail);
+    }
+}
+
 fn fn_true() -> bool {
     true
 }
@@ -512,6 +542,7 @@ impl Action for InitColorPicker {
         let title = "".to_string();
         program_state.color_picker = ColorPicker::new(title, Some(initial_color));
         program_state.color_picker_target = self.target.clone();
+        program_state.highlighting_on = false;
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
