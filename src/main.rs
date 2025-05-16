@@ -140,6 +140,7 @@ fn application(
         program_state.new_messages.push_back(format!("{err}"));
         load_default_config()
     });
+    program_state.config_sources = config_sources;
     program_state.input_mode = program_state.config.input_mode_initial.clone();
     let autoreload_config = program_state.config.autoreload_config;
     // log::debug!("{:#?}", program_state.config);
