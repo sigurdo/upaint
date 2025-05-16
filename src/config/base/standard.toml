@@ -154,6 +154,10 @@ base_keymaps = ["base"]
 "" = [
     { Repeat = { count = "FromKeystrokes", action = "FromKeystrokes" }},
     { Operation = { operator = "FromKeystrokes", motion = { Highlighted = {} }}},
+    { Batch = [
+        { MoveCursor = { motion = { Repeat = { count = 1, motion = { FixedNumberOfCells = { direction = "FromKeystrokes", jump = "DirectionAsStride" }}}}, highlight_trail = false }},
+        { HighlightClear = {}}
+    ]},
     { MoveCursor = { motion = "FromKeystrokes", highlight_trail = true }},
 ]
 

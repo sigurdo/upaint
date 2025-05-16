@@ -134,6 +134,7 @@ pub enum ActionEnum {
     Pipette(Pipette),
     MoveCursor(MoveCursor),
     HighlightTrail(HighlightTrail),
+    HighlightClear(HighlightClear),
     Operation(Operation),
     OperationMotionFirst(OperationMotionFirst),
     InitCommandLine(InitCommandLine),
@@ -386,6 +387,15 @@ impl Action for HighlightTrail {
         let trail = Selection::from_iter(cells.into_iter());
         program_state.selection_highlight = None;
         program_state.highlight = Some(trail);
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct HighlightClear {}
+impl Action for HighlightClear {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.selection_highlight = None;
+        program_state.highlight = None;
     }
 }
 
