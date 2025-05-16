@@ -182,12 +182,7 @@ impl Motion for SelectionMotion {
 pub struct Highlighted {}
 impl Motion for Highlighted {
     fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
-        if let Some(slot) = program_state.selection_highlight {
-            SelectionMotion {
-                slot: SelectionSlotSpecification::Specific(slot),
-            }
-            .cells(program_state)
-        } else if let Some(selection) = &program_state.highlight {
+        if let Some(selection) = &program_state.highlight {
             let cells: Vec<_> = selection.clone().into_iter().collect();
             if cells.len() > 0 {
                 cells

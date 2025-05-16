@@ -133,8 +133,6 @@ pub enum ActionEnum {
     ClearAllModeItems(ClearAllModeItems),
     Pipette(Pipette),
     MoveCursor(MoveCursor),
-    HighlightTrail(HighlightTrail),
-    HighlightClear(HighlightClear),
     Operation(Operation),
     OperationMotionFirst(OperationMotionFirst),
     InitCommandLine(InitCommandLine),
@@ -146,7 +144,8 @@ pub enum ActionEnum {
     InitVisualRect(InitVisualRect),
     VisualRectSwapCorners(VisualRectSwapCorners),
     HighlightSelection(HighlightSelection),
-    HighlightSelectionClear(HighlightSelectionClear),
+    HighlightTrail(HighlightTrail),
+    HighlightClear(HighlightClear),
     SetSelectionActive(SetSelectionActive),
     SetColorOrSlotActive(SetColorOrSlotActive),
     Paste(Paste),
@@ -376,29 +375,6 @@ impl Action for MoveCursor {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(config_type = "ProgramState")]
-pub struct HighlightTrail {
-    pub motion: MotionEnum,
-}
-impl Action for HighlightTrail {
-    fn execute(&self, program_state: &mut ProgramState) {
-        let cells = self.motion.cells(program_state);
-        let trail = Selection::from_iter(cells.into_iter());
-        program_state.selection_highlight = None;
-        program_state.highlight = Some(trail);
-    }
-}
-#[derive(Clone, Debug, PartialEq, Presetable)]
-#[presetable(config_type = "ProgramState")]
-pub struct HighlightClear {}
-impl Action for HighlightClear {
-    fn execute(&self, program_state: &mut ProgramState) {
-        program_state.selection_highlight = None;
-        program_state.highlight = None;
-    }
-}
-
 fn fn_true() -> bool {
     true
 }
@@ -584,17 +560,30 @@ pub struct HighlightSelection {
 }
 impl Action for HighlightSelection {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.selection_highlight = Some(self.slot);
+        program_state.highlight = program_state.selections.get(&self.slot).cloned()
     }
 }
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
-pub struct HighlightSelectionClear {}
-impl Action for HighlightSelectionClear {
+pub struct HighlightTrail {
+    pub motion: MotionEnum,
+}
+impl Action for HighlightTrail {
     fn execute(&self, program_state: &mut ProgramState) {
-        program_state.selection_highlight = None;
+        let cells = self.motion.cells(program_state);
+        let trail = Selection::from_iter(cells.into_iter());
+        program_state.highlight = Some(trail);
     }
 }
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct HighlightClear {}
+impl Action for HighlightClear {
+    fn execute(&self, program_state: &mut ProgramState) {
+        program_state.highlight = None;
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct SetSelectionActive {
@@ -605,7 +594,7 @@ impl Action for SetSelectionActive {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.selection_active = self.slot;
         if self.highlight {
-            program_state.selection_highlight = Some(self.slot);
+            program_state.highlight = program_state.selections.get(&self.slot).cloned();
         }
     }
 }

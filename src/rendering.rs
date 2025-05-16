@@ -137,9 +137,7 @@ pub fn draw_frame(
             if let Some(corners) = program_state.visual_rect {
                 canvas.visual_rect = Some(corners);
             }
-            if let Some(ch) = program_state.selection_highlight {
-                canvas.selection = program_state.selections.get(&ch).cloned();
-            } else if let Some(highlight) = &program_state.highlight {
+            if let Some(highlight) = &program_state.highlight {
                 canvas.selection = Some(highlight.clone());
             }
         }

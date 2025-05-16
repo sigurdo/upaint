@@ -149,7 +149,7 @@ base_keymaps = ["base"]
 "L" = { ChangeMode = { mode = "L" }}
 "d" = { Batch = [
     { Operation = { motion = { Highlighted = {} }, operator = { Cut = { content_type = "ALL", slot = "Active" }}}},
-    { HighlightSelectionClear = {} },
+    { HighlightClear = {} },
 ]}
 "" = [
     { Repeat = { count = "FromKeystrokes", action = "FromKeystrokes" }},
@@ -180,9 +180,9 @@ base_keymaps = []
 "b" = { Colorize = { ground = "Background" } }
 "B" = { Colorize = { ground = "Background", color = "FromKeystrokes" } }
 "r" = { Replace = { ch = "FromKeystrokes" } }
-"a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = false } }
-"z" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = false } }
-"s" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = false } }
+"a" = { UpdateSelection = { operator = "Add", slot = "Active", highlight = true } }
+"-" = { UpdateSelection = { operator = "Subtract", slot = "Active", highlight = true } }
+"s" = { UpdateSelection = { operator = "Overwrite", slot = "Active", highlight = true } }
 "y" = { Yank = { content_type = "ALL", slot = "Active" } }
 "Y" = { Yank = { content_type = "FromKeystrokes", slot = "Active" } }
 "d" = { Cut = { content_type = "ALL", slot = "Active" } }

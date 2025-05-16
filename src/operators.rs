@@ -124,7 +124,7 @@ impl Operator for UpdateSelection {
             }
         }
         if self.highlight {
-            program_state.selection_highlight = Some(slot);
+            program_state.highlight = Some(selection.clone());
         }
     }
 }
