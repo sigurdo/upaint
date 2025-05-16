@@ -10,7 +10,7 @@ use std::collections::HashSet;
 pub type Selection = HashSet<CanvasIndex>;
 
 impl Motion for Selection {
-    fn trail(&self, _program_state: &ProgramState) -> Vec<CanvasIndex> {
+    fn cells(&self, _program_state: &ProgramState) -> Vec<CanvasIndex> {
         self.iter().copied().collect()
     }
 }
@@ -51,7 +51,7 @@ impl SelectionSpecification {
                     .cloned()
                     .unwrap_or(Selection::new())
             }
-            Self::Motion(motion) => motion.trail(program_state).iter().copied().collect(),
+            Self::Motion(motion) => motion.cells(program_state).iter().copied().collect(),
         }
     }
 }
