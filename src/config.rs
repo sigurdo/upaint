@@ -40,23 +40,23 @@ impl TomlValue for bool {
 }
 
 nest! {
-    #[derive(Clone, Debug, Deserialize)]
+    #[derive(Clone, Debug, Deserialize, PartialEq)]
     pub struct Config {
-        pub numbers: #[derive(Clone, Debug, Deserialize)] pub struct ConfigNumbers {
-            pub row: #[derive(Clone, Debug, Deserialize)] pub struct ConfigNumbersRow {
+        pub numbers: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ConfigNumbers {
+            pub row: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ConfigNumbersRow {
                 pub enable: bool,
                 pub relative: bool,
             },
-            pub column: #[derive(Clone, Debug, Deserialize)] pub struct ConfigNumbersColumn {
+            pub column: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ConfigNumbersColumn {
                 pub enable: bool,
                 pub relative: bool,
             }
         },
         pub color_theme_preset: ColorThemePreset,
-        pub color_theme: #[derive(Clone, Debug, Deserialize)] pub struct ColorTheme {
-            pub canvas: #[derive(Clone, Debug, Deserialize)] pub struct ColorThemeCanvas {
+        pub color_theme: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorTheme {
+            pub canvas: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorThemeCanvas {
                 pub default_style: StyleConfig,
-                pub standard_colors: #[derive(Clone, Debug, Deserialize)] pub struct ColorThemeCanvasStandardColors {
+                pub standard_colors: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorThemeCanvasStandardColors {
                     pub black: ColorToml,
                     pub red: ColorToml,
                     pub green: ColorToml,
@@ -84,7 +84,7 @@ nest! {
             pub input_mode: StyleConfig,
             pub user_feedback: StyleConfig,
         },
-        pub character_mirrors: #[derive(Clone, Debug, Deserialize)] pub struct ConfigCharacterMirrors {
+        pub character_mirrors: #[derive(Clone, Debug, PartialEq, Deserialize)] pub struct ConfigCharacterMirrors {
             pub x: CharacterSwapMap,
             pub y: CharacterSwapMap,
         },
@@ -97,7 +97,7 @@ nest! {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct ConfigInputMode {
     pub keymaps: Keymaps,
     // Values are keys for config.input_mode hashmap

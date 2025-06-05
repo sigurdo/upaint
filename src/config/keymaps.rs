@@ -39,7 +39,7 @@ pub mod base_keymaps_iter;
 
 macro_rules! keymaps {
     {$($ident:ident : $type:ty,)*} => {
-        #[derive(Clone, Debug, Deserialize)]
+        #[derive(Clone, Debug, PartialEq, Deserialize)]
         pub struct Keymaps {
             $(
                 pub $ident: Option<Keymap<<$type as Presetable<ProgramState>>::Preset>>,

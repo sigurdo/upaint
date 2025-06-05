@@ -41,7 +41,7 @@ macro_rules! swap_indices {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CharacterSwapMap(HashMap<char, char>);
 
 impl<'de> Deserialize<'de> for CharacterSwapMap {

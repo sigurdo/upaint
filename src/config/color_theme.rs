@@ -6,7 +6,7 @@ use super::TomlValue;
 
 macro_rules! color_theme_presets {
     ($($variant:ident = $filename:literal),*,) => {
-        #[derive(Clone, Debug, Deserialize, Serialize)]
+        #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
         pub enum ColorThemePreset {
             $(
                 $variant,
@@ -60,7 +60,7 @@ enum StringOrU8 {
     U8(u8),
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(try_from = "StringOrU8")]
 pub struct ColorToml(Color);
 impl TomlValue for ColorToml {
@@ -136,7 +136,7 @@ impl TomlValue for StyleToml {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StyleConfig {
     pub fg: Color,
     pub bg: Color,

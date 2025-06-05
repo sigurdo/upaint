@@ -12,7 +12,7 @@ use crate::Presetable;
 
 pub mod deserialize;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(try_from = "HashMap<KeystrokeSequence, PresetSources<T>>")]
 pub struct Keymap<T: Clone + Debug> {
     pub current: Option<PresetSources<T>>,

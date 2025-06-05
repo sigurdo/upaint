@@ -44,7 +44,7 @@ fn btreemap_get_closest<T>(map: &BTreeMap<i16, T>, target: i16) -> Option<&T> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LineDrawingCharacterMap(BTreeMap<i16, char>);
 
 impl<'de> Deserialize<'de> for LineDrawingCharacterMap {
@@ -69,7 +69,7 @@ impl<'de> Deserialize<'de> for LineDrawingCharacterMap {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct LineDrawingCharacters {
     gentle_slope: LineDrawingCharacterMap,
     straight_horizontal: char,
