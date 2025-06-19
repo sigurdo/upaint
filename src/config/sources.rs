@@ -34,8 +34,8 @@ impl BaseConfigIncluded {
     }
     pub fn ron_str(self) -> &'static str {
         match self {
-            Self::Standard => include_str!("../../upaint_standard_config/upaint_standard.ron"),
-            Self::Vim => include_str!("../../upaint_standard_config/upaint_standard.ron"),
+            Self::Standard => include_str!("../../upaint-config-standard/upaint.ron"),
+            Self::Vim => include_str!("../../upaint-config-vim/upaint.ron"),
         }
     }
     pub fn ron_string(self) -> String {

@@ -1,3 +1,7 @@
-[submodule "upaint_standard_config"]
-	path = upaint_standard_config
-	url = https://github.com/sigurdo/upaint_standard_config.git
+[submodule "upaint-config-standard"]
+	path = upaint-config-standard
+	url = https://github.com/upaint-textart/upaint-config-standard.git
+
+[submodule "upaint-config-vim"]
+	path = upaint-config-vim
+	url = https://github.com/upaint-textart/upaint-config-vim.git

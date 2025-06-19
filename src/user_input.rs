@@ -17,19 +17,26 @@ pub fn handle_user_input_command_mode(
 ) -> anyhow::Result<()> {
     match event {
         Event::Key(e) => {
-            match e.code {
-                KeyCode::Enter => {
-                    execute_command(program_state)?;
+            if e.code == KeyCode::Esc
+                || (e.modifiers == KeyModifiers::CONTROL && e.code == KeyCode::Char('c'))
+            {
+                ClearAllModeItems {}.execute(program_state);
+                program_state.input_mode = InputMode::standard(program_state);
+            } else {
+                match e.code {
+                    KeyCode::Enter => {
+                        execute_command(program_state)?;
+                    }
+                    _ => {
+                        program_state.command_line.input(e);
+                    }
                 }
-                _ => {
-                    program_state.command_line.input(e);
+                if e.modifiers.contains(KeyModifiers::CONTROL) {
+                    program_state.a += 100;
                 }
-            }
-            if e.modifiers.contains(KeyModifiers::CONTROL) {
-                program_state.a += 100;
-            }
-            if e.modifiers.contains(KeyModifiers::SHIFT) {
-                program_state.a += 1000;
+                if e.modifiers.contains(KeyModifiers::SHIFT) {
+                    program_state.a += 1000;
+                }
             }
         }
         Event::Mouse(e) => {
