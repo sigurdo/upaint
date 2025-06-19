@@ -1,3 +1,4 @@
+use crate::Ground;
 use ratatui::{
     prelude::{Constraint, Layout},
     style::Modifier,
@@ -55,7 +56,7 @@ impl<'a> Widget for StatusBar<'a> {
                 " [+]"
             }
         );
-        let base_style = self.program_state.config.color_theme.status_bar;
+        let base_style = self.program_state.config.color_theme().status_bar;
         let open_file =
             Paragraph::new(vec![Line::from(vec![Span::raw(open_file)])]).style(base_style);
 
@@ -84,6 +85,17 @@ impl<'a> Widget for StatusBar<'a> {
         ])])
         .style(base_style);
 
+        let bg = self
+            .program_state
+            .color_or_slot_active
+            .as_color(&self.program_state)
+            .unwrap_or(self.program_state.config.color_theme().status_bar.bg);
+        let bg = self
+            .program_state
+            .config
+            .color_theme()
+            .canvas
+            .apply_to_color(bg, Ground::Background);
         let color_or_slot_active = Paragraph::new(vec![Line::from(vec![
             Span::styled(" c", Style::new().add_modifier(Modifier::BOLD)),
             Span::raw({
@@ -97,14 +109,7 @@ impl<'a> Widget for StatusBar<'a> {
                 }
             }),
             Span::raw(" "),
-            Span::styled(
-                "  ",
-                Style::new().bg(self
-                    .program_state
-                    .color_or_slot_active
-                    .as_color(&self.program_state)
-                    .unwrap_or(self.program_state.config.color_theme.status_bar.bg)),
-            ),
+            Span::styled("  ", Style::new().bg(bg)),
             // Span::raw(")"),
         ])])
         .style(base_style);

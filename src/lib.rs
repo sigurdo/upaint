@@ -1,3 +1,4 @@
+use config::sources::ConfigSource;
 use derive_more::From;
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
@@ -34,7 +35,6 @@ use canvas::raw::CanvasIndex;
 use canvas::{rect::CanvasRect, VersionControlledCanvas};
 use color_picker::target::ColorPickerTargetEnum;
 use color_picker::ColorPicker;
-use config::sources::ConfigSources;
 use input_mode::InputMode;
 use keystrokes::ColorSlot;
 use keystrokes_parsing::KeystrokeSequence;
@@ -189,7 +189,7 @@ pub struct ProgramState {
     pub last_saved_revision: u64,
     pub new_messages: VecDeque<String>,
     pub exit: bool,
-    pub config_sources: ConfigSources,
+    pub config_source: ConfigSource,
     pub config: Config,
     pub keystroke_sequence_incomplete: KeystrokeSequence,
     pub macros: HashMap<char, Macro>,

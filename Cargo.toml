@@ -28,6 +28,7 @@ nestify = "0.3.3"
 notify = { version = "6.1.1", features = ["serde"] }
 anyhow = "1.0.95"
 thiserror = "2"
+ron = "0.10.1"
 
 [[bin]]
 name = "upaint"

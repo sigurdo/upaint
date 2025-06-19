@@ -1,0 +1,3 @@
+[submodule "upaint_standard_config"]
+	path = upaint_standard_config
+	url = https://github.com/sigurdo/upaint_standard_config.git

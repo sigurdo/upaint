@@ -1,15 +1,14 @@
 use ratatui::{
     layout::Layout,
     prelude::{Buffer, Constraint, Line, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     widgets::Widget,
 };
 
 use crate::{
     canvas::{raw::CanvasIndex, rect::CanvasRect},
-    config::{ColorThemeCanvas, Config},
+    config::Config,
     selections::Selection,
-    Ground,
 };
 
 use super::Canvas;
@@ -86,58 +85,6 @@ impl<'a> CanvasWidget<'a> {
     }
 }
 
-fn apply_color_theme_to_color(
-    color: Color,
-    color_theme: &ColorThemeCanvas,
-    ground: Ground,
-) -> Color {
-    match color {
-        Color::Reset => match ground {
-            Ground::Foreground => match color_theme.default_style.fg {
-                Color::Reset => Color::Reset,
-                color => apply_color_theme_to_color(color, color_theme, Ground::Foreground),
-            },
-            Ground::Background => match color_theme.default_style.bg {
-                Color::Reset => Color::Reset,
-                color => apply_color_theme_to_color(color, color_theme, Ground::Background),
-            },
-        },
-        Color::Black | Color::Indexed(0) => color_theme.standard_colors.black.into(),
-        Color::Red | Color::Indexed(1) => color_theme.standard_colors.red.into(),
-        Color::Green | Color::Indexed(2) => color_theme.standard_colors.green.into(),
-        Color::Yellow | Color::Indexed(3) => color_theme.standard_colors.yellow.into(),
-        Color::Blue | Color::Indexed(4) => color_theme.standard_colors.blue.into(),
-        Color::Magenta | Color::Indexed(5) => color_theme.standard_colors.magenta.into(),
-        Color::Cyan | Color::Indexed(6) => color_theme.standard_colors.cyan.into(),
-        Color::Gray | Color::Indexed(7) => color_theme.standard_colors.white.into(),
-        Color::DarkGray | Color::Indexed(8) => color_theme.standard_colors.bright_black.into(),
-        Color::LightRed | Color::Indexed(9) => color_theme.standard_colors.bright_red.into(),
-        Color::LightGreen | Color::Indexed(10) => color_theme.standard_colors.bright_green.into(),
-        Color::LightYellow | Color::Indexed(11) => color_theme.standard_colors.bright_yellow.into(),
-        Color::LightBlue | Color::Indexed(12) => color_theme.standard_colors.bright_blue.into(),
-        Color::LightMagenta | Color::Indexed(13) => {
-            color_theme.standard_colors.bright_magenta.into()
-        }
-        Color::LightCyan | Color::Indexed(14) => color_theme.standard_colors.bright_cyan.into(),
-        Color::White | Color::Indexed(15) => color_theme.standard_colors.bright_white.into(),
-        _ => color,
-    }
-}
-
-fn apply_color_theme(style: Style, color_theme: &ColorThemeCanvas) -> Style {
-    style
-        .fg(apply_color_theme_to_color(
-            style.fg.unwrap_or(Color::Reset),
-            &color_theme,
-            Ground::Foreground,
-        ))
-        .bg(apply_color_theme_to_color(
-            style.bg.unwrap_or(Color::Reset),
-            &color_theme,
-            Ground::Background,
-        ))
-}
-
 struct RowNumbersWidget<'a> {
     row_number_cursor: Option<i16>,
     row_to_y_translation: i16,
@@ -175,7 +122,7 @@ impl Widget for RowNumbersWidget<'_> {
             } else {
                 format!("{:>width$}", number, width = width)
             };
-            let style = self.config.color_theme.row_numbers;
+            let style = self.config.color_theme().row_numbers;
             ratatui::widgets::Paragraph::new(vec![Line::from(text)])
                 .style(style)
                 .render(area, buffer);
@@ -192,6 +139,13 @@ struct ColumnNumbersWidget<'a> {
 impl Widget for ColumnNumbersWidget<'_> {
     fn render(self, area: Rect, buffer: &mut Buffer) {
         let cell_width = 5;
+        let style = self.config.color_theme().column_numbers;
+        // Render style to entire area beforehand to colorize spaces between the numbers
+        // Would be a bit cleaner to rewrite entire functions to use a Paragraph,
+        // to not write the same cells to the buffer twice.
+        ratatui::widgets::Block::new()
+            .style(style)
+            .render(area, buffer);
         if self.config.numbers.column.relative && self.column_number_cursor.is_some() {
             let column_cursor = self.column_number_cursor.unwrap();
             let x_cursor = column_cursor + self.column_to_x_translation;
@@ -218,7 +172,6 @@ impl Widget for ColumnNumbersWidget<'_> {
                     width: cell_width as u16,
                     height: 1,
                 };
-                let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)])
                     .style(style)
                     .render(area, buffer);
@@ -250,7 +203,6 @@ impl Widget for ColumnNumbersWidget<'_> {
                     width: cell_width as u16,
                     height: 1,
                 };
-                let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)])
                     .style(style)
                     .render(area, buffer);
@@ -266,7 +218,6 @@ impl Widget for ColumnNumbersWidget<'_> {
                     width: cell_width as u16,
                     height: 1,
                 };
-                let style = self.config.color_theme.row_numbers;
                 ratatui::widgets::Paragraph::new(vec![Line::from(text)])
                     .style(style)
                     .render(area, buffer);
@@ -313,29 +264,29 @@ impl Widget for CanvasWidget<'_> {
                 let column = x as i16 - column_to_x_translation;
 
                 let target = buffer.cell_mut((x, y)).unwrap();
-                let color_theme = &self.config.color_theme.canvas;
+                let color_theme = &self.config.color_theme().canvas;
 
                 if let Some(cell) = self.canvas.cells.get(&(row, column)) {
                     target.set_symbol(String::from(cell.character).as_str());
-                    target.set_style(apply_color_theme(
-                        Style::default()
-                            .fg(cell.fg)
-                            .bg(cell.bg)
-                            .add_modifier(cell.modifiers),
-                        color_theme,
-                    ));
+                    target.set_style(
+                        color_theme.apply_to_style(
+                            Style::default()
+                                .fg(cell.fg)
+                                .bg(cell.bg)
+                                .add_modifier(cell.modifiers),
+                        ),
+                    );
                 } else {
-                    target.set_style(apply_color_theme(
-                        color_theme.default_style.clone().into(),
-                        color_theme,
-                    ));
+                    target.set_style(
+                        color_theme.apply_to_style(color_theme.default_style.clone().into()),
+                    );
                 }
                 if let Some(ref selection) = self.selection {
                     if selection.contains(&(row, column)) {
                         target.set_style(
                             Style::default().bg(self
                                 .config
-                                .color_theme
+                                .color_theme()
                                 .canvas
                                 .selection_highlight_bg
                                 .into()),
@@ -348,7 +299,7 @@ impl Widget for CanvasWidget<'_> {
                         target.set_style(
                             Style::default().bg(self
                                 .config
-                                .color_theme
+                                .color_theme()
                                 .canvas
                                 .visual_mode_highlight_bg
                                 .into()),

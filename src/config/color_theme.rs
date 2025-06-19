@@ -1,56 +1,99 @@
+use crate::Ground;
+use nestify::nest;
 use ratatui::style::{Color, Modifier, Style};
 use serde::{Deserialize, Serialize};
 use toml::de::ValueDeserializer;
 
 use super::TomlValue;
 
-macro_rules! color_theme_presets {
-    ($($variant:ident = $filename:literal),*,) => {
-        #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-        pub enum ColorThemePreset {
-            $(
-                $variant,
-            )*
-        }
+nest! {
+    #[derive(Clone, Debug, Deserialize, PartialEq)]
+    pub struct ColorTheme {
+        pub canvas: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorThemeCanvas {
+            pub default_style: StyleConfig,
+            pub standard_colors: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorThemeCanvasStandardColors {
+                pub black: ColorToml,
+                pub red: ColorToml,
+                pub green: ColorToml,
+                pub yellow: ColorToml,
+                pub blue: ColorToml,
+                pub magenta: ColorToml,
+                pub cyan: ColorToml,
+                pub white: ColorToml,
+                pub bright_black: ColorToml,
+                pub bright_red: ColorToml,
+                pub bright_green: ColorToml,
+                pub bright_yellow: ColorToml,
+                pub bright_blue: ColorToml,
+                pub bright_magenta: ColorToml,
+                pub bright_cyan: ColorToml,
+                pub bright_white: ColorToml,
+            },
+            pub visual_mode_highlight_bg: ColorToml,
+            pub selection_highlight_bg: ColorToml,
+        },
+        pub row_numbers: StyleConfig,
+        pub column_numbers: StyleConfig,
+        pub status_bar: StyleConfig,
+        pub command_line: StyleConfig,
+        pub input_mode: StyleConfig,
+        pub user_feedback: StyleConfig,
+    }
+}
 
-        impl ColorThemePreset {
-            /// Returns the content of the TOML file for the preset as a str
-            pub fn toml_str(&self) -> &'static str {
-                match self {
-                    $(
-                        ColorThemePreset::$variant => {
-                            include_str!(concat!("color_theme/presets/", $filename))
-                        },
-                    )*
-                }
+impl ColorThemeCanvas {
+    pub fn apply_to_color(&self, color: Color, ground: Ground) -> Color {
+        let color_theme = self;
+        match color {
+            Color::Reset => match ground {
+                Ground::Foreground => match color_theme.default_style.fg {
+                    Color::Reset => Color::Reset,
+                    color => apply_color_theme_to_color(color, color_theme, Ground::Foreground),
+                },
+                Ground::Background => match color_theme.default_style.bg {
+                    Color::Reset => Color::Reset,
+                    color => apply_color_theme_to_color(color, color_theme, Ground::Background),
+                },
+            },
+            Color::Black | Color::Indexed(0) => color_theme.standard_colors.black.into(),
+            Color::Red | Color::Indexed(1) => color_theme.standard_colors.red.into(),
+            Color::Green | Color::Indexed(2) => color_theme.standard_colors.green.into(),
+            Color::Yellow | Color::Indexed(3) => color_theme.standard_colors.yellow.into(),
+            Color::Blue | Color::Indexed(4) => color_theme.standard_colors.blue.into(),
+            Color::Magenta | Color::Indexed(5) => color_theme.standard_colors.magenta.into(),
+            Color::Cyan | Color::Indexed(6) => color_theme.standard_colors.cyan.into(),
+            Color::Gray | Color::Indexed(7) => color_theme.standard_colors.white.into(),
+            Color::DarkGray | Color::Indexed(8) => color_theme.standard_colors.bright_black.into(),
+            Color::LightRed | Color::Indexed(9) => color_theme.standard_colors.bright_red.into(),
+            Color::LightGreen | Color::Indexed(10) => {
+                color_theme.standard_colors.bright_green.into()
             }
+            Color::LightYellow | Color::Indexed(11) => {
+                color_theme.standard_colors.bright_yellow.into()
+            }
+            Color::LightBlue | Color::Indexed(12) => color_theme.standard_colors.bright_blue.into(),
+            Color::LightMagenta | Color::Indexed(13) => {
+                color_theme.standard_colors.bright_magenta.into()
+            }
+            Color::LightCyan | Color::Indexed(14) => color_theme.standard_colors.bright_cyan.into(),
+            Color::White | Color::Indexed(15) => color_theme.standard_colors.bright_white.into(),
+            _ => color,
         }
-    };
-}
-
-impl ColorThemePreset {
-    pub fn toml_table(&self) -> toml::Table {
-        self.toml_str()
-            .parse::<toml::Table>()
-            .expect("color preset contains invalid TOML syntax")
+    }
+    pub fn apply_to_style(&self, style: Style) -> Style {
+        let color_theme = self;
+        style
+            .fg(color_theme.apply_to_color(style.fg.unwrap_or(Color::Reset), Ground::Foreground))
+            .bg(color_theme.apply_to_color(style.bg.unwrap_or(Color::Reset), Ground::Background))
     }
 }
 
-color_theme_presets!(
-    Basic = "basic.toml",
-    Monokai = "monokai.toml",
-    Light = "light.toml",
-    Vga = "vga.toml",
-    Campbell = "campbell.toml",
-    Xterm = "xterm.toml",
-    Ubuntu = "ubuntu.toml",
-);
-
-impl TomlValue for ColorThemePreset {
-    type ConfigValue = ColorThemePreset;
-    fn to_config_value(self) -> Self::ConfigValue {
-        self
-    }
+pub fn apply_color_theme_to_color(
+    color: Color,
+    color_theme: &ColorThemeCanvas,
+    ground: Ground,
+) -> Color {
+    color_theme.apply_to_color(color, ground)
 }
 
 #[derive(Serialize, Deserialize)]

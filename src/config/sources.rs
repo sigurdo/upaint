@@ -12,12 +12,12 @@ pub enum BaseConfigIncluded {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum BaseConfig {
+pub enum ConfigSource {
     Included(BaseConfigIncluded),
     Path(PathBuf),
 }
 
-impl Default for BaseConfig {
+impl Default for ConfigSource {
     fn default() -> Self {
         Self::Included(BaseConfigIncluded::default())
     }
@@ -32,19 +32,18 @@ impl BaseConfigIncluded {
         };
         Ok(ok)
     }
-    pub fn toml_str(self) -> &'static str {
+    pub fn ron_str(self) -> &'static str {
         match self {
-            Self::Standard => include_str!("base/standard.toml"),
-            Self::Vim => include_str!("base/vim.toml"),
+            Self::Standard => include_str!("../../upaint_standard_config/upaint_standard.ron"),
+            Self::Vim => include_str!("../../upaint_standard_config/upaint_standard.ron"),
         }
     }
-
-    pub fn toml_string(self) -> String {
-        self.toml_str().to_string()
+    pub fn ron_string(self) -> String {
+        self.ron_str().to_string()
     }
 }
 
-impl BaseConfig {
+impl ConfigSource {
     pub fn from_str(s: &str) -> anyhow::Result<Self> {
         if let Ok(included) = BaseConfigIncluded::from_str(s) {
             Ok(Self::Included(included))
@@ -52,45 +51,24 @@ impl BaseConfig {
             Ok(Self::Path(s.try_into()?))
         }
     }
-    pub fn toml_string(&self) -> anyhow::Result<String> {
-        Ok(match self {
-            Self::Included(included) => included.toml_string(),
-            Self::Path(path) => std::fs::read_to_string(path)?,
-        })
-    }
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct ConfigSources {
-    pub base: BaseConfig,
-    pub user: Vec<PathBuf>,
-}
-
-pub fn load_config_from_sources(sources: &ConfigSources) -> Result<Config, super::ErrorLoadConfig> {
-    fn load_config_toml_table(sources: &ConfigSources) -> anyhow::Result<toml::Table> {
-        let mut toml_table = toml::Table::new();
-        let mut config_stack = vec![];
-        config_stack.push(sources.base.toml_string()?);
-        if sources.user.len() == 0 {
-            if let Ok(user_config) = super::local_config_toml() {
-                config_stack.push(user_config);
-            }
+    pub fn load_config(&self) -> Result<Config, super::ErrorLoadConfig> {
+        let ron = match self {
+            Self::Included(included) => included.ron_string(),
+            Self::Path(path) => match std::fs::read_to_string(path) {
+                Ok(ok) => ok,
+                Err(err) => return Err(ErrorLoadConfig::Any(err.into())),
+            },
+        };
+        let config = match ron::from_str::<Config>(ron.as_str()) {
+            Ok(ok) => ok,
+            Err(err) => return Err(ErrorLoadConfig::ConfigInvalid(err.into())),
+        };
+        if !config.color_themes.contains_key(&config.color_theme) {
+            return Err(ErrorLoadConfig::ConfigInvalid(anyhow::anyhow!(
+                "Chosen color theme {} not found in color themes table",
+                config.color_theme
+            )));
         }
-        for user_config in &sources.user {
-            config_stack.push(std::fs::read_to_string(user_config)?);
-        }
-
-        for config_toml in config_stack {
-            toml_table.extend_recurse_tables(config_toml.parse::<toml::Table>()?);
-        }
-        Ok(toml_table)
-    }
-    let table = match load_config_toml_table(sources) {
-        Err(e) => return Err(ErrorLoadConfig::Any(e)),
-        Ok(table) => table,
-    };
-    match super::load_config_from_table(table) {
-        Ok(config) => Ok(config),
-        Err(err) => Err(ErrorLoadConfig::ConfigInvalid(err)),
+        Ok(config)
     }
 }

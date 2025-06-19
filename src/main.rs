@@ -1,8 +1,5 @@
 use upaint::config::load_default_config;
-use upaint::config::local_config_dir_path;
-use upaint::config::sources::load_config_from_sources;
-use upaint::config::sources::BaseConfig;
-use upaint::config::sources::ConfigSources;
+use upaint::config::sources::ConfigSource;
 use upaint::config::ErrorLoadConfig;
 
 use clap::Parser;
@@ -39,9 +36,7 @@ use upaint::{
 pub struct UpaintCli {
     ansi_file: Option<String>,
     #[arg(short, long)]
-    base_config: Option<String>,
-    #[arg(short, long)]
-    user_config: Vec<String>,
+    config: Option<String>,
 }
 
 struct FileLogger;
@@ -124,23 +119,16 @@ fn application(
     };
     program_state.canvas = VersionControlledCanvas::from_ansi(ansi_to_load)?;
     program_state.last_saved_revision = program_state.canvas.get_current_revision();
-    let config_sources = ConfigSources {
-        base: if let Some(base) = args.base_config {
-            BaseConfig::from_str(base.as_str()).unwrap()
-        } else {
-            BaseConfig::default()
-        },
-        user: args
-            .user_config
-            .iter()
-            .map(|s| s.try_into().unwrap())
-            .collect(),
+    let config_source = if let Some(config) = args.config {
+        ConfigSource::from_str(config.as_str()).unwrap()
+    } else {
+        ConfigSource::default()
     };
-    program_state.config = load_config_from_sources(&config_sources).unwrap_or_else(|err| {
+    program_state.config = config_source.load_config().unwrap_or_else(|err| {
         program_state.new_messages.push_back(format!("{err}"));
         load_default_config()
     });
-    program_state.config_sources = config_sources;
+    program_state.config_source = config_source;
     program_state.input_mode = program_state.config.input_mode_initial.clone();
     let autoreload_config = program_state.config.autoreload_config;
     // log::debug!("{:#?}", program_state.config);
@@ -149,7 +137,7 @@ fn application(
     program_state.cursor_position = canvas_area.center();
     program_state.focus_position = program_state.cursor_position;
     program_state.command_line =
-        create_command_line_textarea(program_state.config.color_theme.command_line.into());
+        create_command_line_textarea(program_state.config.color_theme().command_line.into());
     program_state.selection_active = 'a';
     program_state.yank_active = 'a';
     program_state.highlight = None;
@@ -202,78 +190,85 @@ fn application(
     if autoreload_config {
         let program_state_watch_config_file = Arc::clone(&program_state);
         let redraw_tx_watch_config_file = Arc::clone(&redraw_tx);
-        thread::Builder::new()
-            .name("watch config file".to_string())
-            .spawn(move || -> anyhow::Result<()> {
-                use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
-                loop {
-                    let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
-                    let mut watcher = recommended_watcher(tx).unwrap();
-                    let config_dir = local_config_dir_path()?;
-                    watcher
-                        .watch(config_dir.as_path(), RecursiveMode::Recursive)
-                        .unwrap();
+        let program_state = program_state_watch_config_file.lock().unwrap();
+        if let ConfigSource::Path(path) = program_state.config_source.clone() {
+            // Make sure program_state mutex is released
+            drop(program_state);
+            thread::Builder::new()
+                .name("watch config file".to_string())
+                .spawn(move || -> anyhow::Result<()> {
                     // The code for detecting config file changes is quite complex and ugly because
                     // when the file is updated, it doesn't resolve to a single unambiguous event,
                     // since the entire config folder must be watched in case the file is deleted
                     // and recreated and which events occur depend on OS and which editor is used.
                     // But still a single and clear error message should be displayed to the user.
-                    let mut changes = false;
                     loop {
-                        let timeout = if changes {
-                            Duration::from_millis(50)
-                        } else {
-                            Duration::MAX
-                        };
-                        match rx.recv_timeout(timeout) {
-                            Err(mpsc::RecvTimeoutError::Timeout) => {
-                                if changes {
-                                    changes = false;
-                                    'max_attempts: {
-                                        for _ in 0..100 {
-                                            let mut program_state =
-                                                program_state_watch_config_file.lock().unwrap();
-                                            match load_config_from_sources(
-                                                &program_state.config_sources,
-                                            ) {
-                                                Ok(config) => {
-                                                    program_state.config = config;
-                                                    break 'max_attempts;
-                                                }
-                                                Err(ErrorLoadConfig::ConfigInvalid(err)) => {
-                                                    program_state.new_messages.push_back(format!(
-                                                        "{}",
-                                                        ErrorLoadConfig::ConfigInvalid(err)
-                                                    ));
-                                                    break 'max_attempts;
-                                                }
-                                                Err(_) => {
-                                                    drop(program_state);
-                                                    std::thread::sleep(Duration::from_millis(10));
+                        let mut changes = false;
+                        'create_watcher: loop {
+                            use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
+                            let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
+                            let mut watcher = recommended_watcher(tx).unwrap();
+                            watcher
+                                .watch(path.as_path(), RecursiveMode::NonRecursive)
+                                .unwrap();
+                            let timeout = if changes {
+                                Duration::from_millis(50)
+                            } else {
+                                Duration::MAX
+                            };
+                            match rx.recv_timeout(timeout) {
+                                Err(mpsc::RecvTimeoutError::Timeout) => {
+                                    if changes {
+                                        changes = false;
+                                        'max_attempts: {
+                                            for _ in 0..100 {
+                                                let mut program_state =
+                                                    program_state_watch_config_file.lock().unwrap();
+                                                match program_state.config_source.load_config() {
+                                                    Ok(config) => {
+                                                        program_state.config = config;
+                                                        break 'max_attempts;
+                                                    }
+                                                    Err(ErrorLoadConfig::ConfigInvalid(err)) => {
+                                                        program_state.new_messages.push_back(
+                                                            format!(
+                                                                "{}",
+                                                                ErrorLoadConfig::ConfigInvalid(err)
+                                                            ),
+                                                        );
+                                                        break 'max_attempts;
+                                                    }
+                                                    Err(_) => {
+                                                        drop(program_state);
+                                                        std::thread::sleep(Duration::from_millis(
+                                                            10,
+                                                        ));
+                                                    }
                                                 }
                                             }
-                                        }
-                                        panic!(
+                                            panic!(
                                             "Couldn't reload modified config even after 1 second"
                                         )
+                                        }
+                                        (*(redraw_tx_watch_config_file.lock().unwrap()))
+                                            .try_send(())
+                                            .unwrap_or(());
                                     }
-                                    (*(redraw_tx_watch_config_file.lock().unwrap()))
-                                        .try_send(())
-                                        .unwrap_or(());
                                 }
-                            }
-                            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                                panic!("File system watcher disconnected")
-                            }
-                            Ok(event) => {
-                                let _event = event.unwrap();
-                                // log::debug!("notify event: {:#?}", _event);
-                                changes = true;
+                                Err(mpsc::RecvTimeoutError::Disconnected) => {
+                                    // Not sure in what situations this could happen, but there's just one thing to do...
+                                    continue 'create_watcher;
+                                }
+                                Ok(event) => {
+                                    let _event = event.unwrap();
+                                    // log::debug!("notify event: {:#?}", _event);
+                                    changes = true;
+                                }
                             }
                         }
                     }
-                }
-            })?;
+                })?;
+        }
     }
 
     exit_rx.recv()?;

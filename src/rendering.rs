@@ -76,7 +76,7 @@ pub fn draw_frame(
                 }
                 let message_popup = Paragraph::new(message)
                     .wrap(Wrap { trim: false })
-                    .style(program_state.config.color_theme.user_feedback);
+                    .style(program_state.config.color_theme().user_feedback);
                 let lines = message_popup.line_count(chunks[0].width);
                 (Some(message_popup), lines as u16)
             } else {
@@ -165,7 +165,7 @@ pub fn draw_frame(
                 input_mode.push_str(format!("recording @{}", recording.slot).as_str());
             }
             let input_mode = Paragraph::new(vec![Line::from(vec![Span::raw(input_mode)])])
-                .style(program_state.config.color_theme.input_mode);
+                .style(program_state.config.color_theme().input_mode);
             f.render_widget(input_mode, command_line_chunk);
         }
 

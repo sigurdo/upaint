@@ -6,21 +6,16 @@ use crate::line_drawing::LineDrawingCharacters;
 use derive_more::Display;
 use derive_more::From;
 use nestify::nest;
-use sources::load_config_from_sources;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
 use serde::Deserialize;
-use toml::de::ValueDeserializer;
 
 pub mod color_theme;
 pub mod keymaps;
 pub mod sources;
 
-use self::{
-    color_theme::{ColorThemePreset, ColorToml, StyleConfig},
-    keymaps::Keymaps,
-};
+use self::{color_theme::ColorTheme, keymaps::Keymaps};
 
 #[cfg(test)]
 mod test;
@@ -52,38 +47,8 @@ nest! {
                 pub relative: bool,
             }
         },
-        pub color_theme_preset: ColorThemePreset,
-        pub color_theme: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorTheme {
-            pub canvas: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorThemeCanvas {
-                pub default_style: StyleConfig,
-                pub standard_colors: #[derive(Clone, Debug, Deserialize, PartialEq)] pub struct ColorThemeCanvasStandardColors {
-                    pub black: ColorToml,
-                    pub red: ColorToml,
-                    pub green: ColorToml,
-                    pub yellow: ColorToml,
-                    pub blue: ColorToml,
-                    pub magenta: ColorToml,
-                    pub cyan: ColorToml,
-                    pub white: ColorToml,
-                    pub bright_black: ColorToml,
-                    pub bright_red: ColorToml,
-                    pub bright_green: ColorToml,
-                    pub bright_yellow: ColorToml,
-                    pub bright_blue: ColorToml,
-                    pub bright_magenta: ColorToml,
-                    pub bright_cyan: ColorToml,
-                    pub bright_white: ColorToml,
-                },
-                pub visual_mode_highlight_bg: ColorToml,
-                pub selection_highlight_bg: ColorToml,
-            },
-            pub row_numbers: StyleConfig,
-            pub column_numbers: StyleConfig,
-            pub status_bar: StyleConfig,
-            pub command_line: StyleConfig,
-            pub input_mode: StyleConfig,
-            pub user_feedback: StyleConfig,
-        },
+        pub color_themes: HashMap<String, ColorTheme>,
+        pub color_theme: String,
         pub character_mirrors: #[derive(Clone, Debug, PartialEq, Deserialize)] pub struct ConfigCharacterMirrors {
             pub x: CharacterSwapMap,
             pub y: CharacterSwapMap,
@@ -113,6 +78,13 @@ impl TomlValue for Keymaps {
     }
 }
 
+impl Config {
+    pub fn color_theme(&self) -> &ColorTheme {
+        // This unwrap should never fail due to the check in ConfigSource::load_config()
+        self.color_themes.get(&self.color_theme).unwrap()
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         load_default_config()
@@ -133,40 +105,8 @@ pub fn local_config_toml() -> anyhow::Result<String> {
     Ok(std::fs::read_to_string(config_file_path)?)
 }
 
-/// Read and load color theme preset, apply customizations.
-fn load_color_preset(config_table: &mut toml::Table) -> anyhow::Result<()> {
-    // let mut config_table = config.cache.clone().into_table()?;
-    if let Some(preset) = config_table.get("color_theme_preset") {
-        if let toml::Value::String(preset) = preset.clone() {
-            let Ok(preset) = ColorThemePreset::deserialize(ValueDeserializer::new(
-                format!("\"{preset}\"").as_str(),
-            )) else {
-                anyhow::bail!("Value of color_theme_preset is invalid: {preset}");
-            };
-
-            let mut theme_table = include_str!("config/color_theme/base.toml")
-                .parse::<toml::Table>()
-                .unwrap();
-            theme_table.extend_recurse_tables(preset.toml_table());
-
-            if let Some(toml::Value::Table(theme_custom)) = config_table.get("color_theme") {
-                theme_table.extend_recurse_tables(theme_custom.clone());
-            };
-
-            config_table.insert("color_theme".to_string(), toml::Value::Table(theme_table));
-        }
-    }
-
-    Ok(())
-}
-
-pub fn load_config_from_table(mut toml_table: toml::Table) -> anyhow::Result<Config> {
-    load_color_preset(&mut toml_table)?;
-    Ok(Config::deserialize(toml_table)?)
-}
-
 pub fn load_default_config() -> Config {
-    load_config_from_sources(&sources::ConfigSources::default()).unwrap()
+    sources::ConfigSource::default().load_config().unwrap()
 }
 
 #[derive(Debug, From, Display)]
