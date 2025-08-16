@@ -232,6 +232,20 @@ impl<'a> Canvas {
         }
         result
     }
+    pub fn cells_matching_in_selection(
+        &self,
+        match_cell: impl MatchValue<CanvasCell>,
+        selection: Selection,
+    ) -> Selection {
+        let mut result = Selection::new();
+        for index in selection {
+            let cell = self.cell(index);
+            if match_cell.matches(&cell) {
+                result.insert(index);
+            }
+        }
+        result
+    }
     pub fn cells_matching_old(
         &self,
         ch: Option<char>,

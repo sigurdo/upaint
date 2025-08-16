@@ -10,6 +10,7 @@ use ratatui::style::Modifier;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::hash::Hash;
+use std::marker::PhantomData;
 
 // Todo: Fikse tester
 // #[cfg(test)]
@@ -47,6 +48,22 @@ impl<T, U: MatchValue<T>> MatchValue<T> for Option<U> {
         }
     }
 }
+pub struct MatchInverse<T, M: MatchValue<T>>(pub M, PhantomData<T>);
+impl<T, M: MatchValue<T>> MatchInverse<T, M> {
+    pub fn new(value: M) -> Self {
+        Self(value, PhantomData)
+    }
+}
+impl<T, M: MatchValue<T>> MatchValue<T> for MatchInverse<T, M> {
+    fn matches(&self, target: &T) -> bool {
+        (&self).matches(target)
+    }
+}
+impl<T, M: MatchValue<T>> MatchValue<T> for &MatchInverse<T, M> {
+    fn matches(&self, target: &T) -> bool {
+        !self.0.matches(target)
+    }
+}
 impl MatchValue<char> for char {
     fn matches(&self, target: &char) -> bool {
         target == self
@@ -61,6 +78,12 @@ impl MatchValue<Modifier> for Modifier {
     fn matches(&self, target: &Modifier) -> bool {
         // Checks if all bits in self are set in target
         target.bits() & self.bits() == self.bits()
+    }
+}
+
+impl MatchValue<CanvasCell> for CanvasCell {
+    fn matches(&self, target: &CanvasCell) -> bool {
+        (&self).matches(target)
     }
 }
 impl MatchValue<CanvasCell> for &CanvasCell {
@@ -84,6 +107,11 @@ impl MatchValue<CanvasCell> for MatchCellSame {
             && self.fg.matches(&target.fg)
             && self.bg.matches(&target.bg)
             && self.modifier.matches(&target.modifiers)
+    }
+}
+impl MatchValue<CanvasCell> for &MatchCellSame {
+    fn matches(&self, target: &CanvasCell) -> bool {
+        (*self).matches(target)
     }
 }
 impl From<(&CanvasCell, CellContentType)> for MatchCellSame {
@@ -155,6 +183,7 @@ impl MatchValue<CanvasCell> for MatchCell {
 pub enum ContinuousRegionRelativeType {
     #[presetable(default)]
     Same(CellContentType),
+    NotSame(CellContentType),
     NonBlank(CellContentType),
 }
 impl From<(&CanvasCell, ContinuousRegionRelativeType)> for MatchCell {
@@ -163,6 +192,9 @@ impl From<(&CanvasCell, ContinuousRegionRelativeType)> for MatchCell {
         match relative_type {
             ContinuousRegionRelativeType::Same(content_type) => {
                 MatchCell::Same(MatchCellSame::from((cell, content_type)))
+            }
+            ContinuousRegionRelativeType::NotSame(content_type) => {
+                MatchCell::NotSame(MatchCellSame::from((cell, content_type)))
             }
             ContinuousRegionRelativeType::NonBlank(content_type) => {
                 MatchCell::non_blank(content_type)

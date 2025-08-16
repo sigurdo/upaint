@@ -1,6 +1,8 @@
 use crate::canvas::raw::continuous_region::find_continuous_region;
 use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
 use crate::canvas::raw::continuous_region::MatchCell;
+use crate::canvas::raw::continuous_region::MatchCellSame;
+use crate::canvas::raw::continuous_region::MatchInverse;
 use crate::canvas::raw::iter::CanvasIndexIterator;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::raw::iter::StopCondition;
@@ -34,6 +36,8 @@ pub enum MotionEnum {
     VisualRectMotion(VisualRectMotion),
     GoToMark(GoToMark),
     MatchingCells(MatchingCells),
+    MatchingCellsHighlighted(MatchingCellsHighlighted),
+    NonMatchingCellsHighlighted(NonMatchingCellsHighlighted),
     ContinuousRegion(ContinuousRegion),
     Repeat(MotionRepeat),
 }
@@ -288,7 +292,46 @@ impl Motion for MatchingCells {
         result
     }
 }
-
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct MatchingCellsHighlighted {
+    pub content_type: CellContentType,
+}
+impl Motion for MatchingCellsHighlighted {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let cell = program_state
+            .canvas
+            .raw()
+            .cell(program_state.cursor_position);
+        let cell = MatchCellSame::from((&cell, self.content_type));
+        let selection = Selection::from_iter(Highlighted {}.cells(program_state).into_iter());
+        let selection = program_state
+            .canvas
+            .raw()
+            .cells_matching_in_selection(&cell, selection);
+        Vec::from_iter(selection.into_iter())
+    }
+}
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct NonMatchingCellsHighlighted {
+    pub content_type: CellContentType,
+}
+impl Motion for NonMatchingCellsHighlighted {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let cell = program_state
+            .canvas
+            .raw()
+            .cell(program_state.cursor_position);
+        let cell = MatchInverse::new(MatchCellSame::from((&cell, self.content_type)));
+        let selection = Selection::from_iter(Highlighted {}.cells(program_state).into_iter());
+        let selection = program_state
+            .canvas
+            .raw()
+            .cells_matching_in_selection(&cell, selection);
+        Vec::from_iter(selection.into_iter())
+    }
+}
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(config_type = "ProgramState")]
 pub struct ContinuousRegion {
