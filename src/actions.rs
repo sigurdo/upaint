@@ -14,6 +14,7 @@ use crate::line_drawing::draw_line_on_canvas;
 use crate::line_drawing::LineDrawingState;
 use crate::macros::Macro;
 use crate::macros::MacroRecording;
+use crate::motions::GoToCoordinate;
 use crate::motions::Motion;
 use crate::motions::MotionEnum;
 use crate::motions::MotionRepeat;
@@ -38,6 +39,7 @@ use serde::Serialize;
 use std::fmt::Debug;
 
 pub mod change_focus;
+pub mod mouse;
 pub mod session;
 
 #[enum_dispatch]
@@ -756,4 +758,11 @@ impl Action for ReloadConfig {
     fn execute(&self, program_state: &mut ProgramState) {
         program_state.config = program_state.config_source.load_config().unwrap();
     }
+}
+
+pub fn move_cursor_to(row: i16, column: i16, jump: CanvasIterationJump) -> impl Action {
+    ActionEnum::MoveCursor(MoveCursor {
+        motion: MotionEnum::GoToCoordinate(GoToCoordinate { jump, row, column }),
+        highlight_trail: false,
+    })
 }

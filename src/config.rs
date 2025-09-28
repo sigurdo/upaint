@@ -67,6 +67,7 @@ pub struct ConfigInputMode {
     pub keymaps: Keymaps,
     // Values are keys for config.input_mode hashmap
     pub base_keymaps: Vec<InputMode>,
+    // pub mouse_actions: Vec<InputMode>,
     pub handler: InputModeHandler,
     pub on_enter: Option<ActionBatchPreset>,
 }

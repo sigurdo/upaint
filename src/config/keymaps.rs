@@ -80,6 +80,7 @@ macro_rules! keymaps {
 
 keymaps! {
     keymap_u32: u32,
+    keymap_i16: i16,
     characters: char,
     motions: MotionEnum,
     motions_repeatable: MotionRepeatEnum,
@@ -217,6 +218,11 @@ impl Default for UnsignedIntegerKeymapEntry<u32> {
         Self::Number(1)
     }
 }
+impl Default for UnsignedIntegerKeymapEntry<i16> {
+    fn default() -> Self {
+        Self::Number(0)
+    }
+}
 macro_rules! unsigned_integer_impl_presetable {
     ($($type:ty,)*) => {
         $(
@@ -244,4 +250,4 @@ macro_rules! unsigned_integer_impl_presetable {
         )*
     };
 }
-unsigned_integer_impl_presetable!(u16, u32, u64,);
+unsigned_integer_impl_presetable!(u16, u32, u64, i16,);

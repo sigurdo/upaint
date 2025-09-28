@@ -33,6 +33,7 @@ pub enum MotionEnum {
     SelectionDirectMotion(SelectionDirectMotion),
     VisualRectMotion(VisualRectMotion),
     GoToMark(GoToMark),
+    GoToCoordinate(GoToCoordinate),
     MatchingCells(MatchingCells),
     ContinuousRegion(ContinuousRegion),
     Repeat(MotionRepeat),
@@ -243,6 +244,32 @@ impl Motion for GoToMark {
         } else {
             Vec::new()
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Presetable)]
+#[presetable(config_type = "ProgramState")]
+pub struct GoToCoordinate {
+    pub jump: CanvasIterationJump,
+    pub row: i16,
+    pub column: i16,
+}
+impl Motion for GoToCoordinate {
+    fn cells(&self, program_state: &ProgramState) -> Vec<CanvasIndex> {
+        let rows = self.row - program_state.cursor_position.0;
+        let columns = self.column - program_state.cursor_position.1;
+        let Ok(direction) = DirectionFree::new(rows, columns) else {
+            // This else would only occur if rows and columns are both 0
+            return vec![(self.row, self.column)];
+        };
+        let it = CanvasIndexIterator::new(
+            program_state.cursor_position,
+            direction,
+            self.jump,
+            StopCondition::Index((self.row, self.column)),
+            0,
+        );
+        it.collect()
     }
 }
 

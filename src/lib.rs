@@ -42,6 +42,7 @@ use line_drawing::LineDrawingState;
 use macros::Macro;
 use macros::MacroRecording;
 use selections::Selection;
+use user_input::MouseInputState;
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum Direction {
@@ -168,6 +169,8 @@ pub struct ProgramState {
     pub cursor_position_previous: Option<(i16, i16)>, // (row, column)
     pub focus_position: (i16, i16),                   // (row, column)
     pub canvas_visible: CanvasRect,
+    pub canvas_render_translation: (i16, i16),
+    pub mouse_input_state: MouseInputState,
     pub canvas: VersionControlledCanvas,
     pub chosen_color: Option<Color>,
     pub color_slots: HashMap<ColorSlot, Color>,

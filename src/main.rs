@@ -75,7 +75,19 @@ impl log::Log for FileLogger {
                     .append(true)
                     .open(log_file_path)
                     .unwrap()
-                    .write_all(format!("{} — {}\n", record.level(), record.args()).as_bytes())
+                    .write_all(
+                        format!(
+                            "{} {} — {}\n",
+                            // std::time::SystemTime::now()
+                            //     .duration_since(std::time::UNIX_EPOCH)
+                            //     .unwrap()
+                            //     .as_millis(),
+                            "",
+                            record.level(),
+                            record.args()
+                        )
+                        .as_bytes(),
+                    )
                     .unwrap();
             }
         }

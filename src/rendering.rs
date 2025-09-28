@@ -131,6 +131,12 @@ pub fn draw_frame(
         }
 
         program_state.canvas_visible = canvas_visible;
+        program_state.canvas_render_translation =
+            crate::canvas::raw::rendering::canvas_render_translation(
+                canvas.focus,
+                crate::canvas::raw::rendering::canvas_layout_chunks(inner_area).0,
+            );
+
         canvas.cursor = Some(program_state.cursor_position);
 
         if program_state.highlighting_on {

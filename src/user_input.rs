@@ -1,15 +1,23 @@
+use crate::actions::mouse::MouseActionEnum;
 use crate::actions::ActionBatch;
 use crate::actions::ClearAllModeItems;
 use crate::color_picker::target::ColorPickerTarget;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
 use crate::ColorPickerTargetEnum;
+use crossterm::event::MouseButton;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
 use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
 
 use crate::{actions::Action, command_line::execute_command, ProgramState};
 use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};
+
+#[derive(Clone, Debug, Default)]
+pub struct MouseInputState {
+    // last_button_down_left: Option<(u16, u16)>,
+    pub previous_position: (u16, u16),
+}
 
 pub fn handle_user_input_command_mode(
     event: Event,
@@ -81,7 +89,31 @@ pub fn handle_user_input_action(
         }
         Event::Mouse(e) => {
             program_state.a += 10;
-            if e.kind == MouseEventKind::Moved {}
+            if e.kind == MouseEventKind::Moved {
+                MouseActionEnum::MoveCursor.execute(program_state, e.row, e.column);
+            }
+            if e.kind == MouseEventKind::Down(MouseButton::Left) {
+                // program_state.mouse_input_state.last_button_down_left = Some((e.row, e.column));
+                MouseActionEnum::StartLineDrawing.execute(program_state, e.row, e.column);
+            }
+            if e.kind == MouseEventKind::Drag(MouseButton::Left) {
+
+                // MouseActionEnum::DrawLine.execute(program_state, e.row, e.column);
+            }
+            // if e.kind == MouseEventKind::Up(MouseButton::Left) {
+            //     if let Some((row, column)) = program_state.mouse_input_state.last_button_down_left {
+            //         if e.row == row && e.column == column {
+            //             crate::actions::move_cursor_to(
+            //                 (e.row as i16) - program_state.canvas_render_translation.0,
+            //                 (e.column as i16) - program_state.canvas_render_translation.1,
+            //                 crate::canvas::raw::iter::CanvasIterationJump::Diagonals,
+            //             )
+            //             .execute(program_state);
+            //         }
+            //         program_state.mouse_input_state.last_button_down_left = None;
+            //     }
+            // }
+            program_state.mouse_input_state.previous_position = (e.row, e.column);
         }
         _ => {
             program_state.a += 10;
