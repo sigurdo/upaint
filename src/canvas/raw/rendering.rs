@@ -22,6 +22,43 @@ pub struct CanvasWidget<'a> {
     pub config: &'a Config,
 }
 
+pub fn canvas_render_translation(focus: CanvasIndex, render_area: Rect) -> (i16, i16) {
+    let (focus_row, focus_column) = focus;
+    let row_to_y_translation = -focus_row + (render_area.y + render_area.height / 2) as i16;
+    let column_to_x_translation = -focus_column + (render_area.x + render_area.width / 2) as i16;
+    (row_to_y_translation, column_to_x_translation)
+}
+
+pub fn canvas_layout_chunks(area: Rect) -> (Rect, Rect, Rect) {
+    // In a perfect world, this is calculated dynamically based on the numbers of digits in the
+    // highest row index
+    let row_number_chunk_width = 4;
+    let chunks = Layout::default()
+        .direction(ratatui::prelude::Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Max(row_number_chunk_width), // Row numbers
+                Constraint::Min(1),                      // Rest
+            ]
+            .as_ref(),
+        )
+        .split(area);
+    let row_number_chunk = chunks[0];
+    let chunks = Layout::default()
+        .direction(ratatui::prelude::Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Max(1), // Column numbers
+                Constraint::Min(1), // Rest
+            ]
+            .as_ref(),
+        )
+        .split(chunks[1]);
+    let column_number_chunk = chunks[0];
+    let canvas_chunk = chunks[1];
+    (canvas_chunk, row_number_chunk, column_number_chunk)
+}
+
 impl<'a> CanvasWidget<'a> {
     pub fn from_canvas(canvas: &'a Canvas, config: &'a Config) -> Self {
         CanvasWidget {
@@ -35,41 +72,12 @@ impl<'a> CanvasWidget<'a> {
     }
 
     fn render_translation(&self, area: Rect) -> (i16, i16) {
-        let (focus_row, focus_column) = self.focus;
-        let row_to_y_translation = -focus_row + (area.y + area.height / 2) as i16;
-        let column_to_x_translation = -focus_column + (area.x + area.width / 2) as i16;
-        (row_to_y_translation, column_to_x_translation)
+        canvas_render_translation(self.focus, area)
     }
 
     // Calculate layout chunks for (canvas, row numbers, column numbers)
     fn layout_chunks(&self, area: Rect) -> (Rect, Rect, Rect) {
-        // In a perfect world, this is calculated dynamically based on the numbers of digits in the
-        // highest row index
-        let row_number_chunk_width = 4;
-        let chunks = Layout::default()
-            .direction(ratatui::prelude::Direction::Horizontal)
-            .constraints(
-                [
-                    Constraint::Max(row_number_chunk_width), // Row numbers
-                    Constraint::Min(1),                      // Rest
-                ]
-                .as_ref(),
-            )
-            .split(area);
-        let row_number_chunk = chunks[0];
-        let chunks = Layout::default()
-            .direction(ratatui::prelude::Direction::Vertical)
-            .constraints(
-                [
-                    Constraint::Max(1), // Column numbers
-                    Constraint::Min(1), // Rest
-                ]
-                .as_ref(),
-            )
-            .split(chunks[1]);
-        let column_number_chunk = chunks[0];
-        let canvas_chunk = chunks[1];
-        (canvas_chunk, row_number_chunk, column_number_chunk)
+        canvas_layout_chunks(area)
     }
 
     /// Visible canvas area when rendered to `area`
