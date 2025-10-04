@@ -10,6 +10,7 @@ pub enum ChangeFocusType {
     Center,
     Start(u16),
     End(u16),
+    Pan(i16),
 }
 
 // Not sure why I need this here
@@ -24,13 +25,13 @@ pub type OptionChangeFocusType = Option<ChangeFocusType>;
 #[derive(Clone, Debug, PartialEq, Presetable)]
 #[presetable(all_required, config_type = "ProgramState")]
 pub struct ChangeFocus {
-    pub type_horizontal: OptionChangeFocusType,
-    pub type_vertical: OptionChangeFocusType,
+    pub horizontal: OptionChangeFocusType,
+    pub vertical: OptionChangeFocusType,
 }
 
 impl Action for ChangeFocus {
     fn execute(&self, program_state: &mut ProgramState) {
-        match self.type_horizontal {
+        match self.horizontal {
             Some(ChangeFocusType::Center) => {
                 program_state.focus_position.1 = program_state.cursor_position.1;
             }
@@ -44,9 +45,12 @@ impl Action for ChangeFocus {
                     - program_state.canvas_visible.last_column()
                     + columns as i16;
             }
+            Some(ChangeFocusType::Pan(columns)) => {
+                program_state.focus_position.1 += columns;
+            }
             None => (),
         }
-        match self.type_vertical {
+        match self.vertical {
             Some(ChangeFocusType::Center) => {
                 program_state.focus_position.0 = program_state.cursor_position.0;
             }
@@ -59,6 +63,9 @@ impl Action for ChangeFocus {
                 program_state.focus_position.0 += program_state.cursor_position.0
                     - program_state.canvas_visible.last_row()
                     + rows as i16;
+            }
+            Some(ChangeFocusType::Pan(rows)) => {
+                program_state.focus_position.0 += rows;
             }
             None => (),
         }

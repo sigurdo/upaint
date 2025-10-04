@@ -17,6 +17,7 @@ use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};
 pub struct MouseInputState {
     // last_button_down_left: Option<(u16, u16)>,
     pub previous_position: (u16, u16),
+    pub dragging: bool,
 }
 
 pub fn handle_user_input_command_mode(
@@ -58,6 +59,28 @@ pub fn handle_user_input_command_mode(
     Ok(())
 }
 
+pub fn handle_keystroke_sequence_incomplete(program_state: &mut ProgramState) {
+    let mut it = program_state
+        .keystroke_sequence_incomplete
+        .iter()
+        .peekable();
+    match ActionBatch::from_keystrokes(&mut it, &program_state) {
+        Ok(action) => {
+            log::debug!("Fant action");
+            action.execute(program_state);
+            program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+        }
+        Err(FromKeystrokesError::MissingKeystrokes) => {
+            log::debug!("MissingKeystrokes");
+        }
+        Err(FromKeystrokesError::Invalid) => {
+            // Abort keystroke sequence completion
+            log::debug!("Invalid");
+            program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+        }
+    }
+}
+
 pub fn handle_user_input_action(
     event: Event,
     program_state: &mut ProgramState,
@@ -67,53 +90,49 @@ pub fn handle_user_input_action(
             program_state
                 .keystroke_sequence_incomplete
                 .push(Keystroke::from(e));
-            let mut it = program_state
-                .keystroke_sequence_incomplete
-                .iter()
-                .peekable();
-            match ActionBatch::from_keystrokes(&mut it, &program_state) {
-                Ok(action) => {
-                    log::debug!("Fant action");
-                    action.execute(program_state);
-                    program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
-                }
-                Err(FromKeystrokesError::MissingKeystrokes) => {
-                    log::debug!("MissingKeystrokes");
-                }
-                Err(FromKeystrokesError::Invalid) => {
-                    // Abort keystroke sequence completion
-                    log::debug!("Invalid");
-                    program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
-                }
-            }
+            handle_keystroke_sequence_incomplete(program_state);
         }
         Event::Mouse(e) => {
-            program_state.a += 10;
-            if e.kind == MouseEventKind::Moved {
-                MouseActionEnum::MoveCursor.execute(program_state, e.row, e.column);
+            if program_state.keystroke_sequence_incomplete.len() == 0 {
+                program_state.a += 10;
+                if e.kind == MouseEventKind::Moved {
+                    // MouseActionEnum::MoveCursor.execute(program_state, e.row, e.column);
+                }
+                if e.kind == MouseEventKind::Down(MouseButton::Left) {
+                    // program_state.mouse_input_state.last_button_down_left = Some((e.row, e.column));
+                    // MouseActionEnum::StartLineDrawing.execute(program_state, e.row, e.column);
+                    // MouseActionEnum::KeystrokesAlias(KeystrokeSequence::try_from("L".to_string())?)
+                    //     .execute(program_state, e.row, e.column);
+                    MouseActionEnum::MoveCursor.execute(program_state, e.row, e.column);
+                }
+                if e.kind == MouseEventKind::Up(MouseButton::Left)
+                    && program_state.mouse_input_state.dragging
+                {
+                    program_state.mouse_input_state.dragging = false;
+                    program_state.canvas.commit_staged();
+                }
+                if e.kind == MouseEventKind::Drag(MouseButton::Left) {
+                    program_state.mouse_input_state.dragging = true;
+                    MouseActionEnum::PaintFromYank.execute(program_state, e.row, e.column);
+                }
+                if e.kind == MouseEventKind::Drag(MouseButton::Right) {
+                    MouseActionEnum::MoveFocus.execute(program_state, e.row, e.column);
+                }
+                // if e.kind == MouseEventKind::Up(MouseButton::Left) {
+                //     if let Some((row, column)) = program_state.mouse_input_state.last_button_down_left {
+                //         if e.row == row && e.column == column {
+                //             crate::actions::move_cursor_to(
+                //                 (e.row as i16) - program_state.canvas_render_translation.0,
+                //                 (e.column as i16) - program_state.canvas_render_translation.1,
+                //                 crate::canvas::raw::iter::CanvasIterationJump::Diagonals,
+                //             )
+                //             .execute(program_state);
+                //         }
+                //         program_state.mouse_input_state.last_button_down_left = None;
+                //     }
+                // }
+                program_state.mouse_input_state.previous_position = (e.row, e.column);
             }
-            if e.kind == MouseEventKind::Down(MouseButton::Left) {
-                // program_state.mouse_input_state.last_button_down_left = Some((e.row, e.column));
-                MouseActionEnum::StartLineDrawing.execute(program_state, e.row, e.column);
-            }
-            if e.kind == MouseEventKind::Drag(MouseButton::Left) {
-
-                // MouseActionEnum::DrawLine.execute(program_state, e.row, e.column);
-            }
-            // if e.kind == MouseEventKind::Up(MouseButton::Left) {
-            //     if let Some((row, column)) = program_state.mouse_input_state.last_button_down_left {
-            //         if e.row == row && e.column == column {
-            //             crate::actions::move_cursor_to(
-            //                 (e.row as i16) - program_state.canvas_render_translation.0,
-            //                 (e.column as i16) - program_state.canvas_render_translation.1,
-            //                 crate::canvas::raw::iter::CanvasIterationJump::Diagonals,
-            //             )
-            //             .execute(program_state);
-            //         }
-            //         program_state.mouse_input_state.last_button_down_left = None;
-            //     }
-            // }
-            program_state.mouse_input_state.previous_position = (e.row, e.column);
         }
         _ => {
             program_state.a += 10;

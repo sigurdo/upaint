@@ -202,22 +202,22 @@ pub fn diff_builder_add(
     for (index, entry) in iter {
         let target = builder.entries.entry(index).or_default();
         if let Some(ch) = entry.ch {
-            if !(overwrite && target.ch.is_some()) {
+            if !(!overwrite && target.ch.is_some()) {
                 target.ch = Some(ch);
             }
         }
         if let Some(fg) = entry.fg {
-            if !(overwrite && target.fg.is_some()) {
+            if !(!overwrite && target.fg.is_some()) {
                 target.fg = Some(fg);
             }
         }
         if let Some(bg) = entry.bg {
-            if !(overwrite && target.bg.is_some()) {
+            if !(!overwrite && target.bg.is_some()) {
                 target.bg = Some(bg);
             }
         }
         if let Some(modifier) = entry.modifier {
-            if !(overwrite && target.modifier.is_some()) {
+            if !(!overwrite && target.modifier.is_some()) {
                 target.modifier = Some(modifier);
             }
         }
