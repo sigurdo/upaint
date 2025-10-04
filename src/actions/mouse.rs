@@ -5,13 +5,11 @@ use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::CanvasModification;
 use crate::ProgramState;
 use keystrokes_parsing::KeystrokeSequence;
+use serde::Deserialize;
 
 use super::Action;
 
-pub struct MouseActionStruct {
-    pub column: u16,
-    pub row: u16,
-}
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 pub enum MouseActionEnum {
     KeystrokesAlias(KeystrokeSequence),
     MoveCursor,

@@ -1,12 +1,14 @@
 use keystrokes_parsing::FromKeystrokes;
 use keystrokes_parsing::KeystrokeSequence;
 use upaint::actions;
+use upaint::actions::ActionBatch;
 use upaint::actions::ActionEnum;
 use upaint::canvas::raw::iter::CanvasIterationJump;
 use upaint::config::load_default_config;
 use upaint::keystrokes::ColorOrSlotSpecification;
 use upaint::keystrokes::Count;
 use upaint::motions;
+use upaint::motions::Highlighted;
 use upaint::motions::MotionEnum;
 use upaint::motions::MotionRepeat;
 use upaint::motions::MotionRepeatEnum;
@@ -120,23 +122,14 @@ pub fn test() {
                 ch: 'x',
             }),
         }),
-        "ch" => ActionEnum::Operation(actions::Operation {
+        "c" => ActionBatch(vec![ActionEnum::Operation(actions::Operation {
             operator: OperatorEnum::Colorize(operators::Colorize {
                 ground: Ground::Foreground,
                 color: ColorOrSlotSpecification::Active,
             }),
-            motion: MotionEnum::Repeat(MotionRepeat {
-                count: Count(1),
-                motion: MotionRepeatEnum::FixedNumberOfCells(motions::FixedNumberOfCells {
-                    direction: DirectionFree {
-                        rows: 0,
-                        columns: -1,
-                    },
-                    jump: CanvasIterationJump::DirectionAsStride,
-                }),
-            }),
+            motion: MotionEnum::Highlighted(Highlighted {}),
             clear_visual_rect: true,
             return_to_standard_mode: false,
-        }),
+        })]),
     );
 }
