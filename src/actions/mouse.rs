@@ -37,7 +37,9 @@ impl MouseActionEnum {
                 .execute(program_state);
             }
             Self::MoveFocus => {
-                let previous = program_state.mouse_input_state.previous_position;
+                let Some(previous) = program_state.mouse_input_state.previous_position else {
+                    return;
+                };
                 let translation = program_state.canvas_render_translation;
 
                 let from = (
@@ -57,7 +59,9 @@ impl MouseActionEnum {
                 crate::actions::LineDrawingStartNewLine {}.execute(program_state);
             }
             Self::DrawLine => {
-                let previous = program_state.mouse_input_state.previous_position;
+                let Some(previous) = program_state.mouse_input_state.previous_position else {
+                    return;
+                };
                 let translation = program_state.canvas_render_translation;
 
                 let from = (
@@ -73,7 +77,9 @@ impl MouseActionEnum {
                 program_state.canvas.create_commit(diff);
             }
             Self::PaintFromYank => {
-                let previous = program_state.mouse_input_state.previous_position;
+                let Some(previous) = program_state.mouse_input_state.previous_position else {
+                    return;
+                };
                 let translation = program_state.canvas_render_translation;
 
                 let from = (

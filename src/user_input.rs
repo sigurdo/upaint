@@ -1,11 +1,11 @@
-use crate::actions::mouse::MouseActionEnum;
 use crate::actions::ActionBatch;
 use crate::actions::ClearAllModeItems;
 use crate::color_picker::target::ColorPickerTarget;
+use crate::config::mouse_actions::MouseActionsKey;
+use crate::config::ConfigInputMode;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
 use crate::ColorPickerTargetEnum;
-use crossterm::event::MouseButton;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
 use keystrokes_parsing::FromKeystrokes;
 use ratatui::style::Color;
@@ -16,7 +16,7 @@ use keystrokes_parsing::{FromKeystrokesError, Keystroke, KeystrokeSequence};
 #[derive(Clone, Debug, Default)]
 pub struct MouseInputState {
     // last_button_down_left: Option<(u16, u16)>,
-    pub previous_position: (u16, u16),
+    pub previous_position: Option<(u16, u16)>,
     pub dragging: bool,
 }
 
@@ -94,44 +94,19 @@ pub fn handle_user_input_action(
         }
         Event::Mouse(e) => {
             if program_state.keystroke_sequence_incomplete.len() == 0 {
-                program_state.a += 10;
-                if e.kind == MouseEventKind::Moved {
-                    // MouseActionEnum::MoveCursor.execute(program_state, e.row, e.column);
-                }
-                if e.kind == MouseEventKind::Down(MouseButton::Left) {
-                    // program_state.mouse_input_state.last_button_down_left = Some((e.row, e.column));
-                    // MouseActionEnum::StartLineDrawing.execute(program_state, e.row, e.column);
-                    // MouseActionEnum::KeystrokesAlias(KeystrokeSequence::try_from("L".to_string())?)
-                    //     .execute(program_state, e.row, e.column);
-                    MouseActionEnum::MoveCursor.execute(program_state, e.row, e.column);
-                }
-                if e.kind == MouseEventKind::Up(MouseButton::Left)
-                    && program_state.mouse_input_state.dragging
+                if let Some(ConfigInputMode {
+                    mouse_actions: Some(mouse_actions),
+                    ..
+                }) = program_state.input_mode_config()
                 {
-                    program_state.mouse_input_state.dragging = false;
-                    program_state.canvas.commit_staged();
+                    if let Some(action) = mouse_actions.0.get(&MouseActionsKey {
+                        kind: e.kind,
+                        modifiers: e.modifiers,
+                    }) {
+                        action.clone().execute(program_state, e.row, e.column);
+                    }
                 }
-                if e.kind == MouseEventKind::Drag(MouseButton::Left) {
-                    program_state.mouse_input_state.dragging = true;
-                    MouseActionEnum::PaintFromYank.execute(program_state, e.row, e.column);
-                }
-                if e.kind == MouseEventKind::Drag(MouseButton::Right) {
-                    MouseActionEnum::MoveFocus.execute(program_state, e.row, e.column);
-                }
-                // if e.kind == MouseEventKind::Up(MouseButton::Left) {
-                //     if let Some((row, column)) = program_state.mouse_input_state.last_button_down_left {
-                //         if e.row == row && e.column == column {
-                //             crate::actions::move_cursor_to(
-                //                 (e.row as i16) - program_state.canvas_render_translation.0,
-                //                 (e.column as i16) - program_state.canvas_render_translation.1,
-                //                 crate::canvas::raw::iter::CanvasIterationJump::Diagonals,
-                //             )
-                //             .execute(program_state);
-                //         }
-                //         program_state.mouse_input_state.last_button_down_left = None;
-                //     }
-                // }
-                program_state.mouse_input_state.previous_position = (e.row, e.column);
+                program_state.mouse_input_state.previous_position = Some((e.row, e.column));
             }
         }
         _ => {
