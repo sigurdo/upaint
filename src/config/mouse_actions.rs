@@ -76,14 +76,14 @@ mod test {
     fn test_parse() {
         for (input, expected) in vec![
             (
-                "s-Down-l",
+                "S-Down-L",
                 MouseActionsKey {
                     kind: MouseEventKind::Down(MouseButton::Left),
                     modifiers: KeyModifiers::SHIFT,
                 },
             ),
             (
-                "c-a-Up-m",
+                "C-A-Up-M",
                 MouseActionsKey {
                     kind: MouseEventKind::Up(MouseButton::Middle),
                     modifiers: KeyModifiers::CONTROL | KeyModifiers::ALT,
@@ -100,7 +100,7 @@ mod test {
             let output = MouseActionsKey::try_from(input.to_string()).unwrap();
             assert_eq!(output, expected);
         }
-        for error_input in vec!["Down", "ScrollUp-l"] {
+        for error_input in vec!["Down", "ScrollUp-L"] {
             assert!(MouseActionsKey::try_from(error_input.to_string()).is_err());
         }
     }

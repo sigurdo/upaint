@@ -25,6 +25,7 @@ pub mod status_bar;
 pub mod user_input;
 pub mod yank_slots;
 
+use crate::actions::ActionBatchPreset;
 use crate::config::Config;
 use crate::config::ConfigInputMode;
 use crate::keystrokes::ColorOrSlot;
@@ -195,6 +196,7 @@ pub struct ProgramState {
     pub config_source: ConfigSource,
     pub config: Config,
     pub keystroke_sequence_incomplete: KeystrokeSequence,
+    pub mouse_action_preset: Option<ActionBatchPreset>,
     pub macros: HashMap<char, Macro>,
     pub macro_recording: Option<MacroRecording>,
     pub line_drawing: Option<LineDrawingState>,

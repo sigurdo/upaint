@@ -1,5 +1,6 @@
 use crate::actions::change_focus::ChangeFocus;
 use crate::actions::change_focus::ChangeFocusType;
+use crate::actions::ActionBatchPreset;
 use crate::canvas::raw::iter::CanvasIndexIteratorFromTo;
 use crate::canvas::raw::iter::CanvasIterationJump;
 use crate::canvas::CanvasModification;
@@ -11,7 +12,8 @@ use super::Action;
 
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 pub enum MouseActionEnum {
-    KeystrokesAlias(KeystrokeSequence),
+    Alias(KeystrokeSequence),
+    Standard(ActionBatchPreset),
     MoveCursor,
     MoveFocus,
     StartLineDrawing,
@@ -22,10 +24,14 @@ pub enum MouseActionEnum {
 impl MouseActionEnum {
     pub fn execute(&self, program_state: &mut ProgramState, row: u16, column: u16) {
         match self {
-            Self::KeystrokesAlias(keystrokes) => {
+            Self::Alias(keystrokes) => {
                 for keystroke in keystrokes.0.clone() {
                     program_state.keystroke_sequence_incomplete.push(keystroke);
                 }
+                crate::user_input::handle_keystroke_sequence_incomplete(program_state);
+            }
+            Self::Standard(preset) => {
+                program_state.mouse_action_preset = Some(preset.clone());
                 crate::user_input::handle_keystroke_sequence_incomplete(program_state);
             }
             Self::MoveCursor => {
@@ -35,6 +41,7 @@ impl MouseActionEnum {
                     crate::canvas::raw::iter::CanvasIterationJump::Diagonals,
                 )
                 .execute(program_state);
+                crate::actions::HighlightClear {}.execute(program_state);
             }
             Self::MoveFocus => {
                 let Some(previous) = program_state.mouse_input_state.previous_position else {

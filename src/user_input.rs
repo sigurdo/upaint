@@ -8,6 +8,7 @@ use crate::input_mode::InputModeHandlerTrait;
 use crate::ColorPickerTargetEnum;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
 use keystrokes_parsing::FromKeystrokes;
+use keystrokes_parsing::Presetable;
 use ratatui::style::Color;
 
 use crate::{actions::Action, command_line::execute_command, ProgramState};
@@ -64,11 +65,17 @@ pub fn handle_keystroke_sequence_incomplete(program_state: &mut ProgramState) {
         .keystroke_sequence_incomplete
         .iter()
         .peekable();
-    match ActionBatch::from_keystrokes(&mut it, &program_state) {
+    let result = if let Some(preset) = &program_state.mouse_action_preset {
+        ActionBatch::from_keystrokes_by_preset(preset.clone(), &mut it, &program_state)
+    } else {
+        ActionBatch::from_keystrokes(&mut it, &program_state)
+    };
+    match result {
         Ok(action) => {
             log::debug!("Fant action");
             action.execute(program_state);
             program_state.keystroke_sequence_incomplete = KeystrokeSequence::new();
+            program_state.mouse_action_preset = None;
         }
         Err(FromKeystrokesError::MissingKeystrokes) => {
             log::debug!("MissingKeystrokes");
@@ -93,7 +100,9 @@ pub fn handle_user_input_action(
             handle_keystroke_sequence_incomplete(program_state);
         }
         Event::Mouse(e) => {
-            if program_state.keystroke_sequence_incomplete.len() == 0 {
+            if program_state.keystroke_sequence_incomplete.len() == 0
+                && program_state.mouse_action_preset.is_none()
+            {
                 if let Some(ConfigInputMode {
                     mouse_actions: Some(mouse_actions),
                     ..
