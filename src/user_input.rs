@@ -1,8 +1,8 @@
 use crate::actions::ActionBatch;
 use crate::actions::ClearAllModeItems;
 use crate::color_picker::target::ColorPickerTarget;
+use crate::config::keymaps::base_keymaps_iter::BaseMouseActionsIter;
 use crate::config::mouse_actions::MouseActionsKey;
-use crate::config::ConfigInputMode;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;
 use crate::ColorPickerTargetEnum;
@@ -103,16 +103,14 @@ pub fn handle_user_input_action(
             if program_state.keystroke_sequence_incomplete.len() == 0
                 && program_state.mouse_action_preset.is_none()
             {
-                if let Some(ConfigInputMode {
-                    mouse_actions: Some(mouse_actions),
-                    ..
-                }) = program_state.input_mode_config()
-                {
+                let mut it = BaseMouseActionsIter::new(program_state);
+                while let Some(mouse_actions) = it.next() {
                     if let Some(action) = mouse_actions.0.get(&MouseActionsKey {
                         kind: e.kind,
                         modifiers: e.modifiers,
                     }) {
                         action.clone().execute(program_state, e.row, e.column);
+                        break;
                     }
                 }
                 program_state.mouse_input_state.previous_position = Some((e.row, e.column));

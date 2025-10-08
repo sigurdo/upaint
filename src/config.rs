@@ -66,7 +66,7 @@ nest! {
 
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct ConfigInputMode {
-    pub keymaps: Keymaps,
+    pub keymaps: Option<Keymaps>,
     // Values are keys for config.input_mode hashmap
     pub base_keymaps: Vec<InputMode>,
     pub mouse_actions: Option<MouseActions>,
