@@ -1,7 +1,7 @@
 use crate::actions::ActionBatch;
 use crate::actions::ClearAllModeItems;
 use crate::color_picker::target::ColorPickerTarget;
-use crate::config::keymaps::base_keymaps_iter::BaseMouseActionsIter;
+use crate::config::input_mode::base_iter::BaseMouseActionsIter;
 use crate::config::mouse_actions::MouseActionsKey;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandlerTrait;

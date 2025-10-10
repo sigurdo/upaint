@@ -1,8 +1,5 @@
-use crate::actions::ActionBatchPreset;
 use crate::canvas::raw::transform::CharacterSwapMap;
-use crate::config::mouse_actions::MouseActions;
 use crate::input_mode::InputMode;
-use crate::input_mode::InputModeHandler;
 use crate::line_drawing::LineDrawingCharacters;
 use derive_more::Display;
 use derive_more::From;
@@ -13,11 +10,15 @@ use std::path::PathBuf;
 use serde::Deserialize;
 
 pub mod color_theme;
-pub mod keymaps;
 pub mod mouse_actions;
 pub mod sources;
 
-use self::{color_theme::ColorTheme, keymaps::Keymaps};
+pub mod input_mode;
+
+use input_mode::ConfigInputMode;
+
+use color_theme::ColorTheme;
+use input_mode::keymaps::Keymaps;
 
 #[cfg(test)]
 mod test;
@@ -62,17 +63,6 @@ nest! {
         pub input_mode_initial: InputMode,
         pub input_mode_standard: InputMode,
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Deserialize)]
-pub struct ConfigInputMode {
-    pub keymaps: Option<Keymaps>,
-    // Values are keys for config.input_mode hashmap
-    pub base_keymaps: Vec<InputMode>,
-    pub mouse_actions: Option<MouseActions>,
-    // pub mouse_actions: Vec<InputMode>,
-    pub handler: InputModeHandler,
-    pub on_enter: Option<ActionBatchPreset>,
 }
 
 impl TomlValue for Keymaps {

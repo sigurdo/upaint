@@ -1,4 +1,4 @@
-use super::Keymaps;
+use super::keymaps::Keymaps;
 use std::marker::PhantomData;
 
 use crate::config::mouse_actions::MouseActions;
@@ -118,7 +118,7 @@ impl<'a, R: InputModeRecurseResult<'a> + 'a> Iterator for InputModeRecursor<'a, 
                 if bases_recursed.insert(input_mode) {
                     let bases_recursed = bases_recursed;
                     ret = <R as InputModeRecurseResult>::get_field(config_input_mode);
-                    let bases_to_recurse = config_input_mode.base_keymaps.iter();
+                    let bases_to_recurse = config_input_mode.extends.iter();
                     let mut new_self =
                         Self::recurse_next_base(bases_to_recurse, bases_recursed, program_state);
                     if ret.is_none() {

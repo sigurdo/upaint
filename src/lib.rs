@@ -26,8 +26,8 @@ pub mod user_input;
 pub mod yank_slots;
 
 use crate::actions::ActionBatchPreset;
+use crate::config::input_mode::ConfigInputMode;
 use crate::config::Config;
-use crate::config::ConfigInputMode;
 use crate::keystrokes::ColorOrSlot;
 use crate::motions::FindChar;
 use canvas::raw::iter::CanvasIndexIteratorInfinite;

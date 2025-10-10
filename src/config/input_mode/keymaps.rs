@@ -1,3 +1,4 @@
+use super::base_iter::BaseKeymapsIter;
 use crate::actions::ActionBatch;
 use crate::actions::ActionRepeatableEnum;
 use crate::canvas::raw::continuous_region::ContinuousRegionRelativeType;
@@ -35,8 +36,6 @@ use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-pub mod base_keymaps_iter;
-
 macro_rules! keymaps {
     {$($ident:ident : $type:ty,)*} => {
         #[derive(Clone, Debug, PartialEq, Deserialize)]
@@ -68,7 +67,7 @@ macro_rules! keymaps {
                     config: &ProgramState
                 ) -> Result<Self, keystrokes_parsing::FromKeystrokesError> {
                     from_keystrokes_by_source_iterator(
-                        base_keymaps_iter::BaseKeymapsIter::new(config),
+                        BaseKeymapsIter::new(config),
                         keystrokes,
                         config,
                     )
