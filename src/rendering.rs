@@ -16,18 +16,13 @@ pub fn draw_frame(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     program_state: &mut ProgramState,
 ) -> anyhow::Result<()> {
-    let command_line_active = match program_state.input_mode_config() {
-        None => false,
-        Some(config) => config.handler == InputModeHandler::Command,
-    };
+    let input_handler = crate::config::input_mode::get_handler(program_state);
+    let command_line_active = input_handler == InputModeHandler::Command;
     // terminal.hide_cursor()?;
     terminal.draw(|f| {
-        let sidebar_width = match program_state.input_mode_config() {
-            Some(config) => match config.handler {
-                InputModeHandler::ColorPicker => 18,
-                _ => 0,
-            },
-            None => 0,
+        let sidebar_width = match input_handler {
+            InputModeHandler::ColorPicker => 18,
+            _ => 0,
         };
         let chunks = Layout::default()
             .direction(ratatui::prelude::Direction::Vertical)
@@ -175,10 +170,8 @@ pub fn draw_frame(
             f.render_widget(input_mode, command_line_chunk);
         }
 
-        if let Some(config) = program_state.input_mode_config() {
-            if config.handler == InputModeHandler::ColorPicker {
-                f.render_widget(program_state.color_picker.widget(), color_picker_chunk);
-            }
+        if input_handler == InputModeHandler::ColorPicker {
+            f.render_widget(program_state.color_picker.widget(), color_picker_chunk);
         }
 
         program_state.canvas.reset_hard(canvas_revision);

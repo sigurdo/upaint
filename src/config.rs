@@ -10,10 +10,10 @@ use std::path::PathBuf;
 use serde::Deserialize;
 
 pub mod color_theme;
-pub mod mouse_actions;
-pub mod sources;
-
 pub mod input_mode;
+pub mod mouse_actions;
+pub mod option_untagged;
+pub mod sources;
 
 use input_mode::ConfigInputMode;
 

@@ -10,6 +10,7 @@ use serde::Serialize;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone, Hash, Serialize, Deserialize, Presetable)]
 #[presetable(config_type = "ProgramState", preset_type = "Self")]
+#[serde(transparent)]
 pub struct InputMode(String);
 
 impl FromKeystrokes<ProgramState> for InputMode {
@@ -64,15 +65,6 @@ impl InputModeHandlerTrait for InputModeHandler {
 
 impl InputModeHandlerTrait for InputMode {
     fn handle_input(&self, event: Event, program_state: &mut ProgramState) -> anyhow::Result<()> {
-        if let Some(config) = program_state
-            .config
-            .input_mode
-            .get(&program_state.input_mode)
-        {
-            config.handler.clone().handle_input(event, program_state)
-        } else {
-            // If input mode isn't configured, simply do nothing
-            Ok(())
-        }
+        crate::config::input_mode::get_handler(program_state).handle_input(event, program_state)
     }
 }

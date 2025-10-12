@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use crate::config::mouse_actions::MouseActions;
 use crate::config::ConfigInputMode;
 use crate::input_mode::InputMode;
+use crate::input_mode::InputModeHandler;
 use crate::ProgramState;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -44,6 +45,14 @@ pub type BaseMouseActionsIter<'a> = InputModeRecursor<'a, MouseActions>;
 impl<'a> InputModeRecurseResult<'a> for MouseActions {
     fn get_field(config_input_mode: &'a ConfigInputMode) -> Option<&'a Self> {
         config_input_mode.mouse_actions.as_ref()
+    }
+}
+
+pub type BaseInputModeHandlerIter<'a> = InputModeRecursor<'a, InputModeHandler>;
+
+impl<'a> InputModeRecurseResult<'a> for InputModeHandler {
+    fn get_field(config_input_mode: &'a ConfigInputMode) -> Option<&'a Self> {
+        config_input_mode.handler.as_ref()
     }
 }
 
@@ -118,9 +127,14 @@ impl<'a, R: InputModeRecurseResult<'a> + 'a> Iterator for InputModeRecursor<'a, 
                 if bases_recursed.insert(input_mode) {
                     let bases_recursed = bases_recursed;
                     ret = <R as InputModeRecurseResult>::get_field(config_input_mode);
-                    let bases_to_recurse = config_input_mode.extends.iter();
-                    let mut new_self =
-                        Self::recurse_next_base(bases_to_recurse, bases_recursed, program_state);
+                    let mut new_self = if let Some(extends) = &config_input_mode.extends {
+                        Self::recurse_next_base(extends.iter(), bases_recursed, program_state)
+                    } else {
+                        Self::Finished {
+                            bases_recursed,
+                            phantom: PhantomData,
+                        }
+                    };
                     if ret.is_none() {
                         ret = new_self.next();
                     }

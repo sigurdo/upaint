@@ -1,30 +1,37 @@
 use serde::Deserialize;
 
 use crate::actions::ActionBatchPreset;
-use crate::config::input_mode::base_iter::BaseKeymapsIter;
 use crate::config::mouse_actions::MouseActions;
 use crate::input_mode::InputMode;
 use crate::input_mode::InputModeHandler;
 use crate::ProgramState;
 
+use super::option_untagged;
 use super::Keymaps;
 
 pub mod base_iter;
 pub mod keymaps;
 
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
 pub struct ConfigInputMode {
+    #[serde(with = "option_untagged")]
     pub keymaps: Option<Keymaps>,
     // Values are keys for config.input_mode hashmap
-    pub extends: Vec<InputMode>,
+    #[serde(with = "option_untagged")]
+    pub extends: Option<Vec<InputMode>>,
+    #[serde(with = "option_untagged")]
     pub mouse_actions: Option<MouseActions>,
-    // pub mouse_actions: Vec<InputMode>,
-    pub handler: InputModeHandler,
+    #[serde(with = "option_untagged")]
+    pub handler: Option<InputModeHandler>,
+    #[serde(with = "option_untagged")]
     pub on_enter: Option<ActionBatchPreset>,
 }
 
-impl<'a> ConfigInputMode {
-    pub fn iter_keymaps(program_state: &'a ProgramState) -> BaseKeymapsIter<'a> {
-        BaseKeymapsIter::new(program_state)
-    }
+pub fn get_handler(program_state: &ProgramState) -> InputModeHandler {
+    let mut iter = base_iter::BaseInputModeHandlerIter::new(program_state);
+    let Some(handler) = iter.next() else {
+        return InputModeHandler::default();
+    };
+    return *handler;
 }
